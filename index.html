@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedSense News - Global Health & Medical Updates</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Merriweather:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-top">
+            <div class="navbar-top-content">
+                <div class="breaking-ticker">
+                    <span class="ticker-label">Breaking</span>
+                    <span class="ticker-text" id="breakingTicker">WHO announces new global health initiative for vaccine
+                        equity across developing nations...</span>
+                </div>
+                <div class="date-display">
+                    <span><i class="fas fa-calendar"></i> <span id="currentDate"></span></span>
+                </div>
+            </div>
+        </div>
+        <div class="navbar-main">
+            <a href="#" class="logo" onclick="router.navigate('home'); return false;">
+                <div class="logo-icon">
+                    <img src="logo.png" alt="MedSense logo">
+                </div>
+                MedSense News
+            </a>
+
+            <ul class="nav-links">
+            </ul>
+
+            <div class="nav-actions">
+                <div class="search-box">
+                    <input type="text" placeholder="Search articles..." id="searchInput" onkeyup="handleSearch(event)">
+                    <button class="search-btn" onclick="toggleSearch()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <button class="icon-btn" onclick="toggleDarkMode()" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="icon-btn mobile-menu-btn" onclick="toggleMobileMenu()">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <a href="#" class="logo" onclick="toggleMobileMenu(); router.navigate('home'); return false;">
+                <div class="logo-icon">
+                    <img src="logo.png" alt="MedSense logo">
+                </div>
+                MedSense News
+            </a>
+            <button class="icon-btn" onclick="toggleMobileMenu()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <ul class="mobile-nav-links">
+        </ul>
+        <div class="mobile-menu-footer">
+            <div class="social-links">
+                <a href="https://web.facebook.com/people/MedSense-News/61579693413492/?rdid=GdNIeI1vIpDolnT5&share_url=https%3A%2F%2Fweb.facebook.com%2Fshare%2F1AQB1pS5p7%2F%3F_rdc%3D1%26_rdr"
+                    target="_blank" rel="noopener"><i class="fab fa-facebook-f"></i></a>
+                <a href="https://x.com/MedsenseN" target="_blank" rel="noopener"><i class="fab fa-twitter"></i></a>
+                <a href="https://whatsapp.com/channel/0029Vb66g7UVPoSLvlA1i" target="_blank" rel="noopener"><i
+                        class="fab fa-whatsapp"></i></a>
+                <a href="https://www.instagram.com/medsensenews/" target="_blank" rel="noopener"><i
+                        class="fab fa-instagram"></i></a>
+            </div>
+            <button class="btn btn-primary" onclick="toggleDarkMode(); toggleMobileMenu();" style="width: 100%;">
+                <i class="fas fa-moon"></i> Appearance
+            </button>
+        </div>
+    </div>
+
+    <div class="search-overlay" id="searchOverlay" onclick="closeSearch(event)">
+        <div class="search-container" onclick="event.stopPropagation()">
+            <input type="text" class="search-input-large" placeholder="Search articles..." id="searchInputLarge"
+                onkeyup="performSearch(this.value)">
+            <div class="search-results" id="searchResults"></div>
+        </div>
+    </div>
+
+    <main id="app"></main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo" onclick="router.navigate('home'); return false;">
+                        <div class="logo-icon">
+                            <img src="logo.png" alt="MedSense logo">
+                        </div>
+                        MedSense News
+                    </a>
+                    <p>Your trusted source for global health news, medical breakthroughs, and public health updates.
+                        Delivering accurate information to keep you informed and healthy.</p>
+                    <div class="social-links">
+                        <a href="https://web.facebook.com/people/MedSense-News/61579693413492/?rdid=GdNIeI1vIpDolnT5&share_url=https%3A%2F%2Fweb.facebook.com%2Fshare%2F1AQB1pS5p7%2F%3F_rdc%3D1%26_rdr"
+                            target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://x.com/MedsenseN" target="_blank" rel="noopener" aria-label="Twitter"><i
+                                class="fab fa-twitter"></i></a>
+                        <a href="https://www.linkedin.com/in/medsense-news-72a2473bb" target="_blank" rel="noopener"
+                            aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="https://www.instagram.com/medsensenews/" target="_blank" rel="noopener"
+                            aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://youtube.com/@medsensenews?si=FOOZPFr1iDFstftyA" target="_blank" rel="noopener"
+                            aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                        <a href="https://whatsapp.com/channel/0029Vb66g7UVPoSLvlA1i" target="_blank" rel="noopener"
+                            aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links-group">
+                    <div class="footer-links">
+                        <h4>Categories</h4>
+                        <ul>
+                            <li><a href="?category=Health" onclick="filterByCategory('Health'); return false;">Health</a></li>
+                            <li><a href="?category=Medicine" onclick="filterByCategory('Medicine'); return false;">Medicine</a></li>
+                            <li><a href="?category=Research" onclick="filterByCategory('Research'); return false;">Research</a></li>
+                            <li><a href="?category=Public%20Health" onclick="filterByCategory('Public Health'); return false;">Public Health</a></li>
+                            <li><a href="?category=Technology" onclick="filterByCategory('Technology'); return false;">Technology</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-links">
+                        <h4>Company</h4>
+                        <ul>
+                            <li><a href="?page=about" onclick="router.navigate('about'); return false;">About Us</a></li>
+                            <li><a href="?page=careers" onclick="router.navigate('careers'); return false;">Careers</a></li>
+                            <li><a href="?page=contact" onclick="router.navigate('contact'); return false;">Contact</a></li>
+                            <li><a href="?page=privacy" onclick="router.navigate('privacy'); return false;">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <h4>Newsletter</h4>
+                    <p class="newsletter-desc">Subscribe for daily health updates</p>
+                    <form class="newsletter-form" onsubmit="handleNewsletter(event)">
+                        <input type="email" placeholder="Your email address" required>
+                        <button type="submit" class="btn btn-primary newsletter-btn">Subscribe</button>
+                    </form>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 MedSense News. All rights reserved. | Powered by MedSense Foundation.</p>
+                <div class="footer-bottom-links"
+                    style="margin-top: 1rem; display: flex; justify-content: center; gap: 2rem; font-size: 0.75rem; opacity: 0.7;">
+                    <a href="?page=privacy" onclick="router.navigate('privacy'); return false;"
+                        style="color: white; text-decoration: none;">Privacy Policy</a>
+                    <a href="?page=terms" onclick="router.navigate('terms'); return false;" style="color: white; text-decoration: none;">Terms of
+                        Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
+    <script src="data.js"></script>
+    <script src="main.js"></script>
+</body>
+
+</html>
