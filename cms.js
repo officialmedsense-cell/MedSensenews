@@ -478,6 +478,7 @@ async function handleNewArticle(e, status = 'published') {
             excerpt: formData.get('excerpt'),
             content: articleContent,
             date: getLocalDateString(),
+            created_at: getLocalDateTimeISO(),
             trending: false,
             views: 0,
             status: status

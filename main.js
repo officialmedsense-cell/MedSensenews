@@ -149,7 +149,7 @@ function performSearch(query) {
         resultsContainer.innerHTML = results.map(article => `
             <div class="search-result-item" onclick="router.navigate('article', {id: ${article.id}}); document.getElementById('searchOverlay').classList.remove('active');">
                 <h4>${article.title}</h4>
-                <p>${article.category} • ${article.created_at ? formatDateTime(article.created_at) : formatDate(article.date)}</p>
+                <p>${article.category} • ${formatDate(article.date)}${article.created_at ? ` • ${formatTime(article.created_at)}` : ''}</p>
             </div>
         `).join('');
     }
@@ -253,7 +253,7 @@ async function addComment(articleId) {
     try {
         const { error } = await supabaseClient
             .from('comments')
-            .insert([{ article_id: articleId, author: name, text: text }]);
+            .insert([{ article_id: articleId, author: name, text: text, created_at: getLocalDateTimeISO() }]);
             
         if (error) throw error;
         
@@ -316,7 +316,7 @@ function renderHome() {
                                     <h3 class="news-card-title">${art.title}</h3>
                                     <p class="news-card-excerpt">${art.excerpt}</p>
                                     <div class="news-card-meta">
-                                        <span>${art.created_at ? formatDateTime(art.created_at) : formatDate(art.date)}</span>
+                                        <span>${formatDate(art.date)}${art.created_at ? ` • ${formatTime(art.created_at)}` : ''}</span>
                                         <span class="read-more">Read More <i class="fas fa-arrow-right"></i></span>
                                     </div>
                                 </div>
@@ -369,7 +369,7 @@ async function renderArticle(id) {
                 <span class="category-tag article-category">${article.category}</span>
                 <h1 class="article-title">${article.title}</h1>
                 <div class="article-meta">
-                    <span>By ${article.author}</span> • <span>${article.created_at ? formatDateTime(article.created_at) : formatDate(article.date)}</span>
+                    <span>By ${article.author}</span> • <span>${formatDate(article.date)}${article.created_at ? ` • ${formatTime(article.created_at)}` : ''}</span>
                 </div>
             </header>
             ${applyBranding(article.image, article.title)}
@@ -771,12 +771,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 month: 'long',
                 day: 'numeric',
                 hour: 'numeric',
-                minute: '2-digit'
+                minute: '2-digit',
+                second: '2-digit'
             });
         };
 
         updateDateTime();
-        setInterval(updateDateTime, 60000);
+        setInterval(updateDateTime, 1000);
     }
 
     if (store.darkMode) {
