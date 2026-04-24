@@ -19,6 +19,10 @@
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+html {
+    background-color: var(--bg);
+}
+
 /* Dark Theme */
 [data-theme="dark"] {
     color-scheme: dark;
@@ -34,6 +38,7 @@
     --border: #1a1a1a;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.45);
     --shadow-lg: 0 16px 24px -8px rgba(0, 0, 0, 0.7);
+    background-color: #000000;
 }
 
 /* Reset & Base */
@@ -53,7 +58,8 @@ body {
 }
 
 [data-theme="dark"] body {
-    background-image: linear-gradient(180deg, #000000 0%, #050505 100%);
+    background-color: #000000;
+    background-image: none;
 }
 
 img {
@@ -1921,7 +1927,26 @@ img {
 }
 
 [data-theme="dark"] .footer {
-    background: #000000;
+    background: var(--primary);
+    color: white;
+}
+
+[data-theme="dark"] .footer .social-links a {
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    color: white;
+    box-shadow: none;
+}
+
+[data-theme="dark"] .footer .social-links a:hover {
+    background: white;
+    color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
+}
+
+[data-theme="dark"] .footer .social-links a i {
+    color: inherit;
 }
 
 [data-theme="dark"] .news-card,

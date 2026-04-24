@@ -106,10 +106,10 @@ window.addEventListener('popstate', (e) => {
     }
 });
 
-function applyBranding(imageUrl, altText = "MedSense Article") {
+function applyBranding(imageUrl, altText = "MedSense Article", loading = "lazy") {
     return `
         <div class="image-branding-wrapper">
-            <img src="${imageUrl}" alt="${altText}" loading="lazy" oncontextmenu="return false;" draggable="false">
+            <img src="${imageUrl}" alt="${altText}" loading="${loading}" decoding="async" oncontextmenu="return false;" draggable="false">
             <div class="download-protection-overlay"></div>
         </div>
     `;
@@ -347,6 +347,49 @@ function renderHome() {
 async function renderArticle(id) {
     const article = store.articles.find(a => a.id === id);
     if (!article) return router.navigate('home');
+
+    document.getElementById('app').innerHTML = `
+        <article class="article-container">
+            <header class="article-header">
+                <span class="category-tag article-category">${article.category}</span>
+                <h1 class="article-title">${article.title}</h1>
+                <div class="article-meta">
+                    <span>By ${article.author}</span> â€¢ <span>${formatDate(article.date)}${article.created_at ? ` â€¢ ${formatTime(article.created_at)}` : ''}</span>
+                </div>
+            </header>
+            ${applyBranding(article.image, article.title, "eager")}
+            <div class="article-body">${article.content}</div>
+            
+            <div class="share-buttons">
+                <button class="share-btn share-whatsapp" onclick="shareArticle('whatsapp', '${article.title.replace(/'/g, "\\'")}')">
+                    <i class="fab fa-whatsapp"></i> Share on WhatsApp
+                </button>
+                <button class="share-btn share-twitter" onclick="shareArticle('twitter', '${article.title.replace(/'/g, "\\'")}')">
+                    <i class="fab fa-twitter"></i> Share on X
+                </button>
+                <button class="share-btn share-facebook" onclick="shareArticle('facebook', '${article.title.replace(/'/g, "\\'")}')">
+                    <i class="fab fa-facebook-f"></i> Share on Facebook
+                </button>
+            </div>
+
+            <div class="comments-section">
+                <h3 class="comments-header">Comments</h3>
+                
+                <div class="comments-list">
+                    <p class="no-comments">Loading comments...</p>
+                </div>
+
+                <div class="comment-form-container">
+                    <h4>Leave a Comment</h4>
+                    <div class="comment-form">
+                        <input type="text" id="commentName" placeholder="Your name (e.g. Dr. Smith)">
+                        <textarea id="commentText" placeholder="Share your thoughts on this article..."></textarea>
+                        <button id="postCommentBtn" class="btn btn-primary btn-sm" onclick="addComment(${article.id})">Post Comment</button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    `;
     
     let comments = [];
     try {
@@ -372,7 +415,7 @@ async function renderArticle(id) {
                     <span>By ${article.author}</span> • <span>${formatDate(article.date)}${article.created_at ? ` • ${formatTime(article.created_at)}` : ''}</span>
                 </div>
             </header>
-            ${applyBranding(article.image, article.title)}
+            ${applyBranding(article.image, article.title, "eager")}
             <div class="article-body">${article.content}</div>
             
             <div class="share-buttons">
