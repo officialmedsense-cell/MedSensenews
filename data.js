@@ -124,7 +124,18 @@ async function saveStore() {
 
 function formatDate(dateString) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString('en-US', options);
+    if (!dateString) return '';
+
+    // Treat stored `YYYY-MM-DD` values as local calendar dates so they do not
+    // shift a day earlier in timezones west of UTC.
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day).toLocaleDateString('en-US', options);
+    }
+
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return String(dateString);
+    return date.toLocaleDateString('en-US', options);
 }
 
 function showToast(message, type = 'success') {
@@ -157,4 +168,3 @@ function toggleMobileMenu() {
     menu.classList.toggle('active');
     document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
 }
-
