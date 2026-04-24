@@ -149,7 +149,7 @@ function performSearch(query) {
         resultsContainer.innerHTML = results.map(article => `
             <div class="search-result-item" onclick="router.navigate('article', {id: ${article.id}}); document.getElementById('searchOverlay').classList.remove('active');">
                 <h4>${article.title}</h4>
-                <p>${article.category} • ${formatDate(article.date)}</p>
+                <p>${article.category} • ${article.created_at ? formatDateTime(article.created_at) : formatDate(article.date)}</p>
             </div>
         `).join('');
     }
@@ -287,7 +287,7 @@ function renderHome() {
                                     <h3 class="news-card-title">${art.title}</h3>
                                     <p class="news-card-excerpt">${art.excerpt}</p>
                                     <div class="news-card-meta">
-                                        <span>${formatDate(art.date)}</span>
+                                        <span>${art.created_at ? formatDateTime(art.created_at) : formatDate(art.date)}</span>
                                         <span class="read-more">Read More <i class="fas fa-arrow-right"></i></span>
                                     </div>
                                 </div>
@@ -305,7 +305,6 @@ function renderHome() {
                                 <span class="trending-number">0${i+1}</span>
                                 <div class="trending-content">
                                     <h4>${art.title}</h4>
-                                    <span>${art.views.toLocaleString()} views</span>
                                 </div>
                             </div>
                         `).join('')}
@@ -341,7 +340,7 @@ async function renderArticle(id) {
                 <span class="category-tag article-category">${article.category}</span>
                 <h1 class="article-title">${article.title}</h1>
                 <div class="article-meta">
-                    <span>By ${article.author}</span> • <span>${formatDate(article.date)}</span>
+                    <span>By ${article.author}</span> • <span>${article.created_at ? formatDateTime(article.created_at) : formatDate(article.date)}</span>
                 </div>
             </header>
             ${applyBranding(article.image, article.title)}
@@ -366,7 +365,7 @@ async function renderArticle(id) {
                     ${comments.length === 0 ? '<p class="no-comments">Be the first to comment!</p>' : ''}
                     ${comments.map(c => `
                         <div class="comment">
-                            <div class="comment-author"><strong>${c.author}</strong> <small>${formatDate(c.created_at || new Date())}</small></div>
+                            <div class="comment-author"><strong>${c.author}</strong> <small>${formatDateTime(c.created_at || new Date())}</small></div>
                             <p class="comment-text">${c.text}</p>
                         </div>
                     `).join('')}

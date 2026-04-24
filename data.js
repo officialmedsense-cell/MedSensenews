@@ -138,6 +138,26 @@ function formatDate(dateString) {
     return date.toLocaleDateString('en-US', options);
 }
 
+function formatDateTime(dateString) {
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit'
+    };
+    if (!dateString) return '';
+
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day).toLocaleString('en-US', options);
+    }
+
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return String(dateString);
+    return date.toLocaleString('en-US', options);
+}
+
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
