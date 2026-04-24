@@ -166,6 +166,35 @@ function handleNewsletter(e) {
     e.target.reset();
 }
 
+function getBreakingTickerItems() {
+    const publishedArticles = store.articles
+        .filter(article => article.status === 'published')
+        .sort((a, b) => new Date(b.created_at || b.date) - new Date(a.created_at || a.date))
+        .slice(0, 3);
+
+    const liveItems = publishedArticles.map(article => `Breaking: ${article.title}`);
+
+    if (liveItems.length > 0) {
+        return liveItems;
+    }
+
+    return [
+        'Breaking: WHO announces new global health initiative',
+        'Breaking: New medical research updates are now live',
+        'Breaking: Health and medicine stories are rotating automatically'
+    ];
+}
+
+function startBreakingTicker() {
+    const ticker = document.getElementById('breakingTicker');
+    if (!ticker) return;
+
+    const items = getBreakingTickerItems();
+    if (items.length === 0) return;
+
+    ticker.textContent = items.join('   |   ');
+}
+
 function updateNavbar() {
     const navLinks = document.querySelector('.nav-links');
     if (!navLinks) return;
@@ -735,9 +764,19 @@ function renderContact() {
 document.addEventListener('DOMContentLoaded', () => {
     const dateEl = document.getElementById('currentDate');
     if (dateEl) {
-        dateEl.textContent = new Date().toLocaleDateString('en-US', { 
-            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-        });
+        const updateDateTime = () => {
+            dateEl.textContent = new Date().toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+        };
+
+        updateDateTime();
+        setInterval(updateDateTime, 60000);
     }
 
     if (store.darkMode) {
@@ -747,6 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     updateNavbar();
+    startBreakingTicker();
     renderCurrentURLRoute();
 
     document.addEventListener('contextmenu', (e) => {
@@ -785,6 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data && data.length > 0) {
                 store.articles = data;
             }
+            startBreakingTicker();
             renderCurrentURLRoute();
         } catch (e) {
             console.warn("Supabase sync pending config.");
