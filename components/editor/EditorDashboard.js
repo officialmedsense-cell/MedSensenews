@@ -66,7 +66,7 @@ export default function EditorDashboard() {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select('id, title, category, status, author, date, image, excerpt')
+        .select('id, title, category, status, author, date, created_at, image, excerpt')
         .order('date', { ascending: false });
         
       if (error) {
@@ -521,7 +521,10 @@ export default function EditorDashboard() {
                           </span>
                         </td>
                         <td className={styles.tdMuted}>{article.author}</td>
-                        <td className={styles.tdMuted}>{article.date ? new Date(article.date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}</td>
+                        <td className={styles.tdMuted}>
+                          {article.created_at ? new Date(article.created_at).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) 
+                          : article.date ? new Date(article.date).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
+                        </td>
                         <td>
                           <div className={styles.actions}>
                             <button title="Copy live link" className={styles.actionBtn} onClick={() => copyLink(article.id)}>

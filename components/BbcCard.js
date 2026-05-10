@@ -42,7 +42,7 @@ export default function BbcCard({ article, isFeatured = false, isList = false })
       <div className="bbc-card-content">
         <div className="bbc-card-meta">
           <span className="bbc-card-category">{article.category}</span>
-          <span>{formatDate(article.date)}</span>
+          <span>{formatDate(article.created_at || article.date)}</span>
         </div>
         <h3 className="bbc-card-title">{article.title}</h3>
         {isFeatured && <p className="bbc-card-excerpt">{article.excerpt}</p>}

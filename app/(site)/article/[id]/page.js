@@ -188,7 +188,7 @@ export default async function ArticlePage({ params }) {
             <span>By {article.author}</span>
           </div>
           &bull; 
-          <span>{formatDate(article.date)}</span>
+          <span>{formatDate(article.created_at || article.date)}</span>
         </div>
       </header>
 
