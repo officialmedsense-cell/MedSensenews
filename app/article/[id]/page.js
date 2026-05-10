@@ -1,0 +1,195 @@
+import { supabase } from '@/lib/supabase';
+import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import CommentSection from '@/components/CommentSection';
+import BbcCard from '@/components/BbcCard';
+
+export const revalidate = 3600; // Cache articles for 1 hour
+
+async function getArticle(id) {
+  const { data, error } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('id', id)
+    .single();
+  
+  if (error || !data) return null;
+  return data;
+}
+
+async function getOtherArticles(currentId, category) {
+  // Fetch articles from the same category first
+  const { data: categoryArticles } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('status', 'published')
+    .eq('category', category)
+    .neq('id', currentId)
+    .limit(4);
+
+  let otherArticles = categoryArticles || [];
+
+  // If we have less than 4, fetch latest articles to fill the gap
+  if (otherArticles.length < 4) {
+    const excludeIds = [currentId, ...otherArticles.map(a => a.id)];
+    const { data: latestArticles } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('status', 'published')
+      .not('id', 'in', excludeIds)
+      .order('date', { ascending: false })
+      .limit(4 - otherArticles.length);
+    
+    if (latestArticles) {
+      otherArticles = [...otherArticles, ...latestArticles];
+    }
+  }
+
+  return otherArticles;
+}
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+  const article = await getArticle(id);
+  if (!article) return { title: 'Article Not Found' };
+
+  return {
+    title: `${article.title} | MedSense News`,
+    description: article.excerpt,
+    openGraph: {
+      title: article.title,
+      description: article.excerpt,
+      images: [article.image],
+    },
+  };
+}
+
+export default async function ArticlePage({ params }) {
+  const { id } = await params;
+  const article = await getArticle(id);
+  
+  if (!article) notFound();
+
+  const otherArticles = await getOtherArticles(id, article.category);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    // If it's a simple YYYY-MM-DD, parse as local to avoid UTC shift
+    if (dateString.length === 10 && dateString.includes('-')) {
+      const [y, m, d] = dateString.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    }
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    'headline': article.title,
+    'description': article.excerpt,
+    'image': [article.image],
+    'datePublished': article.date,
+    'dateModified': article.date,
+    'author': [{
+      '@type': 'Person',
+      'name': article.author,
+    }],
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'MedSense News',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': 'https://ufiirgbphacmlcgszqdx.supabase.co/storage/v1/object/public/article-images/logo.png'
+      }
+    }
+  };
+
+  return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+    <article className="article-container">
+      <header className="article-header">
+        <span className="category-tag article-category">{article.category}</span>
+        <h1 className="article-title">{article.title}</h1>
+        <div className="article-meta">
+          <div className="author-info">
+            <div className="author-avatar">
+              {article.author.charAt(0).toUpperCase()}
+            </div>
+            <span>By {article.author}</span>
+          </div>
+          &bull; 
+          <span>{formatDate(article.date)}</span>
+        </div>
+      </header>
+
+      <div className="image-branding-wrapper article-main-image-container" style={{ position: 'relative', width: '100%' }}>
+        <Image 
+          src={article.image} 
+          alt={article.title} 
+          fill
+          priority
+          style={{ objectFit: 'cover' }}
+          className="article-image" 
+        />
+        <div className="download-protection-overlay"></div>
+      </div>
+
+      <div 
+        className="article-body" 
+        dangerouslySetInnerHTML={{ __html: article.content }} 
+      />
+
+      <div className="share-buttons">
+        <button className="share-btn share-whatsapp">
+          <i className="fab fa-whatsapp"></i> Share
+        </button>
+        <button className="share-btn share-twitter">
+          <i className="fab fa-twitter"></i> Share
+        </button>
+        <button className="share-btn share-facebook">
+          <i className="fab fa-facebook-f"></i> Share
+        </button>
+      </div>
+
+      <CommentSection articleId={id} />
+    </article>
+
+    {otherArticles.length > 0 && (
+      <section className="bbc-trending-grid-wrapper other-news-section" style={{ background: 'var(--bg-secondary)', padding: '3rem 0', borderTop: '1px solid var(--border)', marginTop: '4rem' }}>
+        <div className="bbc-homepage-wrapper" style={{ minHeight: 'auto', paddingTop: 0 }}>
+          <div className="other-news-header">
+            <h3 className="other-news-title">More News For You</h3>
+            <div className="other-news-line"></div>
+          </div>
+          
+          <div className="other-news-grid">
+            {otherArticles.map(item => (
+              <div key={item.id} className="other-news-item">
+                <BbcCard article={item} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+  </>
+);
+}

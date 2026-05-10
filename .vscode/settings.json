@@ -1,0 +1,32 @@
+{
+    "files.associations": {
+        "**/.eslintrc": "jsonc",
+        "**/.eslintrc.json": "jsonc"
+    },
+    "liveServer.settings.port": 5503,
+    "typescript.validate.enable": true,
+    "javascript.validate.enable": true,
+    "eslint.options": {
+        "ignorePath": ".eslintignore"
+    },
+    "eslint.exclude": [
+        "**/node_modules/**",
+        "**/.next/**",
+        "**/out/**",
+        "**/build/**"
+    ],
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/node_modules": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/bower_components": true,
+        "**/.next": true
+    },
+    "files.watcherExclude": {
+        "**/node_modules/*/**": true,
+        "**/.next/*/**": true
+    }
+}

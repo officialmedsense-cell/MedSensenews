@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "typeAcquisition": {
+    "enable": false
+  },
+  "exclude": ["node_modules", ".next"]
+}

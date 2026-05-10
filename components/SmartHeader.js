@@ -1,0 +1,55 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+
+export default function SmartHeader({ children }) {
+  const [isVisible, setIsVisible] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const lastScrollY = useRef(0);
+  const lockUntil = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const now = Date.now();
+      
+      // Track if we are scrolled away from top
+      const currentScrollY = window.scrollY;
+      setIsScrolled(currentScrollY > 150);
+
+      // If we are in the lockout period, ignore visibility toggle
+      if (now < lockUntil.current) return;
+      
+      // Always show at the very top
+      if (currentScrollY < 150) {
+        if (!isVisible) setIsVisible(true);
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
+      const diff = currentScrollY - lastScrollY.current;
+
+      // Use a very high 60px threshold to confirm intent and stop jitter
+      if (Math.abs(diff) > 60) {
+        if (diff > 0 && isVisible) {
+          setIsVisible(false);
+          lockUntil.current = Date.now() + 400; // Lock state for 400ms
+        } else if (diff < 0 && !isVisible) {
+          setIsVisible(true);
+          lockUntil.current = Date.now() + 400; // Lock state for 400ms
+        }
+        lastScrollY.current = currentScrollY;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isVisible]);
+
+  return (
+    <>
+      <div className={`smart-header-wrapper ${isVisible ? 'smart-header-visible' : 'smart-header-hidden'} ${isScrolled ? 'is-scrolled' : ''}`}>
+        {children}
+      </div>
+    </>
+  );
+}
