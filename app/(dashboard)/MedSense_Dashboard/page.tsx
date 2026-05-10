@@ -100,7 +100,7 @@ export default function MedSenseDashboard() {
   const [viewMode, setViewMode] = useState<'dashboard' | 'fullFeed'>('dashboard');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>([
-    { role: 'ai', content: "Neural Interface established. I am the MedSense Command AI. How can I assist your editorial operations today?" }
+    { role: 'ai', content: "Neural Interface established. I am MedSA, your AOJ Group intelligence assistant. How can I assist your editorial operations today?" }
   ]);
   const [chatInput, setChatInput] = useState("");
   const [isChatting, setIsChatting] = useState(false);
@@ -701,7 +701,7 @@ export default function MedSenseDashboard() {
                      ))}
                      {isChatting && (
                        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                          <div className="badge badge-tech" style={{ padding: '8px 16px', animation: 'pulse 1.5s infinite' }}>AI is analyzing directive...</div>
+                          <div className="badge badge-tech" style={{ padding: '8px 16px', animation: 'pulse 1.5s infinite' }}>MedSA is analyzing directive...</div>
                        </div>
                      )}
                   </div>

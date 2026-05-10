@@ -339,7 +339,7 @@ export async function processAICommand(prompt: string, context: { articles: any[
         messages: [
           { 
             role: "system", 
-            content: `You are the MedSense Command AI. You help staff manage news articles and intelligence sources.
+            content: `You are MedSA, the official AI assistant of AOJ Group. You help staff manage news articles and intelligence sources.
             
             AVAILABLE ACTIONS:
             1. SEARCH_NEWS: If user asks for "latest news", "news today", or news about a specific topic. Return search terms in 'query'.
