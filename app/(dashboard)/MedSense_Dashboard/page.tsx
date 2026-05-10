@@ -96,6 +96,11 @@ export default function MedSenseDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'dashboard' | 'fullFeed'>('dashboard');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai', content: string }[]>([
+    { role: 'ai', content: "Neural Interface established. I am the MedSense Command AI. How can I assist your editorial operations today?" }
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatting, setIsChatting] = useState(false);
 
   // --- Auth State ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -302,6 +307,45 @@ export default function MedSenseDashboard() {
     }
   };
 
+  const handleSendChatMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || isChatting) return;
+
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setIsChatting(true);
+
+    try {
+      const res = await processAICommand(userMsg, { articles, sources });
+      if (res.success && res.result) {
+        const { message, action, targetId } = res.result;
+        setChatMessages(prev => [...prev, { role: 'ai', content: message }]);
+        
+        // Execute Action
+        if (action === 'DELETE_ARTICLE' && targetId) {
+          const articleToDelete = articles.find(a => a.id === targetId);
+          if (articleToDelete) {
+            setArticles(prev => prev.filter(a => a.id !== targetId));
+            showToast(`Article purged: ${articleToDelete.title.substring(0, 20)}...`, "warning");
+            addLog(`AI Action: Purged article ${targetId}`, "warning");
+          }
+        } else if (action === 'PUBLISH_ARTICLE' && targetId) {
+          const articleToPub = articles.find(a => a.id === targetId);
+          if (articleToPub) handlePublishArticle(articleToPub);
+        } else if (action === 'RUN_DISCOVERY') {
+          runScraper();
+        }
+      } else {
+        setChatMessages(prev => [...prev, { role: 'ai', content: "I encountered a neural synchronization error. Please try again." }]);
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'ai', content: "Neural link severed. Connection lost." }]);
+    } finally {
+      setIsChatting(false);
+    }
+  };
+
   const filteredArticles = articles.filter(a => 
     (activeCategory === "all" || a.category === activeCategory) &&
     (a.title.toLowerCase().includes(searchQuery.toLowerCase()) || a.summary.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -371,6 +415,7 @@ export default function MedSenseDashboard() {
         <nav className="sidebar-nav">
           {[
             { id: 'dashboard', label: 'Command Center', icon: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z' },
+            { id: 'aichat', label: 'AI Command Hub', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
             { id: 'sources', label: 'Intelligence Sources', icon: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3' },
             { id: 'pipeline', label: 'Neural Pipeline', icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5' },
             { id: 'settings', label: 'System Config', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' },
@@ -414,6 +459,7 @@ export default function MedSenseDashboard() {
       {/* Main Viewport */}
       <main className="main-viewport">
         {/* Metrics Row (Horizontal Ribbon) */}
+        {activeNav !== 'aichat' && (
         <div className="metrics-grid">
            <div className="metric-box">
               <div className="metric-label">System</div>
@@ -431,8 +477,10 @@ export default function MedSenseDashboard() {
               <div className="metric-value" style={{ fontSize: '14px' }}>{articles.length.toString().padStart(2, '0')}</div>
            </div>
         </div>
+        )}
 
         {/* Settings Overlay */}
+        {activeNav === 'settings' && (
         <section className="glass-card" id="settings" style={{ marginBottom: '24px' }}>
            <h2 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '24px' }}>System Configuration</h2>
            <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px' }}>
@@ -453,6 +501,7 @@ export default function MedSenseDashboard() {
               </div>
            </div>
         </section>
+        )}
 
         {/* Staff Management (Admin Only) */}
         {currentUser.role === 'admin' && (
@@ -517,6 +566,7 @@ export default function MedSenseDashboard() {
            </section>
          )}
 
+        {activeNav === 'dashboard' && (
         <header className="header-row">
           <div className="page-title">
             <h1>Intelligence Command</h1>
@@ -544,9 +594,58 @@ export default function MedSenseDashboard() {
              </button>
           </div>
         </header>
+        )}
 
-        <div className="dashboard-grid" style={viewMode === 'fullFeed' ? { gridTemplateColumns: '1fr' } : {}}>
+        <div className="dashboard-grid" style={viewMode === 'fullFeed' || activeNav === 'aichat' ? { gridTemplateColumns: '1fr' } : {}}>
+          {/* AI Chatbox View */}
+          {activeNav === 'aichat' && (
+            <section className="glass-card" id="aichat" style={{ minHeight: '600px', display: 'flex', flexDirection: 'column' }}>
+               <div style={{ paddingBottom: '24px', borderBottom: '1px solid var(--border-dim)' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: '800' }}>AI Command Hub</h2>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Issue natural language commands to manage your intelligence network.</p>
+               </div>
+               
+               <div style={{ flex: 1, padding: '24px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                       <div style={{ 
+                          maxWidth: '80%', 
+                          padding: '12px 16px', 
+                          borderRadius: 'var(--radius-md)', 
+                          background: msg.role === 'user' ? 'var(--accent-primary)' : 'var(--bg-elevated)',
+                          color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
+                          border: msg.role === 'ai' ? '1px solid var(--border-dim)' : 'none',
+                          fontSize: '14px',
+                          lineHeight: '1.5'
+                       }}>
+                          {msg.content}
+                       </div>
+                    </div>
+                  ))}
+                  {isChatting && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                       <div className="badge badge-tech" style={{ padding: '8px 16px' }}>AI is thinking...</div>
+                    </div>
+                  )}
+               </div>
+
+               <form onSubmit={handleSendChatMessage} style={{ marginTop: '24px', position: 'relative' }}>
+                  <input 
+                    type="text" 
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    placeholder="e.g., 'Delete the article about obesity' or 'Run news discovery'..."
+                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-active)', borderRadius: 'var(--radius-md)', padding: '16px 60px 16px 20px', color: 'var(--text-primary)', outline: 'none' }}
+                  />
+                  <button type="submit" className="btn btn-primary" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', padding: '8px 12px' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </button>
+               </form>
+            </section>
+          )}
+
           {/* Article Feed */}
+          {activeNav === 'dashboard' && (
           <section className="glass-card" id="dashboard" style={{ gridRow: 'span 2' }}>
             <div className="feed-header" style={{ marginBottom: viewMode === 'fullFeed' ? '12px' : '24px' }}>
                <h2 style={{ fontSize: '18px', fontWeight: '800' }}>
@@ -635,9 +734,10 @@ export default function MedSenseDashboard() {
               </button>
             )}
           </section>
+          )}
 
           {/* Right Sidebar: Pipeline & Telemetry */}
-          {viewMode === 'dashboard' && (
+          {viewMode === 'dashboard' && activeNav === 'dashboard' && (
             <aside style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
              <section className="glass-card" id="pipeline">
                 <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '20px' }}>Neural Pipeline Status</h2>

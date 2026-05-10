@@ -270,6 +270,80 @@ export async function saveArticleToSupabase(article: any) {
   }
 }
 
+export async function deleteArticleFromSupabase(articleId: string) {
+  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+
+  try {
+    const { error } = await supabase
+      .from("articles")
+      .delete()
+      .eq("id", articleId);
+
+    if (error) throw error;
+    return { success: true, msg: "Article purged from database." };
+  } catch (error: any) {
+    console.error("Supabase Delete Error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * AI Command Processing
+ * Allows staff to chat with the AI to perform actions.
+ */
+export async function processAICommand(prompt: string, context: { articles: any[], sources: any[] }) {
+  const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
+  if (!MISTRAL_API_KEY) return { success: false, error: "AI key missing." };
+
+  try {
+    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${MISTRAL_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "mistral-small-latest",
+        messages: [
+          { 
+            role: "system", 
+            content: `You are the MedSense Command AI. You help staff manage news articles and intelligence sources.
+            
+            AVAILABLE ACTIONS:
+            1. DELETE_ARTICLE: If user wants to delete/remove a specific news article.
+            2. PUBLISH_ARTICLE: If user wants to publish a specific article to the main site.
+            3. RUN_DISCOVERY: If user wants to start a news scan.
+            4. CHAT: For general questions or analysis.
+
+            CURRENT CONTEXT:
+            - Discovered Articles: ${context.articles.map(a => `ID: ${a.id}, Title: ${a.title}`).join(' | ')}
+            - Intelligence Hubs: ${context.sources.map(s => `ID: ${s.id}, Name: ${s.name}`).join(' | ')}
+
+            RESPONSE FORMAT:
+            You must return a JSON object:
+            {
+              "message": "Your helpful response to the staff member.",
+              "action": "DELETE_ARTICLE" | "PUBLISH_ARTICLE" | "RUN_DISCOVERY" | "CHAT",
+              "targetId": "ID of the article or hub if applicable",
+              "confidence": 0.0 to 1.0
+            }` 
+          },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" }
+      })
+    });
+
+    const data = await response.json();
+    if (data.choices && data.choices[0]) {
+      return { success: true, result: JSON.parse(data.choices[0].message.content) };
+    }
+    throw new Error("Invalid AI response");
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 // --- Publication Client (MedSense News) --- (Moved to top)
 
 // --- Category Image Assets ---
