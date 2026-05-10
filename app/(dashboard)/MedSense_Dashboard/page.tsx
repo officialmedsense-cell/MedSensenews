@@ -5,7 +5,9 @@ import {
   fetchLiveMedicalNews, 
   processArticleWithAI, 
   saveArticleToSupabase, 
-  publishToNewsSite 
+  publishToNewsSite,
+  processAICommand,
+  deleteArticleFromSupabase
 } from "./actions";
 
 // --- Types ---
