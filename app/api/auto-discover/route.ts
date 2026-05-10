@@ -61,6 +61,7 @@ export async function GET(request: Request) {
           fullReport: aiResult.transformed.content,
           visualKeyword: aiResult.transformed.visual_keyword,
           originalImage: aiResult.transformed.originalImage,
+          sourceUrl: article.sourceUrl,
         });
 
         if (pubResult.success) {

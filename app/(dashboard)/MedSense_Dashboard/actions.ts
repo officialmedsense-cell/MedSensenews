@@ -261,6 +261,7 @@ export async function publishToNewsSite(payload: {
   fullReport: string,
   visualKeyword?: string,
   originalImage?: string | null,
+  sourceUrl?: string,
   targetUrl?: string,
   token?: string
 }) {
@@ -269,7 +270,18 @@ export async function publishToNewsSite(payload: {
   }
 
   try {
-    // 1. DUPLICATE CHECK
+    // 1. DUPLICATE CHECK — by source URL first (most reliable), then by title
+    if (payload.sourceUrl) {
+      const { data: urlDup } = await pubClient
+        .from('articles')
+        .select('id')
+        .eq('source_url', payload.sourceUrl)
+        .maybeSingle();
+      if (urlDup) {
+        return { success: false, error: "Article already exists on MedSense News (Duplicate Prevented)." };
+      }
+    }
+
     const { data: existing, error: checkError } = await pubClient
       .from('articles')
       .select('id')
@@ -314,6 +326,7 @@ export async function publishToNewsSite(payload: {
         image: heroImage,
         status: 'published',
         date: exactPublishTime,
+        source_url: payload.sourceUrl || null,
         views: 0,
         trending: false
       }]);
