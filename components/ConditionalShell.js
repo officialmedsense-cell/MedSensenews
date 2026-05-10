@@ -9,9 +9,9 @@ import { usePathname } from 'next/navigation';
  */
 export default function ConditionalShell({ header, footer, children }) {
   const pathname = usePathname();
-  const isEditor = pathname.startsWith('/mseditor242');
+  const isDashboard = pathname.startsWith('/mseditor242') || pathname.startsWith('/medsense_dashboard');
 
-  if (isEditor) {
+  if (isDashboard) {
     // Editor pages: no header, no footer, no <main> padding
     return <>{children}</>;
   }
