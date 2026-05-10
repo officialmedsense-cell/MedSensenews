@@ -37,8 +37,8 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  color: var(--text);
+  border: 1px solid var(--brand-color, var(--border));
+  color: var(--brand-color, var(--text));
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 18px;
@@ -65,15 +65,18 @@
 
 .share-btn:hover {
   background: var(--brand-color, var(--primary));
-  border-color: var(--brand-color, var(--primary));
-  color: white;
+  color: white !important;
   transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.copy-btn {
+  --brand-color: var(--primary) !important;
 }
 
 .copy-btn:hover {
-  background: var(--primary-color);
-  border-color: var(--primary-color);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .share-icon {
