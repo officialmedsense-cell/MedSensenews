@@ -166,6 +166,23 @@ export default function EditorDashboard() {
   };
 
   // ── Article actions ───────────────────────────────────
+  const handleEditClick = async (article) => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('articles')
+      .select('content')
+      .eq('id', article.id)
+      .single();
+    setLoading(false);
+    
+    if (error) {
+      showToast('Failed to load article content: ' + error.message, 'error');
+      return;
+    }
+    
+    setArticleModal({ open: true, article: { ...article, content: data.content } });
+  };
+
   const handleDeleteArticle = async (id) => {
     if (!confirm('Permanently delete this article?')) return;
     const { error } = await supabase.from('articles').delete().eq('id', id);
@@ -511,7 +528,7 @@ export default function EditorDashboard() {
                               <i className="fas fa-link" />
                             </button>
                             <button title="Edit article" className={`${styles.actionBtn} ${styles.actionEdit}`}
-                              onClick={() => setArticleModal({ open: true, article })}>
+                              onClick={() => handleEditClick(article)}>
                               <i className="fas fa-edit" />
                             </button>
                             <button
