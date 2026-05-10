@@ -8,25 +8,70 @@ import {
   publishToNewsSite 
 } from "./actions";
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// --- Types ---
+interface Article {
+  id: string;
+  title: string;
+  summary: string;
+  fullText: string;
+  source: string;
+  sourceUrl: string;
+  date: string;
+  time: string;
+  category: string;
+  relevance: number;
+  severity: string;
+  read: boolean;
+  publishedToNews?: boolean;
+  visualKeyword?: string;
+  originalImage?: string;
+}
+
+interface Source {
+  id: string;
+  name: string;
+  url: string;
+  status: 'online' | 'offline' | 'error';
+  type: string;
+}
+
+interface LogEntry {
+  time: string;
+  tag: string;
+  msg: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+}
+
+interface User {
+  email: string;
+  role: 'admin' | 'staff';
+}
+
+interface StaffAccount {
+  id: string;
+  email: string;
+  password: string;
+}
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export default function MedSenseDashboard() {
   // --- State ---
-  const [articles, setArticles] = useState([]);
-  const [sources, setSources] = useState([
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [sources, setSources] = useState<Source[]>([
     { id: "1", name: "Nigeria Health Watch", url: "https://nigeriahealthwatch.com/feed/", status: "online", type: "rss" },
     { id: "2", name: "The Punch (Healthwise)", url: "https://rss.punchng.com/v1/category/healthwise", status: "online", type: "rss" },
     { id: "3", name: "Nature Medicine", url: "https://www.nature.com/nm.rss", status: "online", type: "rss" }
   ]);
 
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isRunning, setIsRunning] = useState(false);
-  const [lastRun, setLastRun] = useState("Never");
+  const [lastRun, setLastRun] = useState<string>("Never");
   const [activeNav, setActiveNav] = useState("dashboard");
   
-  const [pipelineState, setPipelineState] = useState({
+  const [pipelineState, setPipelineState] = useState<Record<string, { progress: number, count: number, status: 'idle' | 'running' | 'complete' }>>({
     collect: { progress: 0, count: 0, status: 'idle' },
     extract: { progress: 0, count: 0, status: 'idle' },
     filter: { progress: 0, count: 0, status: 'idle' },
@@ -45,18 +90,18 @@ export default function MedSenseDashboard() {
 
   const [showAddSource, setShowAddSource] = useState(false);
   const [newSource, setNewSource] = useState({ name: "", url: "", type: "rss" });
-  const [selectedArticle, setSelectedArticle] = useState(null);
-  const [toasts, setToasts] = useState([]);
+  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  const [toasts, setToasts] = useState<{ id: number, msg: string, type: string }[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('dashboard');
-  const [theme, setTheme] = useState('dark');
+  const [viewMode, setViewMode] = useState<'dashboard' | 'fullFeed'>('dashboard');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   // --- Auth State ---
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginError, setLoginError] = useState("");
-  const [staffAccounts, setStaffAccounts] = useState([]);
+  const [staffAccounts, setStaffAccounts] = useState<StaffAccount[]>([]);
   const [authChecked, setAuthChecked] = useState(false);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [newStaff, setNewStaff] = useState({ email: "", password: "" });
@@ -66,7 +111,7 @@ export default function MedSenseDashboard() {
     // Load persisted state on client mount
     const savedSources = localStorage.getItem('medsense_sources');
     const savedSettings = localStorage.getItem('medsense_settings');
-    const savedTheme = localStorage.getItem('medsense_theme');
+    const savedTheme = localStorage.getItem('medsense_theme') as 'dark' | 'light';
     const savedUser = localStorage.getItem('medsense_user');
     const savedStaff = localStorage.getItem('medsense_staff');
     
@@ -114,7 +159,7 @@ export default function MedSenseDashboard() {
   }, [staffAccounts]);
 
   // --- Handlers ---
-  const handleLogin = (e) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
     
@@ -138,20 +183,20 @@ export default function MedSenseDashboard() {
     setLoginPassword("");
   };
 
-  const addLog = (msg, type = "info") => {
+  const addLog = (msg: any, type: LogEntry["type"] = "info") => {
     const now = new Date();
     const time = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}`;
     const safeMsg = typeof msg === 'string' ? msg : JSON.stringify(msg).substring(0, 100);
     setLogs(prev => [{ time, tag: type.toUpperCase(), msg: safeMsg, type }, ...prev].slice(0, 50));
   };
 
-  const showToast = (msg, type = "info") => {
+  const showToast = (msg: string, type: string = "info") => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, msg, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
   };
 
-  const handlePublishArticle = async (article) => {
+  const handlePublishArticle = async (article: Article) => {
     addLog(`Initiating Uplink for: ${article.title.substring(0, 20)}...`, "info");
     const result = await publishToNewsSite({
       headline: article.title,
@@ -178,31 +223,31 @@ export default function MedSenseDashboard() {
   const handleAddSource = () => {
     if (!newSource.name || !newSource.url) return showToast("Please fill all fields", "warning");
     const id = Math.random().toString(36).substr(2, 9);
-    setSources(prev => [...prev, { ...newSource, id, status: 'online' }]);
+    setSources(prev => [...prev, { ...newSource, id, status: 'online' } as Source]);
     setNewSource({ name: "", url: "", type: "rss" });
     setShowAddSource(false);
     showToast("New source linked successfully", "success");
     addLog(`Linked new intelligence hub: ${newSource.name}`, "success");
   };
 
-  const handleDeleteSource = (id) => {
+  const handleDeleteSource = (id: string) => {
     setSources(prev => prev.filter(s => s.id !== id));
     showToast("Source disconnected", "warning");
     addLog("Intelligence hub disconnected from neural uplink.", "warning");
   };
 
-  const [editingSourceId, setEditingSourceId] = useState(null);
+  const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
 
   const runScraper = async () => {
     if (isRunning) return;
     setIsRunning(true);
     try {
       addLog("Establishing Neural Uplink to Global News Feeds...", "info");
-      const stages = ["collect", "extract", "filter", "process", "output"];
+      const stages = ["collect", "extract", "filter", "process", "output"] as const;
       
       const sourceUrls = sources.map(s => s.url);
       const discoveryResult = await fetchLiveMedicalNews(sourceUrls);
-      let discovered = [];
+      let discovered: any[] = [];
 
       if (discoveryResult.success && discoveryResult.articles) {
         discovered = discoveryResult.articles;
@@ -216,7 +261,7 @@ export default function MedSenseDashboard() {
           for (const item of discovered) {
             const res = await processArticleWithAI(item, settings.aiModel, settings.tone);
             if (res.success && res.transformed) {
-              const newArticle = {
+              const newArticle: Article = {
                 id: Math.random().toString(36).substr(2, 9),
                 title: res.transformed.title,
                 summary: res.transformed.summary,
@@ -486,14 +531,14 @@ export default function MedSenseDashboard() {
                 <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', width: '14px', height: '14px', color: 'var(--text-muted)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
                 </svg>
-              </div>
-              <button className="btn btn-ghost" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ padding: '10px 16px' }} title="Toggle Theme">
+             </div>
+             <button className="btn btn-ghost" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ padding: '10px 16px' }} title="Toggle Theme">
                 {theme === 'dark' ? '☀️' : '🌙'}
-              </button>
-              <button className="btn btn-primary" onClick={runScraper} disabled={isRunning} style={{ padding: '10px 20px' }}>
+             </button>
+             <button className="btn btn-primary" onClick={runScraper} disabled={isRunning} style={{ padding: '10px 20px' }}>
                 {isRunning ? <span className="spinner"></span> : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>}
                 <span style={{ fontSize: '13px' }}>{isRunning ? "Processing..." : "Run Discovery"}</span>
-              </button>
+             </button>
           </div>
         </header>
 

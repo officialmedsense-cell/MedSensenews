@@ -24,10 +24,10 @@ const FEEDS = [
  * Fetches real articles from global medical RSS feeds.
  * Filters for articles published TODAY only.
  */
-export async function fetchLiveMedicalNews(customFeeds) {
+export async function fetchLiveMedicalNews(customFeeds?: string[]) {
   try {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const allArticles = [];
+    const allArticles: any[] = [];
 
     // Use custom feeds if provided, otherwise fallback to default FEEDS
     const feedsToUse = (customFeeds && customFeeds.length > 0) ? customFeeds : FEEDS;
@@ -47,7 +47,7 @@ export async function fetchLiveMedicalNews(customFeeds) {
         
         let filtered = feed.items.filter(item => {
           if (!item.isoDate && !item.pubDate) return false;
-          const itemDate = new Date(item.isoDate || item.pubDate);
+          const itemDate = new Date(item.isoDate || item.pubDate!);
           return itemDate >= twoDaysAgo;
         });
 
@@ -89,7 +89,7 @@ export async function fetchLiveMedicalNews(customFeeds) {
       articles: allArticles.slice(0, 10),
       count: allArticles.length
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("RSS Fetch Error:", error);
     return { success: false, error: "Failed to reach live news feeds." };
   }
@@ -102,7 +102,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
  * MedSense AI Service Action
  * Connects to Mistral AI using your provided API key.
  */
-export async function processArticleWithAI(sourceArticle, model, tone) {
+export async function processArticleWithAI(sourceArticle: { title: string, summary: string, fullText: string, originalImage?: string | null }, model: string, tone: string) {
   const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 
   if (!MISTRAL_API_KEY) {
@@ -175,7 +175,7 @@ export async function processArticleWithAI(sourceArticle, model, tone) {
     } else {
       throw new Error("Invalid response from Mistral AI");
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("AI Processing Error:", error);
     return { success: false, error: String(error.message || error) };
   }
@@ -196,13 +196,13 @@ export async function getArticlesFromSupabase() {
 
     if (error) throw error;
     return { success: true, articles: data };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Supabase Fetch Error:", error);
     return { success: false, error: error.message };
   }
 }
 
-export async function saveArticleToSupabase(article) {
+export async function saveArticleToSupabase(article: any) {
   if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
 
   try {
@@ -222,7 +222,7 @@ export async function saveArticleToSupabase(article) {
 
     if (error) throw error;
     return { success: true, msg: "Data committed to Supabase." };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Supabase Save Error:", error);
     return { success: false, error: error.message };
   }
@@ -234,7 +234,7 @@ const pubKey = process.env.PUBLICATION_SUPABASE_KEY || "";
 const pubClient = (pubUrl && pubKey) ? createClient(pubUrl, pubKey) : null;
 
 // --- Category Image Assets ---
-const CATEGORY_IMAGES = {
+const CATEGORY_IMAGES: Record<string, string> = {
   'Health': "https://images.unsplash.com/photo-1505751172107-167425f38e0a?auto=format&fit=crop&q=80&w=1200",
   'Medicine': "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200",
   'Research': "https://images.unsplash.com/photo-1579154273821-396417646a7d?auto=format&fit=crop&q=80&w=1200",
@@ -249,7 +249,17 @@ const CATEGORY_IMAGES = {
  * Publication Service
  * Pushes the final report to the MedSense News database.
  */
-export async function publishToNewsSite(payload) {
+export async function publishToNewsSite(payload: {
+  headline: string,
+  category: string,
+  author: string,
+  summary: string,
+  fullReport: string,
+  visualKeyword?: string,
+  originalImage?: string | null,
+  targetUrl?: string,
+  token?: string
+}) {
   if (!pubClient) {
     return { success: false, error: "Publication Target not configured." };
   }
@@ -300,7 +310,7 @@ export async function publishToNewsSite(payload) {
       success: true, 
       msg: `UPLINK SUCCESS: "${payload.headline.substring(0, 30)}..." is now LIVE on MedSense News.` 
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Publication Error:", error);
     return { success: false, error: String(error.message || error) };
   }
