@@ -8,6 +8,8 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="google-site-verification" content="jnE0NxZHyTJjSpUNFeEHJhnJ2GUv958hAQsRDsejMbc" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+        {/* Google AdSense — auto-ads activate after account approval */}
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6268594865479039" crossOrigin="anonymous"></script>
       </head>
       <body>
         {children}
