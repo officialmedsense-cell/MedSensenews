@@ -1,5 +1,5 @@
 import './globals.css';
-import { Inter } from 'next/font/google';
+import { Inter, Playfair_Display } from 'next/font/google';
 import Link from 'next/link';
 import NavbarActions from '@/components/NavbarActions';
 import MobileMenu from '@/components/MobileMenu';
@@ -10,7 +10,8 @@ import SubscribeModal from '@/components/SubscribeModal';
 import NewsletterForm from '@/components/NewsletterForm';
 import { supabase } from '@/lib/supabase';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app'),
@@ -201,7 +202,7 @@ export default async function RootLayout({ children }) {
       <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.variable} ${playfair.variable} ${inter.className}`}>
         <ConditionalShell header={header} footer={footer}>
           <main>{children}</main>
         </ConditionalShell>
