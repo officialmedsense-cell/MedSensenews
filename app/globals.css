@@ -36,9 +36,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
   text-decoration: none;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 18px;
