@@ -293,10 +293,20 @@ export async function publishToNewsSite(payload: {
       heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},medical/all`;
     }
 
+    const createSlug = (text: string) => {
+      return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    };
+
     const { data, error } = await pubClient
       .from('articles')
       .insert([{
         title: payload.headline,
+        slug: createSlug(payload.headline),
         category: payload.category || 'Medicine',
         author: payload.author || 'Damilare',
         excerpt: payload.summary,
