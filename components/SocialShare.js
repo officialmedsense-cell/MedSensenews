@@ -45,7 +45,7 @@ export default function SocialShare({ url, title }) {
             target="_blank"
             rel="noopener noreferrer"
             className="share-btn"
-            style={{ '--brand-color': link.color }}
+            style={{ color: link.color, borderColor: link.color }}
             title={`Share on ${link.name}`}
           >
             {link.icon}
@@ -57,6 +57,7 @@ export default function SocialShare({ url, title }) {
             navigator.clipboard.writeText(url);
             alert('Link copied!');
           }}
+          style={{ color: '#1e3a8a', borderColor: '#1e3a8a' }}
           title="Copy Link"
         >
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
