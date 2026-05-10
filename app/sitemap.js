@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 
 export default async function sitemap() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://medsensenews.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app';
 
   // Static routes
   const routes = ['', '/about', '/careers', '/contact', '/privacy', '/terms', '/category/Health', '/category/Medicine', '/category/Research', '/category/Public%20Health', '/category/Technology'].map(

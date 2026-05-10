@@ -53,13 +53,47 @@ export async function generateMetadata({ params }) {
   const article = await getArticle(id);
   if (!article) return { title: 'Article Not Found' };
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app';
+  
   return {
     title: `${article.title} | MedSense News`,
     description: article.excerpt,
+    alternates: {
+      canonical: `${baseUrl}/article/${article.id}`,
+    },
     openGraph: {
       title: article.title,
       description: article.excerpt,
+      url: `${baseUrl}/article/${article.id}`,
+      siteName: 'MedSense News',
+      type: 'article',
+      publishedTime: article.date,
+      authors: [article.author],
+      images: [
+        {
+          url: article.image,
+          width: 1200,
+          height: 630,
+          alt: article.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.excerpt,
       images: [article.image],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
   };
 }

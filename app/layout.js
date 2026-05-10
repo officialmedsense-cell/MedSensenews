@@ -13,9 +13,16 @@ import { supabase } from '@/lib/supabase';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
-  title: 'MedSense News - Global Health & Medical Breakthroughs',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app'),
+  title: {
+    default: 'MedSense News - Global Health & Medical Breakthroughs',
+    template: '%s | MedSense News'
+  },
   description: 'Stay informed with MedSense News, your trusted source for professional medical insights, public health updates, and research-driven journalism.',
-  viewport: 'width=device-width, initial-scale=1',
+  robots: {
+    index: true,
+    follow: true,
+  }
 };
 
 export const revalidate = 60; // Revalidate every minute
