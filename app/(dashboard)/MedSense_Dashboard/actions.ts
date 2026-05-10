@@ -132,6 +132,38 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
     return { success: false, error: "Failed to reach live news feeds." };
   }
 }
+
+/**
+ * External News Search
+ * Searches Google News for specific topics requested by staff.
+ */
+export async function searchExternalNews(query: string) {
+  try {
+    const searchUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}+medical+health&hl=en-NG&gl=NG&ceid=NG:en`;
+    const response = await fetch(searchUrl);
+    const xml = await response.text();
+    
+    // Minimalistic parser for the purpose of this demo
+    const items = xml.split('<item>').slice(1).map(item => {
+      const title = item.match(/<title>(.*?)<\/title>/)?.[1] || "";
+      const link = item.match(/<link>(.*?)<\/link>/)?.[1] || "";
+      const pubDate = item.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || "";
+      const source = item.match(/<source.*?>(.*?)<\/source>/)?.[1] || "Global News";
+      
+      return {
+        title: title.split(' - ')[0],
+        sourceUrl: link,
+        date: pubDate,
+        source: source,
+        category: "Breaking"
+      };
+    }).slice(0, 5);
+
+    return { success: true, articles: items };
+  } catch (err) {
+    return { success: false, articles: [] };
+  }
+}
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -310,11 +342,12 @@ export async function processAICommand(prompt: string, context: { articles: any[
             content: `You are the MedSense Command AI. You help staff manage news articles and intelligence sources.
             
             AVAILABLE ACTIONS:
-            1. DELETE_ARTICLE: If user wants to delete/remove a news article.
-               CRITICAL: When deleting, check the context for duplicates (same or very similar titles). If found, include ALL matching IDs in the 'targetIds' array and mention this in your message.
-            2. PUBLISH_ARTICLE: If user wants to publish a specific article to the main site.
-            3. RUN_DISCOVERY: If user wants to start a news scan.
-            4. CHAT: For general questions or analysis.
+            1. SEARCH_NEWS: If user asks for "latest news", "news today", or news about a specific topic. Return search terms in 'query'.
+            2. DELETE_ARTICLE: If user wants to delete/remove a news article.
+            3. PUBLISH_ARTICLE: If user wants to publish a specific article.
+            4. EDIT_ARTICLE: If user wants to change/edit content of a draft or existing article.
+            5. RUN_DISCOVERY: If user wants to start a general news scan.
+            6. CHAT: For general questions or analysis.
 
             CURRENT CONTEXT:
             - Discovered Articles: ${context.articles.map(a => `ID: ${a.id}, Title: ${a.title}`).join(' | ')}
@@ -324,9 +357,11 @@ export async function processAICommand(prompt: string, context: { articles: any[
             You must return a JSON object:
             {
               "message": "Your helpful response.",
-              "action": "DELETE_ARTICLE" | "PUBLISH_ARTICLE" | "RUN_DISCOVERY" | "CHAT",
+              "action": "SEARCH_NEWS" | "DELETE_ARTICLE" | "PUBLISH_ARTICLE" | "EDIT_ARTICLE" | "RUN_DISCOVERY" | "CHAT",
+              "query": "search terms if searching",
               "targetId": "ID of primary item",
-              "targetIds": ["ID1", "ID2"], // Use this for multiple items (like duplicates)
+              "targetIds": ["ID1", "ID2"],
+              "editInstructions": "Detailed instructions on what to change if editing",
               "confidence": 0.0 to 1.0
             }` 
           },

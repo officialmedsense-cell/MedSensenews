@@ -7,7 +7,8 @@ import {
   saveArticleToSupabase, 
   publishToNewsSite,
   processAICommand,
-  deleteArticleFromSupabase
+  deleteArticleFromSupabase,
+  searchExternalNews
 } from "./actions";
 
 // --- Types ---
@@ -103,6 +104,7 @@ export default function MedSenseDashboard() {
   ]);
   const [chatInput, setChatInput] = useState("");
   const [isChatting, setIsChatting] = useState(false);
+  const [draftArticle, setDraftArticle] = useState<any>(null);
 
   // --- Auth State ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -319,30 +321,103 @@ export default function MedSenseDashboard() {
     setIsChatting(true);
 
     try {
-      const res = await processAICommand(userMsg, { articles, sources });
+      const res = await processAICommand(userMsg, { 
+        articles: draftArticle ? [draftArticle, ...articles] : articles, 
+        sources 
+      });
+
       if (res.success && res.result) {
-        const { message, action, targetId, targetIds } = res.result;
+        const { message, action, targetId, targetIds, query, editInstructions } = res.result;
+        
+        // --- 1. SEARCH NEWS ---
+        if (action === 'SEARCH_NEWS' && query) {
+          setChatMessages(prev => [...prev, { role: 'ai', content: `🔍 Searching neural network for: "${query}"...` }]);
+          const searchRes = await searchExternalNews(query);
+          if (searchRes.success && searchRes.articles.length > 0) {
+            // Pick the first one and process it automatically to create a draft
+            const first = searchRes.articles[0];
+            const processed = await processArticleWithAI(
+              { title: first.title, summary: "", fullText: "", sourceUrl: first.sourceUrl }, 
+              settings.aiModel, 
+              settings.tone
+            );
+            if (processed.success && processed.transformed) {
+              const newDraft = {
+                ...processed.transformed,
+                id: 'draft-' + Date.now(),
+                source: first.source,
+                sourceUrl: first.sourceUrl,
+                originalImage: processed.transformed.originalImage
+              };
+              setDraftArticle(newDraft);
+              setChatMessages(prev => [...prev, { role: 'ai', content: `✨ **DRAFT GENERATED**\n\n**Headline:** ${newDraft.title}\n\n${newDraft.summary}\n\n*Type "post" to publish or "edit" to refine this.*` }]);
+            }
+          } else {
+            setChatMessages(prev => [...prev, { role: 'ai', content: "I couldn't find any recent signals on that topic." }]);
+          }
+          setIsChatting(false);
+          return;
+        }
+
         setChatMessages(prev => [...prev, { role: 'ai', content: message }]);
         
-        // Execute Action
+        // --- 2. EDIT ARTICLE ---
+        if (action === 'EDIT_ARTICLE' && editInstructions && draftArticle) {
+          setChatMessages(prev => [...prev, { role: 'ai', content: "🔄 Synchronizing edits..." }]);
+          // Use AI to refine the draft based on instructions
+          const refinement = await processArticleWithAI(
+            { title: draftArticle.title, summary: draftArticle.summary, fullText: draftArticle.fullText, sourceUrl: draftArticle.sourceUrl },
+            settings.aiModel,
+            `Refine the following article based on these instructions: ${editInstructions}`
+          );
+          if (refinement.success && refinement.transformed) {
+            setDraftArticle({ ...draftArticle, ...refinement.transformed });
+            setChatMessages(prev => [...prev, { role: 'ai', content: `✅ **DRAFT UPDATED**\n\n**Headline:** ${refinement.transformed.title}\n\n${refinement.transformed.summary}` }]);
+          }
+        }
+
+        // --- 3. DELETE ARTICLE ---
         if (action === 'DELETE_ARTICLE') {
           const idsToPurge = targetIds || (targetId ? [targetId] : []);
           if (idsToPurge.length > 0) {
             setArticles(prev => prev.filter(a => !idsToPurge.includes(a.id)));
+            if (draftArticle && idsToPurge.includes(draftArticle.id)) setDraftArticle(null);
             showToast(idsToPurge.length > 1 ? `Purged ${idsToPurge.length} duplicate signals.` : "Article purged.", "warning");
-            addLog(`AI Action: Purged ${idsToPurge.length} articles (${idsToPurge.join(', ')})`, "warning");
+            addLog(`AI Action: Purged ${idsToPurge.length} articles`, "warning");
           }
-        } else if (action === 'PUBLISH_ARTICLE' && targetId) {
-          const articleToPub = articles.find(a => a.id === targetId);
-          if (articleToPub) handlePublishArticle(articleToPub);
-        } else if (action === 'RUN_DISCOVERY') {
+        } 
+        
+        // --- 4. PUBLISH ARTICLE ---
+        else if (action === 'PUBLISH_ARTICLE') {
+          // Check if user is asking to publish the draft
+          const articleToPub = draftArticle || articles.find(a => a.id === targetId);
+          if (articleToPub) {
+            const pubRes = await publishToNewsSite({
+              headline: articleToPub.title || articleToPub.headline,
+              category: articleToPub.category,
+              author: settings.authorName,
+              summary: articleToPub.summary,
+              fullReport: articleToPub.fullText || articleToPub.content,
+              originalImage: articleToPub.originalImage,
+              sourceUrl: articleToPub.sourceUrl
+            });
+            if (pubRes.success) {
+              showToast("Report Live!", "success");
+              setDraftArticle(null);
+            } else {
+              showToast(pubRes.error || "Publication failed", "error");
+            }
+          }
+        } 
+        
+        else if (action === 'RUN_DISCOVERY') {
           runScraper();
         }
       } else {
-        setChatMessages(prev => [...prev, { role: 'ai', content: "I encountered a neural synchronization error. Please try again." }]);
+        setChatMessages(prev => [...prev, { role: 'ai', content: "Neural sync error. Please retry." }]);
       }
     } catch (err) {
-      setChatMessages(prev => [...prev, { role: 'ai', content: "Neural link severed. Connection lost." }]);
+      setChatMessages(prev => [...prev, { role: 'ai', content: "Neural link severed." }]);
     } finally {
       setIsChatting(false);
     }
