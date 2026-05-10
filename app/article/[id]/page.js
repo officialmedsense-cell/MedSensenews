@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import CommentSection from '@/components/CommentSection';
 import BbcCard from '@/components/BbcCard';
+import SocialShare from '@/components/SocialShare';
 
 export const revalidate = 3600; // Cache articles for 1 hour
 
@@ -196,22 +197,22 @@ export default async function ArticlePage({ params }) {
         <div className="download-protection-overlay"></div>
       </div>
 
-      <div 
-        className="article-body" 
-        dangerouslySetInnerHTML={{ __html: article.content }} 
-      />
+      <SocialShare 
+          url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app'}/article/${article.slug || article.id}`} 
+          title={article.title} 
+        />
 
-      <div className="share-buttons">
-        <button className="share-btn share-whatsapp">
-          <i className="fab fa-whatsapp"></i> Share
-        </button>
-        <button className="share-btn share-twitter">
-          <i className="fab fa-twitter"></i> Share
-        </button>
-        <button className="share-btn share-facebook">
-          <i className="fab fa-facebook-f"></i> Share
-        </button>
-      </div>
+        <div 
+          className="article-content"
+          dangerouslySetInnerHTML={{ __html: article.content }} 
+        />
+
+        <SocialShare 
+          url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app'}/article/${article.slug || article.id}`} 
+          title={article.title} 
+        />
+
+
 
       <CommentSection articleId={id} />
     </article>
