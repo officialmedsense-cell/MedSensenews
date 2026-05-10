@@ -601,7 +601,7 @@ export default function MedSenseDashboard() {
         <div className="dashboard-grid" style={viewMode === 'fullFeed' || activeNav === 'aichat' ? { gridTemplateColumns: '1fr' } : {}}>
           {/* AI Chatbox View */}
           {activeNav === 'aichat' && (
-            <section id="aichat" style={{ minHeight: '80vh', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '40px' }}>
+            <section id="aichat" className="aichat-interface" style={{ minHeight: '80vh', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '40px' }}>
                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <div style={{ paddingBottom: '24px', borderBottom: '1px solid var(--border-dim)' }}>
                      <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Neural Interface</h2>
@@ -648,7 +648,7 @@ export default function MedSenseDashboard() {
                </div>
 
                {/* Capabilities Sidebar */}
-               <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-dim)', padding: '24px', alignSelf: 'start' }}>
+               <div className="aichat-sidebar" style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-dim)', padding: '24px', alignSelf: 'start' }}>
                   <h3 style={{ fontSize: '14px', fontWeight: '800', color: 'var(--accent-primary)', marginBottom: '20px', letterSpacing: '1px' }}>SYSTEM CAPABILITIES</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                      {[
