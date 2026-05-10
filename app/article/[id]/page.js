@@ -197,10 +197,7 @@ export default async function ArticlePage({ params }) {
         <div className="download-protection-overlay"></div>
       </div>
 
-      <SocialShare 
-          url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app'}/article/${article.slug || article.id}`} 
-          title={article.title} 
-        />
+
 
         <div 
           className="article-content"
