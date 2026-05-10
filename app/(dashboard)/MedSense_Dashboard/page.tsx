@@ -601,48 +601,70 @@ export default function MedSenseDashboard() {
         <div className="dashboard-grid" style={viewMode === 'fullFeed' || activeNav === 'aichat' ? { gridTemplateColumns: '1fr' } : {}}>
           {/* AI Chatbox View */}
           {activeNav === 'aichat' && (
-            <section className="glass-card" id="aichat" style={{ minHeight: '600px', display: 'flex', flexDirection: 'column' }}>
-               <div style={{ paddingBottom: '24px', borderBottom: '1px solid var(--border-dim)' }}>
-                  <h2 style={{ fontSize: '20px', fontWeight: '800' }}>AI Command Hub</h2>
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Issue natural language commands to manage your intelligence network.</p>
-               </div>
-               
-               <div style={{ flex: 1, padding: '24px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {chatMessages.map((msg, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                       <div style={{ 
-                          maxWidth: '80%', 
-                          padding: '12px 16px', 
-                          borderRadius: 'var(--radius-md)', 
-                          background: msg.role === 'user' ? 'var(--accent-primary)' : 'var(--bg-elevated)',
-                          color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
-                          border: msg.role === 'ai' ? '1px solid var(--border-dim)' : 'none',
-                          fontSize: '14px',
-                          lineHeight: '1.5'
-                       }}>
-                          {msg.content}
+            <section id="aichat" style={{ minHeight: '80vh', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '40px' }}>
+               <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ paddingBottom: '24px', borderBottom: '1px solid var(--border-dim)' }}>
+                     <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Neural Interface</h2>
+                     <p style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Issue high-level directives to the MedSense autonomous network.</p>
+                  </div>
+                  
+                  <div style={{ flex: 1, padding: '32px 0', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                     {chatMessages.map((msg, i) => (
+                       <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                          <div style={{ 
+                             maxWidth: '85%', 
+                             padding: '14px 20px', 
+                             borderRadius: msg.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px', 
+                             background: msg.role === 'user' ? 'var(--accent-primary)' : 'var(--bg-surface)',
+                             color: msg.role === 'user' ? '#fff' : 'var(--text-primary)',
+                             border: msg.role === 'ai' ? '1px solid var(--border-dim)' : 'none',
+                             fontSize: '15px',
+                             lineHeight: '1.6',
+                             boxShadow: msg.role === 'ai' ? 'var(--shadow-premium)' : 'none'
+                          }}>
+                             {msg.content}
+                          </div>
                        </div>
-                    </div>
-                  ))}
-                  {isChatting && (
-                    <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-                       <div className="badge badge-tech" style={{ padding: '8px 16px' }}>AI is thinking...</div>
-                    </div>
-                  )}
+                     ))}
+                     {isChatting && (
+                       <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                          <div className="badge badge-tech" style={{ padding: '8px 16px', animation: 'pulse 1.5s infinite' }}>AI is analyzing directive...</div>
+                       </div>
+                     )}
+                  </div>
+
+                  <form onSubmit={handleSendChatMessage} style={{ marginTop: '24px', position: 'relative' }}>
+                     <input 
+                       type="text" 
+                       value={chatInput}
+                       onChange={e => setChatInput(e.target.value)}
+                       placeholder="Enter command (e.g. 'Delete the article about malaria')..."
+                       style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-active)', borderRadius: 'var(--radius-md)', padding: '20px 70px 20px 24px', color: 'var(--text-primary)', outline: 'none', fontSize: '16px', boxShadow: '0 0 40px var(--accent-glow)' }}
+                     />
+                     <button type="submit" className="btn btn-primary" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', padding: '10px 16px' }}>
+                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                     </button>
+                  </form>
                </div>
 
-               <form onSubmit={handleSendChatMessage} style={{ marginTop: '24px', position: 'relative' }}>
-                  <input 
-                    type="text" 
-                    value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    placeholder="e.g., 'Delete the article about obesity' or 'Run news discovery'..."
-                    style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-active)', borderRadius: 'var(--radius-md)', padding: '16px 60px 16px 20px', color: 'var(--text-primary)', outline: 'none' }}
-                  />
-                  <button type="submit" className="btn btn-primary" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', padding: '8px 12px' }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  </button>
-               </form>
+               {/* Capabilities Sidebar */}
+               <div style={{ background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-dim)', padding: '24px', alignSelf: 'start' }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: '800', color: 'var(--accent-primary)', marginBottom: '20px', letterSpacing: '1px' }}>SYSTEM CAPABILITIES</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                     {[
+                        { title: "Delete Articles", desc: "Permanently remove any discovered signal from the database.", cmd: "'Delete article about...'" },
+                        { title: "Uplink to Site", desc: "Publish a report directly to the MedSense News live site.", cmd: "'Publish report on...'" },
+                        { title: "Run Discovery", desc: "Trigger a fresh scan of all intelligence hubs.", cmd: "'Start news scan'" },
+                        { title: "Summarize Feed", desc: "Get an AI summary of current top intelligence signals.", cmd: "'What are the top stories?'" }
+                     ].map((cap, i) => (
+                        <div key={i}>
+                           <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '4px' }}>{cap.title}</div>
+                           <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px' }}>{cap.desc}</div>
+                           <code style={{ fontSize: '10px', background: 'var(--bg-base)', padding: '4px 8px', borderRadius: '4px', color: 'var(--accent-secondary)' }}>{cap.cmd}</code>
+                        </div>
+                     ))}
+                  </div>
+               </div>
             </section>
           )}
 
