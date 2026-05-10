@@ -9,6 +9,7 @@ export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const pathname = usePathname();
 
   useEffect(() => {
@@ -119,6 +120,13 @@ export default function MobileMenu() {
           <input 
             type="text" 
             placeholder="Search news..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchQuery.trim()) {
+                window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+              }
+            }}
             style={{ 
               width: '100%', 
               padding: '0.6rem 1rem', 
@@ -131,7 +139,11 @@ export default function MobileMenu() {
               outline: 'none'
             }} 
           />
-          <i className="fas fa-search" style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, fontSize: '0.9rem' }}></i>
+          <i 
+            className="fas fa-search" 
+            onClick={() => searchQuery.trim() && (window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`)}
+            style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, fontSize: '0.9rem', cursor: 'pointer' }}
+          ></i>
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
