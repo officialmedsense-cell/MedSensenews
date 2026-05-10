@@ -281,7 +281,7 @@ export async function publishToNewsSite(payload: {
       return { success: false, error: "Article already exists on MedSense News (Duplicate Prevented)." };
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
     
     // 2. IMAGE SELECTION PRIORITY:
     // Try to use the original photo from the news site first.
