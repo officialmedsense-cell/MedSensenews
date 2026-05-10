@@ -321,16 +321,16 @@ export default function MedSenseDashboard() {
     try {
       const res = await processAICommand(userMsg, { articles, sources });
       if (res.success && res.result) {
-        const { message, action, targetId } = res.result;
+        const { message, action, targetId, targetIds } = res.result;
         setChatMessages(prev => [...prev, { role: 'ai', content: message }]);
         
         // Execute Action
-        if (action === 'DELETE_ARTICLE' && targetId) {
-          const articleToDelete = articles.find(a => a.id === targetId);
-          if (articleToDelete) {
-            setArticles(prev => prev.filter(a => a.id !== targetId));
-            showToast(`Article purged: ${articleToDelete.title.substring(0, 20)}...`, "warning");
-            addLog(`AI Action: Purged article ${targetId}`, "warning");
+        if (action === 'DELETE_ARTICLE') {
+          const idsToPurge = targetIds || (targetId ? [targetId] : []);
+          if (idsToPurge.length > 0) {
+            setArticles(prev => prev.filter(a => !idsToPurge.includes(a.id)));
+            showToast(idsToPurge.length > 1 ? `Purged ${idsToPurge.length} duplicate signals.` : "Article purged.", "warning");
+            addLog(`AI Action: Purged ${idsToPurge.length} articles (${idsToPurge.join(', ')})`, "warning");
           }
         } else if (action === 'PUBLISH_ARTICLE' && targetId) {
           const articleToPub = articles.find(a => a.id === targetId);

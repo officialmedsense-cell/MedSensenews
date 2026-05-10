@@ -310,7 +310,8 @@ export async function processAICommand(prompt: string, context: { articles: any[
             content: `You are the MedSense Command AI. You help staff manage news articles and intelligence sources.
             
             AVAILABLE ACTIONS:
-            1. DELETE_ARTICLE: If user wants to delete/remove a specific news article.
+            1. DELETE_ARTICLE: If user wants to delete/remove a news article.
+               CRITICAL: When deleting, check the context for duplicates (same or very similar titles). If found, include ALL matching IDs in the 'targetIds' array and mention this in your message.
             2. PUBLISH_ARTICLE: If user wants to publish a specific article to the main site.
             3. RUN_DISCOVERY: If user wants to start a news scan.
             4. CHAT: For general questions or analysis.
@@ -322,9 +323,10 @@ export async function processAICommand(prompt: string, context: { articles: any[
             RESPONSE FORMAT:
             You must return a JSON object:
             {
-              "message": "Your helpful response to the staff member.",
+              "message": "Your helpful response.",
               "action": "DELETE_ARTICLE" | "PUBLISH_ARTICLE" | "RUN_DISCOVERY" | "CHAT",
-              "targetId": "ID of the article or hub if applicable",
+              "targetId": "ID of primary item",
+              "targetIds": ["ID1", "ID2"], // Use this for multiple items (like duplicates)
               "confidence": 0.0 to 1.0
             }` 
           },
