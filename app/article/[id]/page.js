@@ -119,6 +119,9 @@ export default async function ArticlePage({ params }) {
   
   if (!article) notFound();
 
+  // Increment view count (Smart Tracking)
+  await supabase.rpc('increment_article_views', { article_id: article.id });
+
   const otherArticles = await getOtherArticles(article.id, article.category);
 
   const formatDate = (dateString) => {
