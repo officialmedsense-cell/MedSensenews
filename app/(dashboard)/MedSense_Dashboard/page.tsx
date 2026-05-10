@@ -89,6 +89,7 @@ export default function MedSenseDashboard() {
   });
 
   const [showAddSource, setShowAddSource] = useState(false);
+  const [showAllSources, setShowAllSources] = useState(false);
   const [newSource, setNewSource] = useState({ name: "", url: "", type: "rss" });
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [toasts, setToasts] = useState<{ id: number, msg: string, type: string }[]>([]);
@@ -696,7 +697,7 @@ export default function MedSenseDashboard() {
                   </div>
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {sources.map(source => (
+                    {(showAllSources ? sources : sources.slice(0, 4)).map(source => (
                       <div key={source.id} style={{ padding: '12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: editingSourceId === source.id ? '8px' : '0' }}>
                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -731,6 +732,15 @@ export default function MedSenseDashboard() {
                         </div>
                       </div>
                     ))}
+                    {sources.length > 4 && (
+                      <button 
+                        onClick={() => setShowAllSources(!showAllSources)} 
+                        className="btn btn-ghost" 
+                        style={{ width: '100%', padding: '8px', fontSize: '11px', color: 'var(--accent-primary)', border: '1px dashed var(--border-dim)' }}
+                      >
+                        {showAllSources ? "↑ Show Less" : `+ Show ${sources.length - 4} More Hubs`}
+                      </button>
+                    )}
                 </div>
              </section>
 
