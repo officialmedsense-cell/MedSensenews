@@ -281,7 +281,7 @@ export async function publishToNewsSite(payload: {
       return { success: false, error: "Article already exists on MedSense News (Duplicate Prevented)." };
     }
 
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+    const exactPublishTime = new Date().toISOString();
     
     // 2. IMAGE SELECTION PRIORITY:
     // Try to use the original photo from the news site first.
@@ -303,7 +303,7 @@ export async function publishToNewsSite(payload: {
         content: payload.fullReport,
         image: heroImage,
         status: 'published',
-        date: today,
+        date: exactPublishTime,
         views: 0,
         trending: false
       }]);
