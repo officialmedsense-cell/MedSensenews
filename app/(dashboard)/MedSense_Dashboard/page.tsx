@@ -278,6 +278,8 @@ export default function MedSenseDashboard() {
                 read: false
               };
               setArticles(prev => [newArticle, ...prev]);
+            } else {
+              addLog(`AI Processing failed for "${item.title.substring(0, 20)}...": ${res.error || "Unknown error"}`, "error");
             }
           }
         }

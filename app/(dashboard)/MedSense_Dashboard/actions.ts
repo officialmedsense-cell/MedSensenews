@@ -155,7 +155,11 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
     const data = await response.json();
     
     if (data.choices && data.choices.length > 0) {
-      const result = JSON.parse(data.choices[0].message.content);
+      let rawContent = data.choices[0].message.content;
+      // Strip markdown code blocks if Mistral returns them
+      rawContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
+      
+      const result = JSON.parse(rawContent);
       
       // Extract domain for attribution
       let domain = "external source";
