@@ -8,6 +8,8 @@ export default function robots() {
         allow: '/',
         disallow: [
           '/mseditor242/', 
+          '/medsense_dashboard/',
+          '/MedSense_Dashboard/',
           '/api/', 
           '/admin/', 
           '/dashboard/', 

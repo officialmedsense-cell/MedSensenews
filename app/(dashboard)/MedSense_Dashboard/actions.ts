@@ -102,7 +102,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
  * MedSense AI Service Action
  * Connects to Mistral AI using your provided API key.
  */
-export async function processArticleWithAI(sourceArticle: { title: string, summary: string, fullText: string, originalImage?: string | null }, model: string, tone: string) {
+export async function processArticleWithAI(sourceArticle: { title: string, summary: string, fullText: string, sourceUrl: string, originalImage?: string | null }, model: string, tone: string) {
   const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
 
   if (!MISTRAL_API_KEY) {
