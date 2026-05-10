@@ -487,9 +487,7 @@ body {
 
 @media (max-width: 768px) {
     .header-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
+        display: none !important;
     }
     
     .header-row div {
@@ -501,9 +499,7 @@ body {
     }
 
     .metrics-grid {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 8px !important;
-        margin-bottom: 24px !important;
+        display: none !important;
     }
 
     .metric-box {
