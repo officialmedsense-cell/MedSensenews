@@ -117,7 +117,7 @@ function buildEmailHtml({ title, excerpt, category, author, image, articleId, su
         <tr>
           <td style="background:#1e3a8a;border-radius:0 0 16px 16px;padding:24px 36px;text-align:center;">
             <p style="margin:0 0 8px;color:rgba(255,255,255,0.9);font-size:13px;">
-              © ${new Date().getFullYear()} MedSense News · Powered by MedSense Network
+              © ${new Date().getFullYear()} MedSense News · Powered by AOJ Group
             </p>
             <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.5);">
               You're receiving this because you subscribed to MedSense News alerts.
