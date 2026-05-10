@@ -26,7 +26,7 @@ export default function BbcCard({ article, isFeatured = false, isList = false })
 
   return (
     <Link 
-      href={`/article/${article.id}`} 
+      href={`/article/${article.slug || article.id}`} 
       className={`bbc-article-card ${isFeatured ? 'bbc-featured-card' : ''} ${isList ? 'bbc-list-card' : ''}`} 
       style={{ textDecoration: 'none' }}
     >

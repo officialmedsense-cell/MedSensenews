@@ -6,14 +6,24 @@ import BbcCard from '@/components/BbcCard';
 
 export const revalidate = 3600; // Cache articles for 1 hour
 
-async function getArticle(id) {
-  const { data, error } = await supabase
+async function getArticle(identifier) {
+  // 1. Try ID if numeric
+  if (/^\d+$/.test(identifier)) {
+    const { data } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('id', identifier)
+      .single();
+    if (data) return data;
+  }
+
+  // 2. Try Slug
+  const { data } = await supabase
     .from('articles')
     .select('*')
-    .eq('id', id)
+    .eq('slug', identifier)
     .single();
   
-  if (error || !data) return null;
   return data;
 }
 
@@ -59,12 +69,12 @@ export async function generateMetadata({ params }) {
     title: `${article.title} | MedSense News`,
     description: article.excerpt,
     alternates: {
-      canonical: `${baseUrl}/article/${article.id}`,
+      canonical: `${baseUrl}/article/${article.slug || article.id}`,
     },
     openGraph: {
       title: article.title,
       description: article.excerpt,
-      url: `${baseUrl}/article/${article.id}`,
+      url: `${baseUrl}/article/${article.slug || article.id}`,
       siteName: 'MedSense News',
       type: 'article',
       publishedTime: article.date,

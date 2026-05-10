@@ -10,7 +10,7 @@ export default function NewsCard({ article }) {
   };
 
   return (
-    <Link href={`/article/${article.id}`} className="news-card">
+    <Link href={`/article/${article.slug || article.id}`} className="news-card">
       <div className="news-card-image">
         <img src={article.image} alt={article.title} loading="lazy" />
         <div className="download-protection-overlay"></div>

@@ -17,14 +17,14 @@ export default async function sitemap() {
   try {
     const { data: articles } = await supabase
       .from('articles')
-      .select('id, date')
+      .select('id, date, slug')
       .eq('status', 'published')
       .order('date', { ascending: false })
       .limit(100);
 
     if (articles) {
       const articleRoutes = articles.map((article) => ({
-        url: `${baseUrl}/article/${article.id}`,
+        url: `${baseUrl}/article/${article.slug || article.id}`,
         lastModified: new Date(article.date).toISOString(),
         changeFrequency: 'monthly',
         priority: 0.6,

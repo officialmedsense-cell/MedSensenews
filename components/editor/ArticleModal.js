@@ -65,6 +65,15 @@ export default function ArticleModal({ article, session, onClose, onSaved, onErr
     setImagePreview(URL.createObjectURL(file));
   };
 
+  const createSlug = (text) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
   const getPublicationDate = () => {
     return new Date().toISOString();
   };
@@ -112,6 +121,7 @@ export default function ArticleModal({ article, session, onClose, onSaved, onErr
 
       const payload = {
         title: form.title,
+        slug: createSlug(form.title),
         category: form.category,
         author: form.author,
         excerpt: form.excerpt,
@@ -145,7 +155,7 @@ export default function ArticleModal({ article, session, onClose, onSaved, onErr
           // Fetch the ID of the article we just inserted
           const { data: newArticle } = await supabase
             .from('articles')
-            .select('id')
+            .select('id, slug')
             .eq('title', payload.title)
             .order('date', { ascending: false })
             .limit(1)
@@ -156,7 +166,7 @@ export default function ArticleModal({ article, session, onClose, onSaved, onErr
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                articleId: newArticle.id,
+                articleId: newArticle.slug || newArticle.id,
                 title:     payload.title,
                 excerpt:   payload.excerpt,
                 category:  payload.category,
