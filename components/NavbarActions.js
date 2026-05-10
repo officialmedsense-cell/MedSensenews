@@ -26,15 +26,38 @@ export default function NavbarActions() {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearch = (e) => {
+    if (e.key === 'Enter' || e.type === 'click') {
+      if (searchQuery.trim()) {
+        window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+      }
+    }
+  };
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
       <div className="search-box">
-        <input type="text" placeholder="Search articles..." />
-        <button className="search-btn" aria-label="Search">
+        <input 
+          type="text" 
+          placeholder="Search news..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyDown={handleSearch}
+        />
+        <button className="search-btn" onClick={handleSearch} aria-label="Search">
           <i className="fas fa-search"></i>
         </button>
       </div>
-      <button className="icon-btn mobile-search-btn" aria-label="Search">
+      <button 
+        className="icon-btn mobile-search-btn" 
+        onClick={() => {
+          const q = prompt("Search MedSense News:");
+          if (q) window.location.href = `/search?q=${encodeURIComponent(q)}`;
+        }}
+        aria-label="Search"
+      >
         <i className="fas fa-search"></i>
       </button>
       <button 
