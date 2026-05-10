@@ -119,6 +119,21 @@ export default async function RootLayout({ children }) {
                 justifyContent: 'center',
                 alignItems: 'center'
               }}>
+                <li>
+                  <Link href="/trending" style={{ 
+                    textDecoration: 'none', 
+                    color: '#ef4444', 
+                    fontWeight: 900, 
+                    fontSize: '0.9rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem'
+                  }}>
+                    <i className="fas fa-fire"></i> Trending
+                  </Link>
+                </li>
                 {['Home', 'Health', 'Medicine', 'Research', 'Public Health', 'Technology'].map(cat => (
                   <li key={cat}>
                     <Link href={cat === 'Home' ? '/' : `/category/${cat}`} style={{ 

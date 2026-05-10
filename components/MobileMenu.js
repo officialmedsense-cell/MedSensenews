@@ -147,6 +147,9 @@ export default function MobileMenu() {
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          <Link href="/trending" style={{ textDecoration: 'none', color: '#ef4444', fontWeight: 800, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <i className="fas fa-fire"></i> Trending
+          </Link>
           <Link href="/" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Home</Link>
           <Link href="/category/Health" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Health</Link>
           <Link href="/category/Medicine" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Medicine</Link>
