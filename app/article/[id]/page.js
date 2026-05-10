@@ -115,7 +115,7 @@ export default async function ArticlePage({ params }) {
   
   if (!article) notFound();
 
-  const otherArticles = await getOtherArticles(id, article.category);
+  const otherArticles = await getOtherArticles(article.id, article.category);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
