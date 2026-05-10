@@ -8,6 +8,7 @@ import LiveClock from '@/components/LiveClock';
 import SubscribeModal from '@/components/SubscribeModal';
 import NewsletterForm from '@/components/NewsletterForm';
 import { supabase } from '@/lib/supabase';
+import ConditionalShell from '@/components/ConditionalShell';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
@@ -213,9 +214,9 @@ export default async function SiteLayout({ children }) {
 
   return (
     <div className={`${inter.variable} ${playfair.variable} ${inter.className}`}>
-      {header}
-      <main>{children}</main>
-      {footer}
+      <ConditionalShell header={header} footer={footer}>
+        {children}
+      </ConditionalShell>
     </div>
   );
 }
