@@ -29,34 +29,38 @@ async function getArticle(identifier) {
 }
 
 async function getOtherArticles(currentId, category) {
-  // Fetch articles from the same category first
-  const { data: categoryArticles } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('status', 'published')
-    .eq('category', category)
-    .neq('id', currentId)
-    .limit(4);
-
-  let otherArticles = categoryArticles || [];
-
-  // If we have less than 4, fetch latest articles to fill the gap
-  if (otherArticles.length < 4) {
-    const excludeIds = [currentId, ...otherArticles.map(a => a.id)];
-    const { data: latestArticles } = await supabase
+  try {
+    // 1. Fetch from same category
+    const { data: categoryArticles } = await supabase
       .from('articles')
       .select('*')
       .eq('status', 'published')
-      .not('id', 'in', excludeIds)
-      .order('date', { ascending: false })
-      .limit(4 - otherArticles.length);
-    
-    if (latestArticles) {
-      otherArticles = [...otherArticles, ...latestArticles];
-    }
-  }
+      .eq('category', category)
+      .neq('id', currentId)
+      .limit(4);
 
-  return otherArticles;
+    let otherArticles = categoryArticles || [];
+
+    // 2. If less than 4, fill with latest published articles
+    if (otherArticles.length < 4) {
+      const excludeIds = [currentId, ...otherArticles.map(a => a.id)];
+      const { data: latestArticles } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('status', 'published')
+        .not('id', 'in', `(${excludeIds.join(',')})`)
+        .order('date', { ascending: false })
+        .limit(4 - otherArticles.length);
+      
+      if (latestArticles) {
+        otherArticles = [...otherArticles, ...latestArticles];
+      }
+    }
+    return otherArticles;
+  } catch (err) {
+    console.error('Error fetching other articles:', err);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }) {
@@ -211,7 +215,7 @@ export default async function ArticlePage({ params }) {
 
 
 
-      <CommentSection articleId={id} />
+      <CommentSection articleId={article.id} />
     </article>
 
     {otherArticles.length > 0 && (
