@@ -19,6 +19,11 @@ const FEEDS = [
   "https://medicalxpress.com/rss-feed/"
 ];
 
+// --- Publication Client (MedSense News) ---
+const pubUrl = process.env.PUBLICATION_SUPABASE_URL || "";
+const pubKey = process.env.PUBLICATION_SUPABASE_KEY || "";
+const pubClient = (pubUrl && pubKey) ? createClient(pubUrl, pubKey) : null;
+
 /**
  * Live News Discovery
  * Fetches real articles from global medical RSS feeds.
@@ -83,11 +88,44 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
         console.error(`Feed Error [${url}]:`, feedErr);
       }
     }
+
+    // --- Deduplication & Database Check ---
+    
+    // 1. In-memory deduplication (by URL and Title)
+    const uniqueMap = new Map();
+    allArticles.forEach(art => {
+      const key = art.sourceUrl !== "#" ? art.sourceUrl : art.title;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, art);
+      }
+    });
+    
+    let deduplicated = Array.from(uniqueMap.values());
+
+    // 2. Database check: Filter out articles that are already published
+    // We check the source_url column in the articles table
+    try {
+      const urlsToCheck = deduplicated.map(a => a.sourceUrl).filter(url => url !== "#");
+      if (urlsToCheck.length > 0) {
+        const { data: existingArticles } = await pubClient
+          .from('articles')
+          .select('source_url')
+          .in('source_url', urlsToCheck);
+        
+        if (existingArticles) {
+          const existingUrls = new Set(existingArticles.map(a => a.source_url));
+          deduplicated = deduplicated.filter(a => !existingUrls.has(a.sourceUrl));
+        }
+      }
+    } catch (dbErr) {
+      console.error("Duplicate DB check error:", dbErr);
+      // Continue with deduplicated list if DB check fails
+    }
     
     return {
       success: true,
-      articles: allArticles.slice(0, 10),
-      count: allArticles.length
+      articles: deduplicated.slice(0, 10),
+      count: deduplicated.length
     };
   } catch (error: any) {
     console.error("RSS Fetch Error:", error);
@@ -232,10 +270,7 @@ export async function saveArticleToSupabase(article: any) {
   }
 }
 
-// --- Publication Client (MedSense News) ---
-const pubUrl = process.env.PUBLICATION_SUPABASE_URL || "";
-const pubKey = process.env.PUBLICATION_SUPABASE_KEY || "";
-const pubClient = (pubUrl && pubKey) ? createClient(pubUrl, pubKey) : null;
+// --- Publication Client (MedSense News) --- (Moved to top)
 
 // --- Category Image Assets ---
 const CATEGORY_IMAGES: Record<string, string> = {
