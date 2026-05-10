@@ -4,12 +4,19 @@ import BbcCard from '@/components/BbcCard';
 export const revalidate = 60;
 
 export default async function TrendingPage() {
+  // Calculate the date 7 days ago
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const dateStr = sevenDaysAgo.toISOString();
+
   const { data: articles, error } = await supabase
     .from('articles')
     .select('*')
     .eq('status', 'published')
+    .gt('date', dateStr) // Only articles from the last 7 days
     .order('views', { ascending: false })
     .limit(10);
+
 
   return (
     <div className="bbc-homepage-wrapper" style={{ minHeight: '80vh', padding: '2rem 1.5rem' }}>
