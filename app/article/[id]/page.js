@@ -37,12 +37,12 @@ async function getOtherArticles(currentId, category) {
       .eq('status', 'published')
       .eq('category', category)
       .neq('id', currentId)
-      .limit(4);
+      .limit(8);
 
     let otherArticles = categoryArticles || [];
 
-    // 2. If less than 4, fill with latest published articles
-    if (otherArticles.length < 4) {
+    // 2. If less than 8, fill with latest published articles
+    if (otherArticles.length < 8) {
       const excludeIds = [currentId, ...otherArticles.map(a => a.id)];
       const { data: latestArticles } = await supabase
         .from('articles')
@@ -50,7 +50,7 @@ async function getOtherArticles(currentId, category) {
         .eq('status', 'published')
         .not('id', 'in', `(${excludeIds.join(',')})`)
         .order('date', { ascending: false })
-        .limit(4 - otherArticles.length);
+        .limit(8 - otherArticles.length);
       
       if (latestArticles) {
         otherArticles = [...otherArticles, ...latestArticles];

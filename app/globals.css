@@ -2,6 +2,64 @@
    MedSense News - Stylesheet
    ============================================ */
 
+/* Other News Section */
+.other-news-section {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.other-news-header {
+  margin-bottom: 24px;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.other-news-title {
+  font-family: var(--font-news);
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.other-news-line {
+  height: 4px;
+  background: var(--primary);
+  width: 60px;
+  margin: 0 auto;
+}
+
+.other-news-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (max-width: 1024px) {
+  .other-news-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .other-news-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px; /* Center single column */
+    margin: 0 auto;
+    gap: 32px;
+  }
+  
+  .other-news-item {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+
 /* Social Sharing */
 .social-share {
   display: flex;
