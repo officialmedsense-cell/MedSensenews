@@ -385,16 +385,14 @@ export default function MedSenseDashboard() {
   return (
     <div className="medsense-app">
       {/* Mobile Header */}
-      <div className="mobile-header">
-        <div className="sidebar-logo">
-          <img src="/logo.png" alt="MedSense Logo" style={{ height: '32px' }} />
+      <div className="mobile-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px' }}>
+        <div style={{ width: '40px' }}></div> {/* Spacer for symmetry */}
+        <div className="sidebar-logo" style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          <img src="/logo.png" alt="MedSense Logo" style={{ height: '32px', filter: 'drop-shadow(0 0 8px var(--accent-glow))' }} />
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn-ghost" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ padding: '8px' }}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <button className="btn btn-ghost" onClick={() => setSidebarOpen(true)}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className="btn btn-ghost" onClick={() => setSidebarOpen(true)} style={{ padding: '8px' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
@@ -571,8 +569,8 @@ export default function MedSenseDashboard() {
         {activeNav === 'dashboard' && (
         <header className="header-row">
           <div className="page-title">
-            <h1>Intelligence Command</h1>
-            <p>Real-time autonomous medical news discovery and synthesis.</p>
+            <img src="/logo.png" alt="MedSense Logo" style={{ height: '40px', objectFit: 'contain', filter: 'drop-shadow(0 0 12px var(--accent-glow))' }} />
+            <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600', letterSpacing: '0.5px' }}>GLOBAL INTELLIGENCE & NEURAL DISCOVERY</p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
