@@ -291,12 +291,6 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
       
       const result = JSON.parse(rawContent);
       
-      // Extract domain for attribution
-      let domain = "external source";
-      try { domain = new URL(sourceArticle.sourceUrl).hostname.replace('www.', ''); } catch (e) {}
-      
-      // Inject user's custom ethical source attribution
-      result.content += `\n<hr style="border: 0; border-top: 1px solid #eaeaea; margin-top: 30px;" />\n<p style="font-size: 12px; color: #888;"><em><strong>Editorial Note:</strong> This report was prepared by MedSense News using verified public reporting, official statements, and editorial analysis. Initial reporting credit: <a href="${sourceArticle.sourceUrl}" target="_blank" rel="noopener noreferrer" style="color: #555; text-decoration: underline;">${domain}</a>.</em></p>`;
 
       return { 
         success: true, 
