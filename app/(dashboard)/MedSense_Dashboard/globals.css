@@ -92,8 +92,9 @@ body {
     display: grid;
     grid-template-columns: 280px 1fr;
     grid-template-areas: "sidebar main";
-    min-height: 100vh;
+    height: 100vh;
     width: 100%;
+    overflow: hidden;
     background-color: var(--bg-base);
 }
 
@@ -183,6 +184,8 @@ body {
     grid-area: main;
     padding: 40px;
     width: 100%;
+    height: 100vh;
+    overflow-y: auto;
     min-width: 0; /* Prevents grid blowout */
     display: flex;
     flex-direction: column;
