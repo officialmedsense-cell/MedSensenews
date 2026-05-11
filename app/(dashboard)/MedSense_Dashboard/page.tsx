@@ -606,7 +606,7 @@ export default function MedSenseDashboard() {
         )}
 
         {/* Staff Management (Admin Only) */}
-        {currentUser.role === 'admin' && (
+        {currentUser.role === 'admin' && activeNav === 'staff' && (
            <section className="glass-card" id="staff" style={{ marginBottom: '24px' }}>
               <div className="staff-registry-header">
                  <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Staff Registry & Access Control</h2>
