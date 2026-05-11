@@ -113,9 +113,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 40px;
-    position: sticky;
-    top: 0;
-    height: 100vh;
+    min-height: 100vh;
     z-index: 100;
 }
 
@@ -501,7 +499,10 @@ body {
 
 @media (max-width: 768px) {
     .header-row {
-        display: none !important;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 24px;
+        margin-bottom: 32px;
     }
     
     .header-row div {
@@ -513,7 +514,9 @@ body {
     }
 
     .metrics-grid {
-        display: none !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 32px;
     }
 
     .metric-box {
@@ -608,10 +611,11 @@ body {
 @media (max-width: 1024px) {
     .aichat-interface {
         grid-template-columns: 1fr !important;
-        gap: 0 !important;
+        gap: 32px !important;
     }
     .aichat-sidebar {
-        display: none !important;
+        order: 2;
+        width: 100% !important;
     }
 }
 
