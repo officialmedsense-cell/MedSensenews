@@ -38,9 +38,9 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
   try {
     const allArticles: any[] = [];
     
-    // Merge system feeds with user-added feeds to ensure "both old and new" work
-    const uniqueFeeds = new Set([...FEEDS, ...(customFeeds || [])]);
-    const selectedFeeds = Array.from(uniqueFeeds);
+    // Exclusively use custom Intelligence Hubs if provided, otherwise fallback to global feeds.
+    const selectedFeeds = (customFeeds && customFeeds.length > 0) ? customFeeds : FEEDS;
+    console.log(`[DISCOVERY] Scanning ${selectedFeeds.length} active hubs...`);
     
     for (const url of selectedFeeds) {
       if (!url || url === "#") continue;
