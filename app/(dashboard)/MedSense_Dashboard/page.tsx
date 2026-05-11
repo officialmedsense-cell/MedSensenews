@@ -619,8 +619,10 @@ export default function MedSenseDashboard() {
                  <input type="text" value={settings.publishUrl} onChange={e => setSettings({...settings, publishUrl: e.target.value})} placeholder="https://..." style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: 'var(--radius-md)', padding: '12px', color: 'var(--text-primary)' }} />
               </div>
            </div>
-        </section>
-          {/* Staff Management (Admin Only) */}
+         </section>
+         )}
+         
+         {/* Staff Management (Admin Only) */}
         {currentUser.role === 'admin' && activeNav === 'staff' && (
            <section className="dashboard-panel" style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto', minHeight: '600px', maxHeight: '80vh', overflowY: 'auto', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-dim)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
