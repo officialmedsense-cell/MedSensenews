@@ -731,3 +731,32 @@ body {
         font-size: 24px;
     }
 }
+
+.toast-container {
+    position: fixed;
+    top: 40px;
+    right: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 9999;
+}
+
+.toast {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-dim);
+    padding: 16px 24px;
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: var(--shadow-premium);
+    animation: slideIn 0.3s ease;
+    min-width: 300px;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}

@@ -632,8 +632,14 @@ export default function MedSenseDashboard() {
                           setIsProvisioning(true);
                           const res = await addStaffAccount(newStaff.email, newStaff.password);
                           if (res.success) {
-                             const updated = await getStaffAccounts();
-                             if (updated.success && updated.staff) setStaffAccounts(updated.staff);
+                             // Immediately add to local state for instant feedback
+                             if (res.staff) {
+                                setStaffAccounts(prev => [...prev, res.staff]);
+                             } else {
+                                // Fallback re-fetch if staff object not returned
+                                const updated = await getStaffAccounts();
+                                if (updated.success && updated.staff) setStaffAccounts(updated.staff);
+                             }
                              setNewStaff({ email: "", password: "" });
                              setShowAddStaff(false);
                              showToast("Staff account provisioned", "success");
