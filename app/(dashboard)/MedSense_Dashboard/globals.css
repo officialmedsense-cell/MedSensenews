@@ -264,6 +264,11 @@ body {
     padding: 20px;
     border-radius: var(--radius-md);
     border: 1px solid var(--border-dim);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
 .metric-label {
