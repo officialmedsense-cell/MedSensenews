@@ -620,21 +620,22 @@ export default function MedSenseDashboard() {
               </div>
            </div>
         </section>
-        )}
-
-        {/* Staff Management (Admin Only) */}
+          {/* Staff Management (Admin Only) */}
         {currentUser.role === 'admin' && activeNav === 'staff' && (
-           <section className="glass-card" id="staff" style={{ marginBottom: '24px' }}>
-              <div className="staff-registry-header">
-                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Staff Registry & Access Control</h2>
-                    <button className="btn btn-ghost" onClick={fetchStaff} style={{ padding: '4px' }} title="Refresh List">
-                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+           <section className="dashboard-panel" style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto', minHeight: '600px', maxHeight: '80vh', overflowY: 'auto', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-dim)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                 <div>
+                    <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Staff Registry & Access Control</h2>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Manage secure credentials for the Intelligence Hub</p>
+                 </div>
+                 <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="btn btn-ghost" onClick={fetchStaff} style={{ padding: '10px' }} title="Refresh Registry">
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setShowAddStaff(!showAddStaff)}>
+                       {showAddStaff ? "Close Form" : "+ Add Staff Account"}
                     </button>
                  </div>
-                 <button className="btn btn-ghost" onClick={() => setShowAddStaff(!showAddStaff)} style={{ padding: '6px 12px', fontSize: '12px' }}>
-                   {showAddStaff ? "Cancel" : "+ Add Staff Account"}
-                 </button>
               </div>
 
               {staffError && (
@@ -644,7 +645,7 @@ export default function MedSenseDashboard() {
               )}
               
               {showAddStaff && (
-                <div style={{ marginBottom: '24px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-primary)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'end' }}>
+                <div style={{ marginBottom: '24px', padding: '20px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-primary)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'end' }}>
                    <div>
                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>FULL NAME</label>
                      <input type="text" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} placeholder="e.g. John Doe" style={{ width: '100%', padding: '10px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', color: 'var(--text-primary)' }} />
@@ -663,7 +664,10 @@ export default function MedSenseDashboard() {
                           const res = await addStaffAccount(newStaff.name, newStaff.email, newStaff.password);
                           if (res.success) {
                              if (res.staff) {
-                                setStaffAccounts(prev => [...prev, res.staff]);
+                                setStaffAccounts(prev => {
+                                   const filtered = prev.filter(s => s.email !== res.staff.email);
+                                   return [...filtered, res.staff];
+                                });
                              } else {
                                 await fetchStaff();
                              }
@@ -678,82 +682,78 @@ export default function MedSenseDashboard() {
                           showToast("All fields are required", "warning");
                        }
                     }} style={{ padding: '10px 16px' }}>
-                      {isProvisioning ? <span className="spinner" style={{ width: '14px', height: '14px' }}></span> : "Provision Account"}
+                       {isProvisioning ? <span className="spinner" style={{ width: '14px', height: '14px' }}></span> : "Provision Account"}
                    </button>
                 </div>
               )}
 
-              <div className="staff-registry-content">
-                 <div className="staff-account-card">
-                    <div>
-                       <div style={{ fontWeight: '700', fontSize: '14px' }}>officialmedsense@gmail.com</div>
-                       <div style={{ fontSize: '11px', color: 'var(--accent-primary)', marginTop: '4px', fontWeight: '800' }}>SYSTEM ADMINISTRATOR</div>
+              <div style={{ display: 'grid', gap: '16px' }}>
+                 {/* Special Card for Global Director (Hardcoded Admin) */}
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '2px solid var(--accent-primary)', position: 'relative' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                       <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--accent-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '20px' }}>🛡️</div>
+                       <div>
+                          <h3 style={{ fontSize: '16px', fontWeight: '800' }}>Global Director</h3>
+                          <p style={{ fontSize: '13px', color: 'var(--accent-primary)', fontWeight: '700' }}>officialmedsense@gmail.com</p>
+                       </div>
                     </div>
-                    <div style={{ fontSize: '20px' }}>🛡️</div>
+                    <span style={{ fontSize: '11px', background: 'var(--accent-primary)', color: 'white', padding: '4px 10px', borderRadius: '100px', fontWeight: '800' }}>SYSTEM ROOT</span>
                  </div>
-                 
-                 {staffAccounts.map(staff => (
-                   <div key={staff.id} className="staff-account-card staff-member" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '16px' }}>
-                      {editingStaffId === staff.id ? (
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', alignItems: 'end' }}>
-                           <div>
-                              <label style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted)' }}>NAME</label>
-                              <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--accent-primary)', borderRadius: '4px', padding: '6px', color: 'var(--text-primary)', fontSize: '12px' }} />
-                           </div>
-                           <div>
-                              <label style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted)' }}>EMAIL</label>
-                              <input type="email" value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '6px', color: 'var(--text-primary)', fontSize: '12px' }} />
-                           </div>
-                           <div>
-                              <label style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted)' }}>PASSWORD</label>
-                              <input type="text" value={editData.password} onChange={e => setEditData({...editData, password: e.target.value})} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '6px', color: 'var(--text-primary)', fontSize: '12px' }} />
-                           </div>
-                           <div style={{ display: 'flex', gap: '8px' }}>
-                              <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={async () => {
-                                 const res = await addStaffAccount(editData.name, editData.email, editData.password);
-                                 if (res.success) {
-                                    setStaffAccounts(prev => prev.map(s => s.id === staff.id ? { ...s, ...editData } : s));
-                                    setEditingStaffId(null);
-                                    showToast("Staff updated", "success");
-                                 } else {
-                                    showToast(res.error || "Update failed", "error");
-                                 }
-                              }}>Save</button>
-                              <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={() => setEditingStaffId(null)}>Cancel</button>
-                           </div>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                           <div>
-                              <div style={{ fontWeight: '700', fontSize: '14px' }}>{staff.name || "Editorial Staff"}</div>
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{staff.email}</div>
-                           </div>
-                           <div style={{ display: 'flex', gap: '8px' }}>
-                              <button className="btn btn-ghost" onClick={() => {
-                                 setEditingStaffId(staff.id);
-                                 setEditData({ name: staff.name || "", email: staff.email, password: staff.password });
-                              }} style={{ color: 'var(--accent-primary)', padding: '6px 12px', fontSize: '11px' }}>Edit</button>
-                              <button className="btn btn-ghost" onClick={async () => {
-                                 if (confirm(`Revoke access for ${staff.email}?`)) {
-                                    const res = await deleteStaffAccount(staff.id);
-                                    if (res.success) {
-                                       setStaffAccounts(prev => prev.filter(s => s.id !== staff.id));
-                                       showToast("Access revoked", "error");
-                                    }
-                                 }
-                              }} style={{ color: 'var(--danger)', padding: '6px 12px', fontSize: '11px' }}>Remove</button>
-                           </div>
-                        </div>
-                      )}
-                   </div>
+
+                 {staffAccounts.filter(s => s.email !== 'officialmedsense@gmail.com').map(staff => (
+                    <div key={staff.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                          <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700' }}>
+                             {staff.name?.charAt(0) || "S"}
+                          </div>
+                          <div>
+                             <h3 style={{ fontSize: '16px', fontWeight: '700' }}>{staff.name || 'Staff Member'}</h3>
+                             <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{staff.email}</p>
+                          </div>
+                       </div>
+                       
+                       <div style={{ display: 'flex', gap: '8px' }}>
+                          {editingStaffId === staff.id ? (
+                             <div style={{ display: 'flex', gap: '8px' }}>
+                                <input type="text" value={editData.password} onChange={e => setEditData({...editData, password: e.target.value})} placeholder="New Password" style={{ padding: '6px', fontSize: '12px', borderRadius: '4px', border: '1px solid var(--primary)', background: 'var(--bg-surface)', color: 'var(--text-primary)' }} />
+                                <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={async () => {
+                                   const res = await addStaffAccount(staff.name || "Staff", staff.email, editData.password);
+                                   if (res.success) {
+                                      setEditingStaffId(null);
+                                      showToast("Password updated", "success");
+                                   }
+                                }}>Save</button>
+                                <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={() => setEditingStaffId(null)}>Cancel</button>
+                             </div>
+                          ) : (
+                             <>
+                                <button className="btn btn-ghost" onClick={() => {
+                                   setEditingStaffId(staff.id);
+                                   setEditData({ name: staff.name || "", email: staff.email, password: "" });
+                                }} style={{ color: 'var(--accent-primary)' }}>Edit</button>
+                                <button className="btn btn-ghost" onClick={async () => {
+                                   if (confirm(`Revoke access for ${staff.email}?`)) {
+                                      const res = await deleteStaffAccount(staff.id);
+                                      if (res.success) {
+                                         setStaffAccounts(prev => prev.filter(s => s.id !== staff.id));
+                                         showToast("Access revoked", "error");
+                                      }
+                                   }
+                                }} style={{ color: 'var(--danger)' }}>Remove</button>
+                             </>
+                          )}
+                       </div>
+                    </div>
                  ))}
-                 {staffAccounts.length === 0 && (
-                   <div className="staff-account-card" style={{ borderStyle: 'dashed', justifyContent: 'center', padding: '32px' }}>
-                      <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>No staff accounts provisioned. You are the sole operator.</span>
-                   </div>
+
+                 {staffAccounts.filter(s => s.email !== 'officialmedsense@gmail.com').length === 0 && (
+                    <div style={{ padding: '40px', textAlign: 'center', border: '1px dashed var(--border-dim)', borderRadius: 'var(--radius-md)', color: 'var(--text-muted)' }}>
+                       No additional staff members registered.
+                    </div>
                  )}
               </div>
            </section>
+        )}
         )}
 
         {['dashboard', 'pipeline', 'sources'].includes(activeNav) && (
