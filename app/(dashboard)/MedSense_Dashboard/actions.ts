@@ -348,6 +348,7 @@ export async function getStaffAccounts() {
     }
     if (data && data.length > 0) {
        console.log("[STAFF_SCHEMA_CHECK] Found columns:", Object.keys(data[0]));
+       console.log("[STAFF_SCHEMA_CHECK] Sample ID format:", data[0].id, "Type:", typeof data[0].id);
     }
     console.log("[STAFF_GET_SUCCESS] Found", data?.length, "accounts");
     return { success: true, staff: data };
@@ -359,48 +360,55 @@ export async function getStaffAccounts() {
 
 export async function addStaffAccount(name: string, email: string, password: string) {
   if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
-  console.log(`[STAFF_ADD] Synchronizing ${name} (${email}) with Auth Service...`);
+  
+  if (password.length < 6) {
+     return { success: false, error: "Password must be at least 6 characters for Supabase Auth." };
+  }
+
+  console.log(`[STAFF_SYNC] Synchronizing ${email} across platforms...`);
   
   try {
-    // 1. Create Supabase Auth User (for the main editor dashboard)
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { name, role: 'staff' }
-    });
+    // 1. Synchronize with Supabase Auth (Main Editorial Board login)
+    const { data: { users } } = await supabase.auth.admin.listUsers();
+    const existingAuthUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
-    if (authError) {
-      if (!authError.message.includes("already registered")) {
-        console.error("[AUTH_ADD_ERROR]", authError);
-        return { success: false, error: `Auth Error: ${authError.message}` };
-      }
-      
-      // User exists, so let's update their password to keep them in sync
-      const { data: { users } } = await supabase.auth.admin.listUsers();
-      const existingUser = users.find(u => u.email === email);
-      if (existingUser) {
-         await supabase.auth.admin.updateUserById(existingUser.id, { password });
-         console.log("[AUTH_UPDATE] Synchronized password for existing user.");
-      }
+    if (existingAuthUser) {
+       console.log(`[STAFF_SYNC] Updating existing Auth user: ${existingAuthUser.id}`);
+       const { error: updateError } = await supabase.auth.admin.updateUserById(existingAuthUser.id, { 
+          password: password,
+          user_metadata: { name, role: 'editor' }
+       });
+       if (updateError) throw new Error(`Auth Update: ${updateError.message}`);
+    } else {
+       console.log(`[STAFF_SYNC] Creating new Auth user...`);
+       const { error: createError } = await supabase.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { name, role: 'editor' }
+       });
+       if (createError) throw new Error(`Auth Creation: ${createError.message}`);
     }
 
-    // 2. Add/Update Staff Table Record (for the AI dashboard)
+    // 2. Synchronize with Staff Table (AI Dashboard registry)
     const { data, error } = await supabase
       .from("staff")
-      .upsert([{ name, email, password }], { onConflict: 'email' })
+      .upsert([
+        { 
+          name, 
+          email, 
+          password, 
+          role: 'editor' // Set default role to ensure access to main board features
+        }
+      ], { onConflict: 'email' })
       .select();
 
-    if (error) {
-       console.error("[STAFF_ADD_ERROR]", error);
-       return { success: false, error: `DB Error: ${error.message} (${error.code})` };
-    }
+    if (error) throw new Error(`DB Table: ${error.message}`);
 
-    console.log("[STAFF_ADD_SUCCESS]", data);
-    return { success: true, msg: "Staff account synchronized across all boards.", staff: data?.[0] };
+    return { success: true, msg: "Staff account synchronized successfully.", staff: data?.[0] };
   } catch (error: any) {
-    console.error("[STAFF_ADD_EXCEPTION]", error);
-    return { success: false, error: `Exception: ${error.message}` };
+    console.error("[STAFF_SYNC_EXCEPTION]", error);
+    return { success: false, error: error.message };
   }
 }
 
