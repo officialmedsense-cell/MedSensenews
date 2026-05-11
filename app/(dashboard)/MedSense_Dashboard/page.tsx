@@ -126,13 +126,22 @@ export default function MedSenseDashboard() {
 
 
   // --- Persistence & Initialization ---
+  const fetchStaff = async () => {
+     setStaffError("");
+     const res = await getStaffAccounts();
+     if (res.success && res.staff) {
+        setStaffAccounts(res.staff);
+     } else if (!res.success) {
+        setStaffError(res.error || "Failed to load staff");
+     }
+  };
+
   useEffect(() => {
     // Load persisted state on client mount
     const savedSources = localStorage.getItem('medsense_sources');
     const savedSettings = localStorage.getItem('medsense_settings');
     const savedTheme = localStorage.getItem('medsense_theme') as 'dark' | 'light';
     const savedUser = localStorage.getItem('medsense_user');
-    const savedStaff = localStorage.getItem('medsense_staff');
     
     if (savedSources) {
       try { setSources(JSON.parse(savedSources)); } catch (e) {}
@@ -147,18 +156,7 @@ export default function MedSenseDashboard() {
       try { setCurrentUser(JSON.parse(savedUser)); } catch(e){}
     }
     
-    // Fetch Staff Registry from Supabase
-    const fetchStaff = async () => {
-       setStaffError("");
-       const res = await getStaffAccounts();
-       if (res.success && res.staff) {
-          setStaffAccounts(res.staff);
-       } else if (!res.success) {
-          setStaffError(res.error || "Failed to load staff");
-       }
-    };
     fetchStaff();
-
     setAuthChecked(true);
   }, []);
 
@@ -662,8 +660,7 @@ export default function MedSenseDashboard() {
                              if (res.staff) {
                                 setStaffAccounts(prev => [...prev, res.staff]);
                              } else {
-                                const updated = await getStaffAccounts();
-                                if (updated.success && updated.staff) setStaffAccounts(updated.staff);
+                                await fetchStaff();
                              }
                              setNewStaff({ name: "", email: "", password: "" });
                              setShowAddStaff(false);
@@ -708,7 +705,7 @@ export default function MedSenseDashboard() {
                            </div>
                            <div style={{ display: 'flex', gap: '8px' }}>
                               <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={async () => {
-                                 const res = await addStaffAccount(editData.name, editData.email, editData.password); // Reuse addStaff for simplicity (it's actually an upsert if we change it)
+                                 const res = await addStaffAccount(editData.name, editData.email, editData.password);
                                  if (res.success) {
                                     setStaffAccounts(prev => prev.map(s => s.id === staff.id ? { ...s, ...editData } : s));
                                     setEditingStaffId(null);
