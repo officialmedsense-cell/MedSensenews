@@ -346,6 +346,9 @@ export async function getStaffAccounts() {
        console.error("[STAFF_GET_ERROR]", error);
        return { success: false, error: error.message };
     }
+    if (data && data.length > 0) {
+       console.log("[STAFF_SCHEMA_CHECK] Found columns:", Object.keys(data[0]));
+    }
     console.log("[STAFF_GET_SUCCESS] Found", data?.length, "accounts");
     return { success: true, staff: data };
   } catch (error: any) {
