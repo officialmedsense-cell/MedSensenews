@@ -724,3 +724,10 @@ body {
     top: 20px;
     height: fit-content;
 }
+
+@media (max-width: 1024px) {
+    #close-sidebar-btn {
+        display: flex !important;
+        font-size: 24px;
+    }
+}
