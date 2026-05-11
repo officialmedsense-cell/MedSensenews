@@ -340,21 +340,32 @@ export async function getStaffAccounts() {
   if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
   try {
     const { data, error } = await supabase.from("staff").select("*");
-    if (error) throw error;
+    if (error) {
+       console.error("[STAFF_GET_ERROR]", error);
+       return { success: false, error: error.message };
+    }
+    console.log("[STAFF_GET_SUCCESS] Found", data?.length, "accounts");
     return { success: true, staff: data };
   } catch (error: any) {
+    console.error("[STAFF_GET_EXCEPTION]", error);
     return { success: false, error: error.message };
   }
 }
 
 export async function addStaffAccount(email: string, password: string) {
   if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  console.log(`[STAFF_ADD] Attempting to add ${email}...`);
   try {
     const { data, error } = await supabase.from("staff").insert([{ email, password }]);
-    if (error) throw error;
+    if (error) {
+       console.error("[STAFF_ADD_ERROR]", error);
+       return { success: false, error: `DB Error: ${error.message} (${error.code})` };
+    }
+    console.log("[STAFF_ADD_SUCCESS]", data);
     return { success: true, msg: "Staff account provisioned." };
   } catch (error: any) {
-    return { success: false, error: error.message };
+    console.error("[STAFF_ADD_EXCEPTION]", error);
+    return { success: false, error: `Exception: ${error.message}` };
   }
 }
 
