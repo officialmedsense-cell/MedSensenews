@@ -460,8 +460,8 @@ export default function MedSenseDashboard() {
   return (
     <div className="medsense-app">
       {/* Mobile Header */}
-      <div className="mobile-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid var(--border-dim)', background: 'var(--bg-surface)' }}>
-        <img src="/logo.png" alt="MedSense Logo" style={{ height: '28px', filter: 'drop-shadow(0 0 8px var(--accent-glow))' }} />
+      <div className="mobile-header">
+        <div style={{ fontWeight: '800', fontSize: '18px', letterSpacing: '-1px' }}>MedSA</div>
         <button className="btn btn-ghost" onClick={() => setSidebarOpen(true)} style={{ padding: '8px' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
@@ -638,7 +638,7 @@ export default function MedSenseDashboard() {
 
         <header className="header-row">
           <div className="page-title">
-            <img src="/logo.png" alt="MedSense Logo" style={{ height: '40px', objectFit: 'contain', filter: 'drop-shadow(0 0 12px var(--accent-glow))' }} />
+            <h1 style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '-1px' }}>Intelligence Command</h1>
             <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-muted)', fontWeight: '600', letterSpacing: '0.5px' }}>GLOBAL INTELLIGENCE & NEURAL DISCOVERY</p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>

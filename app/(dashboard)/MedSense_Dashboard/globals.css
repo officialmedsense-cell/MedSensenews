@@ -551,10 +551,10 @@ body {
     position: sticky;
     top: 0;
     z-index: 2500;
-    background: hsla(230, 40%, 3%, 0.8);
+    background: var(--bg-surface);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-dim);
-    padding: 16px;
+    padding: 12px 20px;
     align-items: center;
     justify-content: space-between;
 }
