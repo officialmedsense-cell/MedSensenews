@@ -193,7 +193,12 @@ export default function MedSenseDashboard() {
       return;
     }
     
-    const staff = staffAccounts.find(s => s.email.trim().toLowerCase() === loginEmail.trim().toLowerCase() && s.password.trim() === loginPassword.trim());
+    const staff = staffAccounts.find(s => {
+      const emailMatch = s.email && loginEmail && s.email.trim().toLowerCase() === loginEmail.trim().toLowerCase();
+      const passwordMatch = s.password && loginPassword && s.password.trim() === loginPassword.trim();
+      return emailMatch && passwordMatch;
+    });
+    
     if (staff) {
       setCurrentUser({ email: staff.email, role: 'staff' });
       return;
