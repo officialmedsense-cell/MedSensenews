@@ -179,7 +179,9 @@ export async function searchExternalNews(query: string) {
   }
 }
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAdminKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAdminKey = serviceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+if (!serviceKey) console.warn("[DB_SECURITY] Service Role Key is missing. Falling back to Anon key.");
 const supabase = createClient(supabaseUrl, supabaseAdminKey);
 
 /**
@@ -356,13 +358,13 @@ export async function addStaffAccount(email: string, password: string) {
   if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
   console.log(`[STAFF_ADD] Attempting to add ${email}...`);
   try {
-    const { data, error } = await supabase.from("staff").insert([{ email, password }]);
+    const { data, error } = await supabase.from("staff").insert([{ email, password }]).select();
     if (error) {
        console.error("[STAFF_ADD_ERROR]", error);
        return { success: false, error: `DB Error: ${error.message} (${error.code})` };
     }
     console.log("[STAFF_ADD_SUCCESS]", data);
-    return { success: true, msg: "Staff account provisioned." };
+    return { success: true, msg: "Staff account provisioned.", staff: data?.[0] };
   } catch (error: any) {
     console.error("[STAFF_ADD_EXCEPTION]", error);
     return { success: false, error: `Exception: ${error.message}` };
