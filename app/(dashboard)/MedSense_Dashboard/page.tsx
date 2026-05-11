@@ -118,6 +118,8 @@ export default function MedSenseDashboard() {
   const [authChecked, setAuthChecked] = useState(false);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [newStaff, setNewStaff] = useState({ email: "", password: "" });
+  const [isProvisioning, setIsProvisioning] = useState(false);
+
 
   // --- Persistence & Initialization ---
   useEffect(() => {
@@ -625,8 +627,9 @@ export default function MedSenseDashboard() {
                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>TEMPORARY PASSWORD</label>
                      <input type="text" value={newStaff.password} onChange={e => setNewStaff({...newStaff, password: e.target.value})} style={{ width: '100%', padding: '10px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', color: 'var(--text-primary)' }} />
                    </div>
-                   <button className="btn btn-primary" onClick={async () => {
+                   <button className="btn btn-primary" disabled={isProvisioning} onClick={async () => {
                        if (newStaff.email && newStaff.password) {
+                          setIsProvisioning(true);
                           const res = await addStaffAccount(newStaff.email, newStaff.password);
                           if (res.success) {
                              const updated = await getStaffAccounts();
@@ -637,8 +640,13 @@ export default function MedSenseDashboard() {
                           } else {
                              showToast(res.error || "Provisioning failed", "error");
                           }
+                          setIsProvisioning(false);
+                       } else {
+                          showToast("Email and Password are required", "warning");
                        }
-                    }} style={{ padding: '10px 16px' }}>Provision Account</button>
+                    }} style={{ padding: '10px 16px' }}>
+                      {isProvisioning ? <span className="spinner" style={{ width: '14px', height: '14px' }}></span> : "Provision Account"}
+                    </button>
                 </div>
               )}
 
