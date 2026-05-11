@@ -483,6 +483,11 @@ body {
 @media (max-width: 1024px) {
     .medsense-app {
         grid-template-columns: 1fr;
+        grid-template-areas: 
+            "header"
+            "main";
+        height: auto;
+        overflow: visible;
     }
     
     .sidebar {
@@ -491,6 +496,7 @@ body {
         width: 280px;
         z-index: 3000;
         box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+        transition: var(--transition);
     }
     
     .sidebar.open {
@@ -499,6 +505,8 @@ body {
 
     .main-viewport {
         padding: 24px 16px;
+        height: auto;
+        overflow: visible;
     }
 }
 
@@ -556,6 +564,7 @@ body {
 /* Mobile Toggle Header */
 .mobile-header {
     display: none;
+    grid-area: header;
     position: sticky;
     top: 0;
     z-index: 2500;
