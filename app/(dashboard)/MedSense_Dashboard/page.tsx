@@ -55,6 +55,7 @@ interface User {
 
 interface StaffAccount {
   id: string;
+  name?: string;
   email: string;
   password: string;
 }
@@ -117,7 +118,7 @@ export default function MedSenseDashboard() {
   const [staffAccounts, setStaffAccounts] = useState<StaffAccount[]>([]);
   const [authChecked, setAuthChecked] = useState(false);
   const [showAddStaff, setShowAddStaff] = useState(false);
-  const [newStaff, setNewStaff] = useState({ email: "", password: "" });
+  const [newStaff, setNewStaff] = useState({ name: "", email: "", password: "" });
   const [isProvisioning, setIsProvisioning] = useState(false);
 
 
@@ -618,29 +619,31 @@ export default function MedSenseDashboard() {
               </div>
               
               {showAddStaff && (
-                <div style={{ marginBottom: '24px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-primary)', display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '16px', alignItems: 'end' }}>
+                <div style={{ marginBottom: '24px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-primary)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'end' }}>
+                   <div>
+                     <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>FULL NAME</label>
+                     <input type="text" value={newStaff.name} onChange={e => setNewStaff({...newStaff, name: e.target.value})} placeholder="e.g. John Doe" style={{ width: '100%', padding: '10px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', color: 'var(--text-primary)' }} />
+                   </div>
                    <div>
                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>STAFF EMAIL</label>
                      <input type="email" value={newStaff.email} onChange={e => setNewStaff({...newStaff, email: e.target.value})} style={{ width: '100%', padding: '10px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', color: 'var(--text-primary)' }} />
                    </div>
                    <div>
-                     <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>TEMPORARY PASSWORD</label>
+                     <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>PASSWORD</label>
                      <input type="text" value={newStaff.password} onChange={e => setNewStaff({...newStaff, password: e.target.value})} style={{ width: '100%', padding: '10px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', color: 'var(--text-primary)' }} />
                    </div>
                    <button className="btn btn-primary" disabled={isProvisioning} onClick={async () => {
-                       if (newStaff.email && newStaff.password) {
+                       if (newStaff.name && newStaff.email && newStaff.password) {
                           setIsProvisioning(true);
-                          const res = await addStaffAccount(newStaff.email, newStaff.password);
+                          const res = await addStaffAccount(newStaff.name, newStaff.email, newStaff.password);
                           if (res.success) {
-                             // Immediately add to local state for instant feedback
                              if (res.staff) {
                                 setStaffAccounts(prev => [...prev, res.staff]);
                              } else {
-                                // Fallback re-fetch if staff object not returned
                                 const updated = await getStaffAccounts();
                                 if (updated.success && updated.staff) setStaffAccounts(updated.staff);
                              }
-                             setNewStaff({ email: "", password: "" });
+                             setNewStaff({ name: "", email: "", password: "" });
                              setShowAddStaff(false);
                              showToast("Staff account provisioned", "success");
                           } else {
@@ -648,11 +651,11 @@ export default function MedSenseDashboard() {
                           }
                           setIsProvisioning(false);
                        } else {
-                          showToast("Email and Password are required", "warning");
+                          showToast("All fields are required", "warning");
                        }
                     }} style={{ padding: '10px 16px' }}>
                       {isProvisioning ? <span className="spinner" style={{ width: '14px', height: '14px' }}></span> : "Provision Account"}
-                    </button>
+                   </button>
                 </div>
               )}
 
@@ -668,8 +671,8 @@ export default function MedSenseDashboard() {
                  {staffAccounts.map(staff => (
                    <div key={staff.id} className="staff-account-card staff-member">
                       <div>
-                         <div style={{ fontWeight: '700', fontSize: '14px' }}>{staff.email}</div>
-                         <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '800' }}>EDITORIAL STAFF</div>
+                         <div style={{ fontWeight: '700', fontSize: '14px' }}>{staff.name || "Editorial Staff"}</div>
+                         <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{staff.email}</div>
                       </div>
                       <button className="btn btn-ghost" onClick={async () => {
                           if (confirm(`Revoke access for ${staff.email}?`)) {
@@ -689,7 +692,7 @@ export default function MedSenseDashboard() {
                  )}
               </div>
            </section>
-         )}
+        )}
 
         <header className="header-row">
           <div className="page-title">
@@ -814,198 +817,168 @@ export default function MedSenseDashboard() {
               <button 
                 onClick={() => setViewMode('dashboard')} 
                 className="btn btn-ghost" 
-                style={{ padding: '6px 12px', fontSize: '12px', marginBottom: '20px', border: '1px solid var(--border-active)' }}
+                style={{ padding: '8px 16px', marginBottom: '16px', fontSize: '12px' }}
               >
-                ← Return to Command Center
+                ← Back to Dashboard
               </button>
             )}
 
             <div className="feed-list">
               {filteredArticles.length === 0 ? (
-                <div style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <svg style={{ width: '48px', height: '48px', marginBottom: '16px', opacity: 0.3 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                  <p>No active signals detected. Run Discovery to begin.</p>
+                <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                   <div className="scanning" style={{ fontSize: '40px', marginBottom: '16px' }}>📡</div>
+                   <p>No active signals detected. Initiate news discovery.</p>
                 </div>
               ) : (
-                (viewMode === 'dashboard' ? filteredArticles.slice(0, 3) : filteredArticles).map(article => (
+                (viewMode === 'dashboard' ? filteredArticles.slice(0, 5) : filteredArticles).map((article) => (
                   <div key={article.id} className="intel-card" onClick={() => setSelectedArticle(article)}>
                     <div className="intel-thumb">
-                       {article.category === 'Medicine' && '🔬'}
-                       {article.category === 'Technology' && '🤖'}
-                       {article.category === 'Research' && '📊'}
-                       {article.category === 'Health' && '🏥'}
-                       {!['Medicine', 'Technology', 'Research', 'Health'].includes(article.category) && '📢'}
+                       {article.originalImage ? (
+                         <img src={article.originalImage} alt="news" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-sm)' }} />
+                       ) : (
+                         "🩺"
+                       )}
                     </div>
                     <div className="intel-body">
                       <div className="intel-meta">
-                        <span className={`badge ${article.category === 'Medicine' ? 'badge-health' : 'badge-tech'}`}>{article.category}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>By {settings.authorName}</span>
+                        <span className={`badge ${article.category === 'Research' ? 'badge-tech' : 'badge-health'}`}>{article.category}</span>
+                        <span style={{ color: 'var(--text-muted)' }}>{article.source}</span>
                         <span>•</span>
-                        <span>{article.time}</span>
+                        <span style={{ color: 'var(--accent-primary)', fontWeight: '700' }}>{article.relevance}% Match</span>
                       </div>
                       <h3>{article.title}</h3>
                       <p className="intel-summary">{article.summary}</p>
-                      <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                            <button 
-                              className="btn btn-primary" 
-                              style={{ padding: '6px 16px', fontSize: '11px' }}
-                              onClick={(e) => { e.stopPropagation(); handlePublishArticle(article); }}
-                              disabled={article.publishedToNews}
-                            >
-                              {article.publishedToNews ? "✅ Published" : "🚀 Publish Uplink"}
-                            </button>
-                            <button 
-                              className="btn btn-ghost" 
-                              style={{ padding: '6px 12px', fontSize: '11px', color: 'var(--danger)' }}
-                              onClick={(e) => { e.stopPropagation(); handleDeleteArticle(article); }}
-                            >
-                              Purge
-                            </button>
-                            {article.sourceUrl && (
-                               <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: 'var(--accent-primary)', textDecoration: 'none' }} onClick={e => e.stopPropagation()}>
-                                  Source Origin ↗
-                               </a>
-                            )}
-                         </div>
-                         <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--accent-secondary)' }}>{article.relevance}% RELEVANCE</div>
-                      </div>
                     </div>
                   </div>
                 ))
               )}
+              {viewMode === 'dashboard' && filteredArticles.length > 5 && (
+                <button 
+                  onClick={() => setViewMode('fullFeed')}
+                  className="btn btn-ghost" 
+                  style={{ width: '100%', marginTop: '16px', borderStyle: 'dashed' }}
+                >
+                  View All Signals ({filteredArticles.length})
+                </button>
+              )}
             </div>
-
-            {viewMode === 'dashboard' && filteredArticles.length > 3 && (
-              <button 
-                onClick={() => setViewMode('fullFeed')} 
-                className="btn btn-ghost" 
-                style={{ width: '100%', marginTop: '20px', padding: '12px', border: '1px dashed var(--border-active)', justifyContent: 'center' }}
-              >
-                View All {filteredArticles.length} Intelligence Signals →
-              </button>
-            )}
           </section>
           )}
 
-          {/* Right Sidebar: Pipeline & Telemetry */}
-          {viewMode === 'dashboard' && ['dashboard', 'pipeline', 'sources'].includes(activeNav) && (
-            <aside style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-             <section className="glass-card" id="pipeline">
-                <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '20px' }}>Neural Pipeline Status</h2>
-                <div className="pipeline-track">
-                   {Object.entries(pipelineState).map(([stage, state]) => (
-                     <div key={stage} className={`stage-row ${state.status === 'running' ? 'scanning' : ''}`}>
-                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: state.status === 'complete' ? 'var(--success)' : state.status === 'running' ? 'var(--accent-primary)' : 'var(--border-dim)' }}></div>
-                        <div style={{ flex: 1 }}>
-                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '11px', fontWeight: '700' }}>
-                              <span>{stage.toUpperCase()}</span>
-                              <span>{state.progress}%</span>
-                           </div>
-                           <div className="stage-progress-bg">
-                              <div className="stage-progress-fill" style={{ width: `${state.progress}%` }}></div>
-                           </div>
-                        </div>
-                     </div>
-                   ))}
-                </div>
-             </section>
-
-             <section className="glass-card" id="sources">
-                <div className="feed-header" style={{ marginBottom: '16px' }}>
-                   <h2 style={{ fontSize: '16px', fontWeight: '800' }}>Intelligence Hubs</h2>
-                   <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => setShowAddSource(!showAddSource)}>
-                      {showAddSource ? "Cancel" : "+"}
-                   </button>
-                </div>
-
-                {showAddSource && (
-                  <div style={{ marginBottom: '16px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-primary)' }}>
-                      <input 
-                      type="text" 
-                      placeholder="Hub Name" 
-                      value={newSource.name} 
-                      onChange={e => setNewSource({...newSource, name: e.target.value})}
-                      style={{ width: '100%', marginBottom: '8px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '8px', color: 'var(--text-primary)' }}
-                    />
-                    <input 
-                      type="text" 
-                      placeholder="Feed URL" 
-                      value={newSource.url} 
-                      onChange={e => setNewSource({...newSource, url: e.target.value})}
-                      style={{ width: '100%', marginBottom: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '8px', color: 'var(--text-primary)' }}
-                    />
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <select 
-                        value={newSource.type} 
-                        onChange={e => setNewSource({...newSource, type: e.target.value})}
-                        style={{ flex: 1, background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '8px', color: 'var(--text-primary)' }}
-                      >
-                        <option value="rss">RSS Feed</option>
-                        <option value="api">JSON API</option>
-                      </select>
-                      <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={handleAddSource}>Link</button>
-                    </div>
-                  </div>
-                )}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {(showAllSources ? sources : sources.slice(0, 4)).map(source => (
-                      <div key={source.id} style={{ padding: '12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: editingSourceId === source.id ? '8px' : '0' }}>
-                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                              <div className={`status-dot status-${source.status}`} style={{ width: '6px', height: '6px' }}></div>
-                              <span style={{ fontSize: '13px', fontWeight: '600' }}>{source.name}</span>
-                           </div>
-                           <div style={{ display: 'flex', gap: '8px' }}>
-                              <button onClick={() => setEditingSourceId(editingSourceId === source.id ? null : source.id)} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer' }}>
-                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                              </button>
-                              <button onClick={() => handleDeleteSource(source.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
-                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
-                              </button>
-                           </div>
-                        </div>
-                        {editingSourceId === source.id && (
-                           <input 
-                              type="text" 
-                              defaultValue={source.url} 
-                              onBlur={(e) => {
-                                 setSources(prev => prev.map(s => s.id === source.id ? {...s, url: e.target.value} : s));
-                                 setEditingSourceId(null);
-                                 showToast("Link updated", "success");
-                              }}
-                              autoFocus
-                              style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--accent-primary)', borderRadius: '4px', padding: '4px 8px', color: 'var(--text-primary)', fontSize: '11px' }}
-                           />
-                        )}
-                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                           <span>{source.type.toUpperCase()}</span>
-                           <span style={{ opacity: 0.5 }}>{source.url.substring(0, 30)}...</span>
-                        </div>
+          {/* Independent Scrolling Sidebar Content */}
+          {['dashboard', 'pipeline', 'sources'].includes(activeNav) && (
+          <aside style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+              <section className="glass-card" id="pipeline">
+                 <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '16px' }}>Neural Pipeline Status</h2>
+                 <div className="pipeline-track">
+                    {Object.entries(pipelineState).map(([stage, state]) => (
+                      <div key={stage} className="stage-row" style={{ opacity: state.status === 'idle' ? 0.4 : 1 }}>
+                         <div style={{ minWidth: '80px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: state.status === 'running' ? 'var(--accent-primary)' : 'var(--text-primary)' }}>{stage}</div>
+                         <div style={{ flex: 1 }}>
+                            <div className="stage-progress-bg">
+                               <div className="stage-progress-fill" style={{ width: `${state.progress}%` }}></div>
+                            </div>
+                         </div>
                       </div>
                     ))}
-                    {sources.length > 4 && (
-                      <button 
-                        onClick={() => setShowAllSources(!showAllSources)} 
-                        className="btn btn-ghost" 
-                        style={{ width: '100%', padding: '8px', fontSize: '11px', color: 'var(--accent-primary)', border: '1px dashed var(--border-dim)' }}
-                      >
-                        {showAllSources ? "↑ Show Less" : `+ Show ${sources.length - 4} More Hubs`}
-                      </button>
-                    )}
-                </div>
-             </section>
+                 </div>
+              </section>
 
-             <section className="glass-card" style={{ height: '300px', display: 'flex', flexDirection: 'column' }}>
-                <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '12px' }}>System Telemetry</h2>
-                <div style={{ flex: 1, overflowY: 'auto', fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
-                   {logs.map((log, i) => (
-                     <div key={i} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--border-dim)' }}>
-                        <span style={{ color: 'var(--accent-primary)' }}>[{log.time}]</span> {log.msg}
+              <section className="glass-card" id="sources">
+                 <div className="feed-header" style={{ marginBottom: '16px' }}>
+                    <h2 style={{ fontSize: '16px', fontWeight: '800' }}>Intelligence Hubs</h2>
+                    <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: '11px' }} onClick={() => setShowAddSource(!showAddSource)}>
+                       {showAddSource ? "Cancel" : "+"}
+                    </button>
+                 </div>
+
+                 {showAddSource && (
+                   <div style={{ marginBottom: '16px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-primary)' }}>
+                       <input 
+                       type="text" 
+                       placeholder="Hub Name" 
+                       value={newSource.name} 
+                       onChange={e => setNewSource({...newSource, name: e.target.value})}
+                       style={{ width: '100%', marginBottom: '8px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '8px', color: 'var(--text-primary)' }}
+                     />
+                     <input 
+                       type="text" 
+                       placeholder="Feed URL" 
+                       value={newSource.url} 
+                       onChange={e => setNewSource({...newSource, url: e.target.value})}
+                       style={{ width: '100%', marginBottom: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '8px', color: 'var(--text-primary)' }}
+                     />
+                     <div style={{ display: 'flex', gap: '8px' }}>
+                       <select 
+                         value={newSource.type} 
+                         onChange={e => setNewSource({...newSource, type: e.target.value})}
+                         style={{ flex: 1, background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '8px', color: 'var(--text-primary)' }}
+                       >
+                         <option value="rss">RSS Feed</option>
+                         <option value="api">JSON API</option>
+                       </select>
+                       <button className="btn btn-primary" style={{ padding: '8px 16px' }} onClick={handleAddSource}>Link</button>
                      </div>
-                   ))}
-                </div>
-             </section>
+                   </div>
+                 )}
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                     {(showAllSources ? sources : sources.slice(0, 4)).map(source => (
+                       <div key={source.id} style={{ padding: '12px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)' }}>
+                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: editingSourceId === source.id ? '8px' : '0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                               <div className={`status-dot status-${source.status}`} style={{ width: '6px', height: '6px' }}></div>
+                               <span style={{ fontSize: '13px', fontWeight: '600' }}>{source.name}</span>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                               <button onClick={() => setEditingSourceId(editingSourceId === source.id ? null : source.id)} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer' }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                               </button>
+                               <button onClick={() => handleDeleteSource(source.id)} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6"/></svg>
+                               </button>
+                            </div>
+                         </div>
+                         {editingSourceId === source.id && (
+                            <input 
+                               type="text" 
+                               defaultValue={source.url} 
+                               onBlur={(e) => {
+                                  setSources(prev => prev.map(s => s.id === source.id ? {...s, url: e.target.value} : s));
+                                  setEditingSourceId(null);
+                                  showToast("Link updated", "success");
+                               }}
+                               autoFocus
+                               style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--accent-primary)', borderRadius: '4px', padding: '4px 8px', color: 'var(--text-primary)', fontSize: '11px' }}
+                            />
+                         )}
+                         <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>{source.type.toUpperCase()}</span>
+                            <span style={{ opacity: 0.5 }}>{source.url.substring(0, 30)}...</span>
+                         </div>
+                       </div>
+                     ))}
+                     {sources.length > 4 && (
+                       <button 
+                         onClick={() => setShowAllSources(!showAllSources)} 
+                         className="btn btn-ghost" 
+                         style={{ width: '100%', padding: '8px', fontSize: '11px', color: 'var(--accent-primary)', border: '1px dashed var(--border-dim)' }}
+                       >
+                         {showAllSources ? "↑ Show Less" : `+ Show ${sources.length - 4} More Hubs`}
+                       </button>
+                     )}
+                 </div>
+              </section>
+
+              <section className="glass-card" style={{ height: '300px', display: 'flex', flexDirection: 'column' }}>
+                 <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '12px' }}>System Telemetry</h2>
+                 <div style={{ flex: 1, overflowY: 'auto', fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {logs.map((log, i) => (
+                      <div key={i} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--border-dim)' }}>
+                         <span style={{ color: 'var(--accent-primary)' }}>[{log.time}]</span> {log.msg}
+                      </div>
+                    ))}
+                 </div>
+              </section>
           </aside>
           )}
         </div>

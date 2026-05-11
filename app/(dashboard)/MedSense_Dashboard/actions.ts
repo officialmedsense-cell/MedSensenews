@@ -357,11 +357,11 @@ export async function getStaffAccounts() {
   }
 }
 
-export async function addStaffAccount(email: string, password: string) {
+export async function addStaffAccount(name: string, email: string, password: string) {
   if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
-  console.log(`[STAFF_ADD] Attempting to add ${email}...`);
+  console.log(`[STAFF_ADD] Attempting to add ${name} (${email})...`);
   try {
-    const { data, error } = await supabase.from("staff").insert([{ email, password }]).select();
+    const { data, error } = await supabase.from("staff").insert([{ name, email, password }]).select();
     if (error) {
        console.error("[STAFF_ADD_ERROR]", error);
        return { success: false, error: `DB Error: ${error.message} (${error.code})` };
