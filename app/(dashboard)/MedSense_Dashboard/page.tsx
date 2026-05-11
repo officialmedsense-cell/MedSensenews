@@ -120,6 +120,9 @@ export default function MedSenseDashboard() {
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [newStaff, setNewStaff] = useState({ name: "", email: "", password: "" });
   const [isProvisioning, setIsProvisioning] = useState(false);
+  const [editingStaffId, setEditingStaffId] = useState<string | null>(null);
+  const [editData, setEditData] = useState({ name: "", email: "", password: "" });
+  const [staffError, setStaffError] = useState("");
 
 
   // --- Persistence & Initialization ---
@@ -146,9 +149,12 @@ export default function MedSenseDashboard() {
     
     // Fetch Staff Registry from Supabase
     const fetchStaff = async () => {
+       setStaffError("");
        const res = await getStaffAccounts();
        if (res.success && res.staff) {
           setStaffAccounts(res.staff);
+       } else if (!res.success) {
+          setStaffError(res.error || "Failed to load staff");
        }
     };
     fetchStaff();
@@ -612,11 +618,22 @@ export default function MedSenseDashboard() {
         {currentUser.role === 'admin' && activeNav === 'staff' && (
            <section className="glass-card" id="staff" style={{ marginBottom: '24px' }}>
               <div className="staff-registry-header">
-                 <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Staff Registry & Access Control</h2>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Staff Registry & Access Control</h2>
+                    <button className="btn btn-ghost" onClick={fetchStaff} style={{ padding: '4px' }} title="Refresh List">
+                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    </button>
+                 </div>
                  <button className="btn btn-ghost" onClick={() => setShowAddStaff(!showAddStaff)} style={{ padding: '6px 12px', fontSize: '12px' }}>
                    {showAddStaff ? "Cancel" : "+ Add Staff Account"}
                  </button>
               </div>
+
+              {staffError && (
+                 <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(255,0,0,0.1)', color: 'var(--danger)', borderRadius: '4px', fontSize: '12px', border: '1px solid rgba(255,0,0,0.2)' }}>
+                    ⚠️ {staffError}
+                 </div>
+              )}
               
               {showAddStaff && (
                 <div style={{ marginBottom: '24px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-primary)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'end' }}>
@@ -669,20 +686,58 @@ export default function MedSenseDashboard() {
                  </div>
                  
                  {staffAccounts.map(staff => (
-                   <div key={staff.id} className="staff-account-card staff-member">
-                      <div>
-                         <div style={{ fontWeight: '700', fontSize: '14px' }}>{staff.name || "Editorial Staff"}</div>
-                         <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{staff.email}</div>
-                      </div>
-                      <button className="btn btn-ghost" onClick={async () => {
-                          if (confirm(`Revoke access for ${staff.email}?`)) {
-                             const res = await deleteStaffAccount(staff.id);
-                             if (res.success) {
-                                setStaffAccounts(prev => prev.filter(s => s.id !== staff.id));
-                                showToast("Access revoked", "error");
-                             }
-                          }
-                       }} style={{ color: 'var(--danger)', padding: '6px 12px', fontSize: '11px' }}>Revoke Access</button>
+                   <div key={staff.id} className="staff-account-card staff-member" style={{ flexDirection: 'column', alignItems: 'stretch', gap: '16px' }}>
+                      {editingStaffId === staff.id ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', alignItems: 'end' }}>
+                           <div>
+                              <label style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted)' }}>NAME</label>
+                              <input type="text" value={editData.name} onChange={e => setEditData({...editData, name: e.target.value})} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--accent-primary)', borderRadius: '4px', padding: '6px', color: 'var(--text-primary)', fontSize: '12px' }} />
+                           </div>
+                           <div>
+                              <label style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted)' }}>EMAIL</label>
+                              <input type="email" value={editData.email} onChange={e => setEditData({...editData, email: e.target.value})} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '6px', color: 'var(--text-primary)', fontSize: '12px' }} />
+                           </div>
+                           <div>
+                              <label style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-muted)' }}>PASSWORD</label>
+                              <input type="text" value={editData.password} onChange={e => setEditData({...editData, password: e.target.value})} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', padding: '6px', color: 'var(--text-primary)', fontSize: '12px' }} />
+                           </div>
+                           <div style={{ display: 'flex', gap: '8px' }}>
+                              <button className="btn btn-primary" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={async () => {
+                                 const res = await addStaffAccount(editData.name, editData.email, editData.password); // Reuse addStaff for simplicity (it's actually an upsert if we change it)
+                                 if (res.success) {
+                                    setStaffAccounts(prev => prev.map(s => s.id === staff.id ? { ...s, ...editData } : s));
+                                    setEditingStaffId(null);
+                                    showToast("Staff updated", "success");
+                                 } else {
+                                    showToast(res.error || "Update failed", "error");
+                                 }
+                              }}>Save</button>
+                              <button className="btn btn-ghost" style={{ padding: '6px 12px', fontSize: '11px' }} onClick={() => setEditingStaffId(null)}>Cancel</button>
+                           </div>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                           <div>
+                              <div style={{ fontWeight: '700', fontSize: '14px' }}>{staff.name || "Editorial Staff"}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>{staff.email}</div>
+                           </div>
+                           <div style={{ display: 'flex', gap: '8px' }}>
+                              <button className="btn btn-ghost" onClick={() => {
+                                 setEditingStaffId(staff.id);
+                                 setEditData({ name: staff.name || "", email: staff.email, password: staff.password });
+                              }} style={{ color: 'var(--accent-primary)', padding: '6px 12px', fontSize: '11px' }}>Edit</button>
+                              <button className="btn btn-ghost" onClick={async () => {
+                                 if (confirm(`Revoke access for ${staff.email}?`)) {
+                                    const res = await deleteStaffAccount(staff.id);
+                                    if (res.success) {
+                                       setStaffAccounts(prev => prev.filter(s => s.id !== staff.id));
+                                       showToast("Access revoked", "error");
+                                    }
+                                 }
+                              }} style={{ color: 'var(--danger)', padding: '6px 12px', fontSize: '11px' }}>Remove</button>
+                           </div>
+                        </div>
+                      )}
                    </div>
                  ))}
                  {staffAccounts.length === 0 && (
