@@ -608,7 +608,7 @@ export default function MedSenseDashboard() {
         {/* Staff Management (Admin Only) */}
         {currentUser.role === 'admin' && (
            <section className="glass-card" id="staff" style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
                  <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Staff Registry & Access Control</h2>
                  <button className="btn btn-ghost" onClick={() => setShowAddStaff(!showAddStaff)} style={{ padding: '6px 12px', fontSize: '12px' }}>
                    {showAddStaff ? "Cancel" : "+ Add Staff Account"}
@@ -642,17 +642,17 @@ export default function MedSenseDashboard() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                 <div style={{ padding: '12px 16px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+                 <div style={{ width: '100%', maxWidth: '500px', padding: '16px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                     <div>
                        <div style={{ fontWeight: '700', fontSize: '14px' }}>officialmedsense@gmail.com</div>
                        <div style={{ fontSize: '11px', color: 'var(--accent-primary)', marginTop: '4px', fontWeight: '800' }}>SYSTEM ADMINISTRATOR</div>
                     </div>
-                    <div style={{ fontSize: '20px', opacity: 0.5 }}>🛡️</div>
+                    <div style={{ fontSize: '20px', marginTop: '12px' }}>🛡️</div>
                  </div>
                  
                  {staffAccounts.map(staff => (
-                   <div key={staff.id} style={{ padding: '12px 16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                   <div key={staff.id} style={{ width: '100%', maxWidth: '500px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
                       <div>
                          <div style={{ fontWeight: '700', fontSize: '14px' }}>{staff.email}</div>
                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '800' }}>EDITORIAL STAFF</div>
@@ -665,11 +665,11 @@ export default function MedSenseDashboard() {
                                 showToast("Access revoked", "error");
                              }
                           }
-                       }} style={{ color: 'var(--danger)', padding: '6px 12px', fontSize: '11px' }}>Revoke Access</button>
+                       }} style={{ color: 'var(--danger)', padding: '6px 12px', fontSize: '11px', marginTop: '12px' }}>Revoke Access</button>
                    </div>
                  ))}
                  {staffAccounts.length === 0 && (
-                   <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-dim)' }}>
+                   <div style={{ width: '100%', maxWidth: '500px', padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-dim)' }}>
                       No staff accounts provisioned. You are the sole operator.
                    </div>
                  )}
