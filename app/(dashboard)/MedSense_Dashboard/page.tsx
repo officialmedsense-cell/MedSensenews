@@ -8,7 +8,10 @@ import {
   publishToNewsSite,
   processAICommand,
   deleteArticleFromSupabase,
-  searchExternalNews
+  searchExternalNews,
+  getStaffAccounts,
+  addStaffAccount,
+  deleteStaffAccount
 } from "./actions";
 
 // --- Types ---
@@ -137,9 +140,16 @@ export default function MedSenseDashboard() {
     if (savedUser) {
       try { setCurrentUser(JSON.parse(savedUser)); } catch(e){}
     }
-    if (savedStaff) {
-      try { setStaffAccounts(JSON.parse(savedStaff)); } catch(e){}
-    }
+    
+    // Fetch Staff Registry from Supabase
+    const fetchStaff = async () => {
+       const res = await getStaffAccounts();
+       if (res.success && res.staff) {
+          setStaffAccounts(res.staff);
+       }
+    };
+    fetchStaff();
+
     setAuthChecked(true);
   }, []);
 
@@ -163,10 +173,6 @@ export default function MedSenseDashboard() {
       localStorage.removeItem('medsense_user');
     }
   }, [currentUser]);
-
-  useEffect(() => {
-    localStorage.setItem('medsense_staff', JSON.stringify(staffAccounts));
-  }, [staffAccounts]);
 
   // --- Handlers ---
   const handleLogin = (e: React.FormEvent) => {
@@ -619,14 +625,20 @@ export default function MedSenseDashboard() {
                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>TEMPORARY PASSWORD</label>
                      <input type="text" value={newStaff.password} onChange={e => setNewStaff({...newStaff, password: e.target.value})} style={{ width: '100%', padding: '10px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: '4px', color: 'var(--text-primary)' }} />
                    </div>
-                   <button className="btn btn-primary" onClick={() => {
-                      if (newStaff.email && newStaff.password) {
-                         setStaffAccounts([...staffAccounts, { id: Date.now().toString(), email: newStaff.email, password: newStaff.password }]);
-                         setNewStaff({ email: "", password: "" });
-                         setShowAddStaff(false);
-                         showToast("Staff account provisioned", "success");
-                      }
-                   }} style={{ padding: '10px 16px' }}>Provision Account</button>
+                   <button className="btn btn-primary" onClick={async () => {
+                       if (newStaff.email && newStaff.password) {
+                          const res = await addStaffAccount(newStaff.email, newStaff.password);
+                          if (res.success) {
+                             const updated = await getStaffAccounts();
+                             if (updated.success && updated.staff) setStaffAccounts(updated.staff);
+                             setNewStaff({ email: "", password: "" });
+                             setShowAddStaff(false);
+                             showToast("Staff account provisioned", "success");
+                          } else {
+                             showToast(res.error || "Provisioning failed", "error");
+                          }
+                       }
+                    }} style={{ padding: '10px 16px' }}>Provision Account</button>
                 </div>
               )}
 
@@ -645,12 +657,15 @@ export default function MedSenseDashboard() {
                          <div style={{ fontWeight: '700', fontSize: '14px' }}>{staff.email}</div>
                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '800' }}>EDITORIAL STAFF</div>
                       </div>
-                      <button className="btn btn-ghost" onClick={() => {
-                         if (confirm(`Revoke access for ${staff.email}?`)) {
-                            setStaffAccounts(staffAccounts.filter(s => s.id !== staff.id));
-                            showToast("Access revoked", "error");
-                         }
-                      }} style={{ color: 'var(--danger)', padding: '6px 12px', fontSize: '11px' }}>Revoke Access</button>
+                      <button className="btn btn-ghost" onClick={async () => {
+                          if (confirm(`Revoke access for ${staff.email}?`)) {
+                             const res = await deleteStaffAccount(staff.id);
+                             if (res.success) {
+                                setStaffAccounts(prev => prev.filter(s => s.id !== staff.id));
+                                showToast("Access revoked", "error");
+                             }
+                          }
+                       }} style={{ color: 'var(--danger)', padding: '6px 12px', fontSize: '11px' }}>Revoke Access</button>
                    </div>
                  ))}
                  {staffAccounts.length === 0 && (

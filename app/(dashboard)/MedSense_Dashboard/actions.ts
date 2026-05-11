@@ -320,6 +320,42 @@ export async function deleteArticleFromSupabase(articleId: string) {
 }
 
 /**
+ * Staff Registry Actions
+ */
+export async function getStaffAccounts() {
+  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  try {
+    const { data, error } = await supabase.from("staff").select("*");
+    if (error) throw error;
+    return { success: true, staff: data };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function addStaffAccount(email: string, password: string) {
+  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  try {
+    const { data, error } = await supabase.from("staff").insert([{ email, password }]);
+    if (error) throw error;
+    return { success: true, msg: "Staff account provisioned." };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteStaffAccount(id: string) {
+  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  try {
+    const { error } = await supabase.from("staff").delete().eq("id", id);
+    if (error) throw error;
+    return { success: true, msg: "Access revoked." };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * AI Command Processing
  * Allows staff to chat with the AI to perform actions.
  */
