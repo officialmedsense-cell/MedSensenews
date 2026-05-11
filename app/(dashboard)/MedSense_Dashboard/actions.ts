@@ -9,14 +9,19 @@ const parser = new Parser({
   }
 });
 
-// --- Live RSS Feeds ---
+// --- Global Intelligence Sources (Expanded) ---
 const FEEDS = [
   "https://nigeriahealthwatch.com/feed/",
   "https://rss.punchng.com/v1/category/healthwise",
   "https://healthnews.ng/feed/",
   "https://www.medicalnewstoday.com/rss/headlines",
   "https://www.sciencedaily.com/rss/top/health.xml",
-  "https://medicalxpress.com/rss-feed/"
+  "https://medicalxpress.com/rss-feed/",
+  "https://www.who.int/rss-feeds/news-english.xml",
+  "https://www.cdc.gov/media/releases/rss-media-releases.xml",
+  "https://www.thelancet.com/rssfeed/lancet_current.xml",
+  "https://www.nature.com/nature/current_issue/rss",
+  "https://feeds.feedburner.com/daily-health-news"
 ];
 
 // --- Publication Client (MedSense News) ---
@@ -62,14 +67,14 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
            };
         }
 
-        // Freshness Window: 48 Hours
-        const twoDaysAgo = new Date();
-        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        // Freshness Window: 7 Days (Expanded to capture more sources)
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         
         let filtered = feed.items.filter((item: any) => {
           if (!item.isoDate && !item.pubDate) return false;
           const itemDate = new Date(item.isoDate || item.pubDate!);
-          return itemDate >= twoDaysAgo;
+          return itemDate >= oneWeekAgo;
         });
 
         // Fallback: Freshest signal if none in window
