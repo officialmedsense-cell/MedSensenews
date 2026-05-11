@@ -103,17 +103,20 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
             if (match) imgUrl = match[1];
           }
 
+          const content = item.content || item['content:encoded'] || item.contentSnippet || item.description || "";
+          const snippet = item.contentSnippet || item['content:encodedSnippet'] || item.description || "No summary available.";
+          
           return {
             title: item.title,
-            summary: item.contentSnippet || item.content || "No summary available.",
-            fullText: item.content || item.contentSnippet,
+            summary: snippet,
+            fullText: content,
             originalImage: imgUrl,
             source: feed.title || "Medical Hub",
             sourceUrl: item.link || "#",
             category: "Breaking",
             pubDate: item.isoDate
           };
-        }));
+        }).slice(0, 5)); // Limit to max 5 items per feed to ensure diversity
       } catch (err) {
         console.error(`Link Failure [${url}]:`, err);
       }
@@ -160,9 +163,16 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
       // Continue with deduplicated list if DB check fails
     }
     
+    // Sort globally by pubDate descending to ensure freshest news from ALL hubs
+    deduplicated.sort((a, b) => {
+      const dateA = new Date(a.pubDate || 0).getTime();
+      const dateB = new Date(b.pubDate || 0).getTime();
+      return dateB - dateA;
+    });
+
     return {
       success: true,
-      articles: deduplicated.slice(0, 10),
+      articles: deduplicated.slice(0, 15),
       count: deduplicated.length
     };
   } catch (error: any) {
