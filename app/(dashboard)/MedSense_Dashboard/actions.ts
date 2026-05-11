@@ -73,7 +73,17 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
                    }))
                  };
               } catch (jsonErr) {
-                 continue;
+                 // If all parsing fails, generate a synthetic error signal
+                 feed = {
+                   title: "System Diagnostics",
+                   items: [{
+                     title: `[UPLINK FAILED] Unreadable Source: ${new URL(url).hostname}`,
+                     contentSnippet: `The AI could not extract structured data from ${url}. Please verify that this is a valid RSS Feed or JSON API endpoint, and not a standard HTML webpage.`,
+                     content: `Diagnostic Failure. The system attempted RSS, XML, and JSON extraction protocols but all returned invalid formats.`,
+                     link: url,
+                     isoDate: new Date().toISOString()
+                   }]
+                 };
               }
            }
         }
