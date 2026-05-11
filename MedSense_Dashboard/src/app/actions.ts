@@ -118,7 +118,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
         "Authorization": `Bearer ${MISTRAL_API_KEY}`
       },
       body: JSON.stringify({
-        model: model === "mistral-7b" ? "open-mistral-7b" : "mistral-small-latest",
+        model: model || "mistral-small-latest",
         messages: [
           { 
             role: "system", 

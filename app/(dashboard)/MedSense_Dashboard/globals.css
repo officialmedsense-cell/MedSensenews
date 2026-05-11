@@ -94,6 +94,11 @@ body {
     min-height: 100vh;
 }
 
+.dashboard-wrapper {
+    width: 100%;
+    min-height: 100vh;
+}
+
 /* Sidebar Navigation */
 .sidebar {
     background: var(--bg-surface);

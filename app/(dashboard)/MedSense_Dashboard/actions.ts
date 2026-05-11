@@ -106,7 +106,7 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
     // We check the source_url column in the articles table
     try {
       const urlsToCheck = deduplicated.map(a => a.sourceUrl).filter(url => url !== "#");
-      if (urlsToCheck.length > 0) {
+      if (pubClient && urlsToCheck.length > 0) {
         const { data: existingArticles } = await pubClient
           .from('articles')
           .select('source_url')
@@ -188,7 +188,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
         "Authorization": `Bearer ${MISTRAL_API_KEY}`
       },
       body: JSON.stringify({
-        model: model === "mistral-7b" ? "open-mistral-7b" : "mistral-small-latest",
+        model: model || "mistral-small-latest",
         messages: [
           { 
             role: "system", 
