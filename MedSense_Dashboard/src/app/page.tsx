@@ -337,7 +337,7 @@ export default function MedSenseDashboard() {
     <div className="medsense-app">
       {/* Mobile Header */}
       <div className="mobile-header">
-        <div style={{ fontWeight: '800', fontSize: '18px', letterSpacing: '-1px' }}>MedSA</div>
+        <img src="/logo.png" alt="MedSense" style={{ height: '24px', filter: 'drop-shadow(0 0 8px var(--accent-glow))' }} />
         <div style={{ display: 'flex', gap: '8px' }}>
           <button className="btn btn-ghost" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} style={{ padding: '8px' }}>
             {theme === 'dark' ? '☀️' : '🌙'}
