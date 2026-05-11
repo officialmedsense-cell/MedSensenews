@@ -735,7 +735,7 @@ export default function MedSenseDashboard() {
           )}
 
           {/* Article Feed */}
-          {activeNav === 'dashboard' && (
+          {['dashboard', 'pipeline', 'sources'].includes(activeNav) && (
           <section className="glass-card" id="dashboard" style={{ gridRow: 'span 2' }}>
             <div className="feed-header" style={{ marginBottom: viewMode === 'fullFeed' ? '12px' : '24px' }}>
                <h2 style={{ fontSize: '18px', fontWeight: '800' }}>
@@ -827,7 +827,7 @@ export default function MedSenseDashboard() {
           )}
 
           {/* Right Sidebar: Pipeline & Telemetry */}
-          {viewMode === 'dashboard' && activeNav === 'dashboard' && (
+          {viewMode === 'dashboard' && ['dashboard', 'pipeline', 'sources'].includes(activeNav) && (
             <aside style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
              <section className="glass-card" id="pipeline">
                 <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '20px' }}>Neural Pipeline Status</h2>
