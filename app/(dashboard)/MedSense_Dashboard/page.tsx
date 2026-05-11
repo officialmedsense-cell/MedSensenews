@@ -756,6 +756,7 @@ export default function MedSenseDashboard() {
            </section>
         )}
 
+        {['dashboard', 'pipeline', 'sources'].includes(activeNav) && (
         <header className="header-row">
           <div className="page-title">
             <h1 style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '-1px' }}>Intelligence Command</h1>
@@ -783,6 +784,7 @@ export default function MedSenseDashboard() {
              </button>
           </div>
         </header>
+        )}
 
         <div className="dashboard-grid" style={viewMode === 'fullFeed' || activeNav === 'aichat' ? { gridTemplateColumns: '1fr' } : {}}>
           {/* AI Chatbox View */}
