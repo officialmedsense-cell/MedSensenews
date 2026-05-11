@@ -754,7 +754,6 @@ export default function MedSenseDashboard() {
               </div>
            </section>
         )}
-        )}
 
         {['dashboard', 'pipeline', 'sources'].includes(activeNav) && (
         <header className="header-row">
