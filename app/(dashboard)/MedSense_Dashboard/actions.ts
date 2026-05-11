@@ -116,7 +116,7 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
             category: "Breaking",
             pubDate: item.isoDate
           };
-        }).slice(0, 5)); // Limit to max 5 items per feed to ensure diversity
+        }).slice(0, 25)); // Allow up to 25 items per feed for a high-volume intake
       } catch (err) {
         console.error(`Link Failure [${url}]:`, err);
       }
@@ -172,7 +172,7 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
 
     return {
       success: true,
-      articles: deduplicated.slice(0, 15),
+      articles: deduplicated.slice(0, 75), // Deliver up to 75 total articles per scan
       count: deduplicated.length
     };
   } catch (error: any) {
