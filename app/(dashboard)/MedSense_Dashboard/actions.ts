@@ -31,44 +31,58 @@ const pubClient = (pubUrl && pubKey) ? createClient(pubUrl, pubKey) : null;
  */
 export async function fetchLiveMedicalNews(customFeeds?: string[]) {
   try {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const allArticles: any[] = [];
-
-    // Use custom feeds if provided, otherwise fallback to default FEEDS
-    const feedsToUse = (customFeeds && customFeeds.length > 0) ? customFeeds : FEEDS;
     
-    // Process all provided feeds (or pick a few randomly if using default)
-    const selectedFeeds = customFeeds && customFeeds.length > 0 
-      ? feedsToUse 
-      : feedsToUse.sort(() => 0.5 - Math.random()).slice(0, 3);
+    // Merge system feeds with user-added feeds to ensure "both old and new" work
+    const uniqueFeeds = new Set([...FEEDS, ...(customFeeds || [])]);
+    const selectedFeeds = Array.from(uniqueFeeds);
     
     for (const url of selectedFeeds) {
+      if (!url || url === "#") continue;
+      
       try {
-        const feed = await parser.parseURL(url);
-        
-        // 48-Hour Rolling Window (Ensures we catch fresh news across timezones)
+        // Attempt RSS Parsing
+        let feed: any;
+        try {
+           feed = await parser.parseURL(url);
+        } catch (rssErr) {
+           // Fallback to JSON fetch if RSS fails (handles API hubs)
+           const res = await fetch(url);
+           const json = await res.json();
+           // Basic mapping for common JSON news structures
+           feed = {
+             title: json.name || json.title || "Intelligence Hub",
+             items: (json.articles || json.items || json.data || []).map((item: any) => ({
+               title: item.title || item.headline,
+               contentSnippet: item.description || item.summary || item.excerpt,
+               content: item.content || item.body || item.description,
+               link: item.url || item.link || item.source_url,
+               isoDate: item.publishedAt || item.date || item.created_at
+             }))
+           };
+        }
+
+        // Freshness Window: 48 Hours
         const twoDaysAgo = new Date();
         twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
         
-        let filtered = feed.items.filter(item => {
+        let filtered = feed.items.filter((item: any) => {
           if (!item.isoDate && !item.pubDate) return false;
           const itemDate = new Date(item.isoDate || item.pubDate!);
           return itemDate >= twoDaysAgo;
         });
 
-        // Fallback: If the source hasn't posted in 48 hours, grab their single freshest article
+        // Fallback: Freshest signal if none in window
         if (filtered.length === 0 && feed.items.length > 0) {
            filtered = [feed.items[0]];
         }
 
-        allArticles.push(...filtered.map(item => {
-          // Extract Original Image
+        allArticles.push(...filtered.map((item: any) => {
           let imgUrl = null;
           if (item.enclosure && item.enclosure.url) imgUrl = item.enclosure.url;
           else if (item['media:content'] && item['media:content'].$) imgUrl = item['media:content'].$.url;
           else if (item['media:thumbnail'] && item['media:thumbnail'].$) imgUrl = item['media:thumbnail'].$.url;
           else {
-            // Attempt to parse img tag from content
             const match = (item.content || item.contentSnippet || '').match(/<img[^>]+src="([^">]+)"/);
             if (match) imgUrl = match[1];
           }
@@ -84,8 +98,8 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
             pubDate: item.isoDate
           };
         }));
-      } catch (feedErr) {
-        console.error(`Feed Error [${url}]:`, feedErr);
+      } catch (err) {
+        console.error(`Link Failure [${url}]:`, err);
       }
     }
 
@@ -416,8 +430,6 @@ export async function processAICommand(prompt: string, context: { articles: any[
     return { success: false, error: err.message };
   }
 }
-
-// --- Publication Client (MedSense News) --- (Moved to top)
 
 // --- Category Image Assets ---
 const CATEGORY_IMAGES: Record<string, string> = {
