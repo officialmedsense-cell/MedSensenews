@@ -660,3 +660,45 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--accent-primary);
 }
+
+.staff-registry-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.staff-account-card {
+    width: 100%;
+    padding: 16px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.staff-account-card.staff-member {
+    background: var(--bg-elevated);
+}
+
+@media (min-width: 1025px) {
+    .staff-registry-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+    
+    .staff-registry-content {
+        align-items: center;
+    }
+    
+    .staff-account-card {
+        max-width: 500px;
+        flex-direction: column;
+        text-align: center;
+        gap: 12px;
+    }
+}
