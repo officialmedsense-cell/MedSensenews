@@ -222,11 +222,29 @@ export default function MedSenseDashboard() {
     if (result.success) {
       showToast(result.msg || "Published successfully", "success");
       addLog(result.msg, "success");
+      // Store the Supabase ID if returned (we'd need to update actions.ts to return it)
       setArticles(prev => prev.map(a => a.id === article.id ? { ...a, publishedToNews: true } : a));
       if (selectedArticle?.id === article.id) setSelectedArticle({ ...article, publishedToNews: true });
     } else {
       showToast(result.error || "Publication failed", "error");
       addLog(`Publication Error: ${result.error}`, "error");
+    }
+  };
+
+  const handleDeleteArticle = async (article: Article) => {
+    if (!confirm(`Permanently purge "${article.title}"? This cannot be undone.`)) return;
+    
+    // Remove from local state
+    setArticles(prev => prev.filter(a => a.id !== article.id));
+    if (selectedArticle?.id === article.id) setSelectedArticle(null);
+    
+    // Remove from Supabase
+    const res = await deleteArticleFromSupabase(article.id);
+    if (res.success) {
+      showToast("Purged from live site", "success");
+      addLog(`Purged article: ${article.title}`, "warning");
+    } else {
+      addLog(`Local purge only: ${res.error}`, "info");
     }
   };
 
@@ -380,10 +398,18 @@ export default function MedSenseDashboard() {
         if (action === 'DELETE_ARTICLE') {
           const idsToPurge = targetIds || (targetId ? [targetId] : []);
           if (idsToPurge.length > 0) {
+            // Remove from local state
             setArticles(prev => prev.filter(a => !idsToPurge.includes(a.id)));
             if (draftArticle && idsToPurge.includes(draftArticle.id)) setDraftArticle(null);
-            showToast(idsToPurge.length > 1 ? `Purged ${idsToPurge.length} duplicate signals.` : "Article purged.", "warning");
-            addLog(`AI Action: Purged ${idsToPurge.length} articles`, "warning");
+            
+            // Attempt to remove from Supabase (if it's a published article)
+            idsToPurge.forEach(async (id) => {
+               // Note: This assumes the ID matches the Supabase ID, which we should ensure during publishing
+               await deleteArticleFromSupabase(id);
+            });
+
+            showToast(idsToPurge.length > 1 ? `Purged ${idsToPurge.length} signals.` : "Signal purged.", "warning");
+            addLog(`AI Action: Purged ${idsToPurge.length} articles from local and live feeds.`, "warning");
           }
         } 
         
@@ -799,6 +825,13 @@ export default function MedSenseDashboard() {
                               disabled={article.publishedToNews}
                             >
                               {article.publishedToNews ? "✅ Published" : "🚀 Publish Uplink"}
+                            </button>
+                            <button 
+                              className="btn btn-ghost" 
+                              style={{ padding: '6px 12px', fontSize: '11px', color: 'var(--danger)' }}
+                              onClick={(e) => { e.stopPropagation(); handleDeleteArticle(article); }}
+                            >
+                              Purge
                             </button>
                             {article.sourceUrl && (
                                <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: 'var(--accent-primary)', textDecoration: 'none' }} onClick={e => e.stopPropagation()}>

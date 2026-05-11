@@ -303,16 +303,16 @@ export async function saveArticleToSupabase(article: any) {
 }
 
 export async function deleteArticleFromSupabase(articleId: string) {
-  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  if (!pubClient) return { success: false, error: "Publication Target not configured." };
 
   try {
-    const { error } = await supabase
+    const { error } = await pubClient
       .from("articles")
       .delete()
       .eq("id", articleId);
 
     if (error) throw error;
-    return { success: true, msg: "Article purged from database." };
+    return { success: true, msg: "Article purged from live database." };
   } catch (error: any) {
     console.error("Supabase Delete Error:", error);
     return { success: false, error: error.message };
