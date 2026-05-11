@@ -119,17 +119,25 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
     // 2. Database check: Filter out articles that are already published
     // We check the source_url column in the articles table
     try {
-      const urlsToCheck = deduplicated.map(a => a.sourceUrl).filter(url => url !== "#");
-      if (pubClient && urlsToCheck.length > 0) {
-        const { data: existingArticles } = await pubClient
-          .from('articles')
-          .select('source_url')
-          .in('source_url', urlsToCheck);
+      if (pubClient) {
+        const urlsToCheck = deduplicated.map(a => a.sourceUrl).filter(url => url !== "#");
+        const titlesToCheck = deduplicated.map(a => a.title);
+
+        const { data: existingByUrl } = urlsToCheck.length > 0 
+          ? await pubClient.from('articles').select('source_url').in('source_url', urlsToCheck)
+          : { data: [] };
+          
+        const { data: existingByTitle } = titlesToCheck.length > 0
+          ? await pubClient.from('articles').select('title').in('title', titlesToCheck)
+          : { data: [] };
         
-        if (existingArticles) {
-          const existingUrls = new Set(existingArticles.map(a => a.source_url));
-          deduplicated = deduplicated.filter(a => !existingUrls.has(a.sourceUrl));
-        }
+        const existingUrls = new Set((existingByUrl || []).map((a: any) => a.source_url));
+        const existingTitles = new Set((existingByTitle || []).map((a: any) => a.title.toLowerCase().trim()));
+        
+        deduplicated = deduplicated.filter(a => 
+          !existingUrls.has(a.sourceUrl) && 
+          !existingTitles.has(a.title.toLowerCase().trim())
+        );
       }
     } catch (dbErr) {
       console.error("Duplicate DB check error:", dbErr);
@@ -211,7 +219,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
             content: `You are a professional medical journalist. Rewrite the provided medical news into a high-fidelity, journalistic article.
             
             STRICT FORMATTING RULES:
-            1. Use exactly ONE main heading (the title).
+            1. Use exactly ONE main heading (the title). NEVER include sub-headlines or alternative titles in the body.
             2. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
             3. Use <h3> for sub-sections like "Why This Is Escalating" or "Understanding the Condition".
             4. Use bullet points (<ul> and <li>) for clarity in technical lists.
