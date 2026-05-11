@@ -4,6 +4,10 @@ import { createClient } from "@supabase/supabase-js";
 import Parser from "rss-parser";
 
 const parser = new Parser({
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+  },
   customFields: {
     item: ['media:content', 'media:thumbnail', 'enclosure']
   }
@@ -51,20 +55,27 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
         try {
            feed = await parser.parseURL(url);
         } catch (rssErr) {
-           // Fallback to JSON fetch if RSS fails (handles API hubs)
-           const res = await fetch(url);
-           const json = await res.json();
-           // Basic mapping for common JSON news structures
-           feed = {
-             title: json.name || json.title || "Intelligence Hub",
-             items: (json.articles || json.items || json.data || []).map((item: any) => ({
-               title: item.title || item.headline,
-               contentSnippet: item.description || item.summary || item.excerpt,
-               content: item.content || item.body || item.description,
-               link: item.url || item.link || item.source_url,
-               isoDate: item.publishedAt || item.date || item.created_at
-             }))
-           };
+           const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+           const text = await res.text();
+           try {
+              feed = await parser.parseString(text);
+           } catch (xmlErr) {
+              try {
+                 const json = JSON.parse(text);
+                 feed = {
+                   title: json.name || json.title || "Intelligence Hub",
+                   items: (json.articles || json.items || json.data || []).map((item: any) => ({
+                     title: item.title || item.headline,
+                     contentSnippet: item.description || item.summary || item.excerpt,
+                     content: item.content || item.body || item.description,
+                     link: item.url || item.link || item.source_url,
+                     isoDate: item.publishedAt || item.date || item.created_at
+                   }))
+                 };
+              } catch (jsonErr) {
+                 continue;
+              }
+           }
         }
 
         // Freshness Window: 7 Days (Expanded to capture more sources)
