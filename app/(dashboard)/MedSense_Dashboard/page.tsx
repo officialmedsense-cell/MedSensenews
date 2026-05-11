@@ -193,13 +193,13 @@ export default function MedSenseDashboard() {
       return;
     }
     
-    const staff = staffAccounts.find(s => s.email === loginEmail && s.password === loginPassword);
+    const staff = staffAccounts.find(s => s.email.trim().toLowerCase() === loginEmail.trim().toLowerCase() && s.password.trim() === loginPassword.trim());
     if (staff) {
       setCurrentUser({ email: staff.email, role: 'staff' });
       return;
     }
     
-    setLoginError("Unauthorized access. Invalid credentials.");
+    setLoginError(`Unauthorized access. Invalid credentials. (${staffAccounts.length} accounts sync'd)`);
   };
 
   const handleLogout = () => {
