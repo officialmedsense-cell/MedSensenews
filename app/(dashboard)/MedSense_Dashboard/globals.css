@@ -91,16 +91,22 @@ body {
 .medsense-app {
     display: grid;
     grid-template-columns: 280px 1fr;
+    grid-template-areas: "sidebar main";
     min-height: 100vh;
+    width: 100%;
+    background-color: var(--bg-base);
 }
 
 .dashboard-wrapper {
     width: 100%;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 /* Sidebar Navigation */
 .sidebar {
+    grid-area: sidebar;
+    width: 280px;
     background: var(--bg-surface);
     border-right: 1px solid var(--border-dim);
     padding: 32px 20px;
@@ -110,6 +116,7 @@ body {
     position: sticky;
     top: 0;
     height: 100vh;
+    z-index: 100;
 }
 
 .sidebar-logo {
@@ -173,10 +180,12 @@ body {
 
 /* Main Content Area */
 .main-viewport {
+    grid-area: main;
     padding: 40px;
-    max-width: 1400px;
-    margin: 0 auto;
     width: 100%;
+    min-width: 0; /* Prevents grid blowout */
+    display: flex;
+    flex-direction: column;
 }
 
 .header-row {

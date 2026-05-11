@@ -91,11 +91,13 @@ body {
 .medsense-app {
     display: grid;
     grid-template-columns: 280px 1fr;
+    grid-template-areas: "sidebar main";
     min-height: 100vh;
 }
 
 /* Sidebar Navigation */
 .sidebar {
+    grid-area: sidebar;
     background: var(--bg-surface);
     border-right: 1px solid var(--border-dim);
     padding: 32px 20px;
@@ -168,6 +170,7 @@ body {
 
 /* Main Content Area */
 .main-viewport {
+    grid-area: main;
     padding: 40px;
     max-width: 1400px;
     margin: 0 auto;
