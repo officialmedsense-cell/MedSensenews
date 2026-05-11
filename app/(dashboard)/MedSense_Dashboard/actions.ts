@@ -369,8 +369,9 @@ export async function addStaffAccount(name: string, email: string, password: str
   
   try {
     // 1. Synchronize with Supabase Auth (Main Editorial Board login)
-    const { data: { users } } = await supabase.auth.admin.listUsers();
-    const existingAuthUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    const { data: listData } = await supabase.auth.admin.listUsers();
+    const users = listData?.users || [];
+    const existingAuthUser = (users as any[]).find(u => u.email?.toLowerCase() === email.toLowerCase());
 
     if (existingAuthUser) {
        console.log(`[STAFF_SYNC] Updating existing Auth user: ${existingAuthUser.id}`);
@@ -420,8 +421,9 @@ export async function deleteStaffAccount(id: string) {
     
     if (member?.email) {
        // Note: Deleting from auth by email is tricky without ID, but we can list users
-       const { data: { users } } = await supabase.auth.admin.listUsers();
-       const authUser = users.find(u => u.email === member.email);
+       const { data: listData } = await supabase.auth.admin.listUsers();
+       const users = listData?.users || [];
+       const authUser = (users as any[]).find(u => u.email === member.email);
        if (authUser) {
           await supabase.auth.admin.deleteUser(authUser.id);
        }
