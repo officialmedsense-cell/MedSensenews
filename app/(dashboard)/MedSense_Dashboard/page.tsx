@@ -708,7 +708,7 @@ export default function MedSenseDashboard() {
         <div className="dashboard-grid" style={viewMode === 'fullFeed' || activeNav === 'aichat' ? { gridTemplateColumns: '1fr' } : {}}>
           {/* AI Chatbox View */}
           {activeNav === 'aichat' && (
-            <section id="aichat" className="aichat-interface" style={{ minHeight: '80vh', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '40px' }}>
+            <section id="aichat" className="aichat-interface">
                <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <div style={{ paddingBottom: '24px', borderBottom: '1px solid var(--border-dim)' }}>
                      <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Neural Interface</h2>

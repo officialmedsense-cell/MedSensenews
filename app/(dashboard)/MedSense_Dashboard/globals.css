@@ -702,3 +702,19 @@ body {
         gap: 12px;
     }
 }
+
+.aichat-interface {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 40px;
+    min-height: 80vh;
+}
+
+@media (max-width: 1024px) {
+    .aichat-interface {
+        grid-template-columns: 1fr !important;
+    }
+    .aichat-sidebar {
+        display: none !important;
+    }
+}
