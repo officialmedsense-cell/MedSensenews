@@ -359,15 +359,45 @@ export async function getStaffAccounts() {
 
 export async function addStaffAccount(name: string, email: string, password: string) {
   if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
-  console.log(`[STAFF_ADD] Attempting to add ${name} (${email})...`);
+  console.log(`[STAFF_ADD] Synchronizing ${name} (${email}) with Auth Service...`);
+  
   try {
-    const { data, error } = await supabase.from("staff").insert([{ name, email, password }]).select();
+    // 1. Create Supabase Auth User (for the main editor dashboard)
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { name, role: 'staff' }
+    });
+
+    if (authError) {
+      if (!authError.message.includes("already registered")) {
+        console.error("[AUTH_ADD_ERROR]", authError);
+        return { success: false, error: `Auth Error: ${authError.message}` };
+      }
+      
+      // User exists, so let's update their password to keep them in sync
+      const { data: { users } } = await supabase.auth.admin.listUsers();
+      const existingUser = users.find(u => u.email === email);
+      if (existingUser) {
+         await supabase.auth.admin.updateUserById(existingUser.id, { password });
+         console.log("[AUTH_UPDATE] Synchronized password for existing user.");
+      }
+    }
+
+    // 2. Add/Update Staff Table Record (for the AI dashboard)
+    const { data, error } = await supabase
+      .from("staff")
+      .upsert([{ name, email, password }], { onConflict: 'email' })
+      .select();
+
     if (error) {
        console.error("[STAFF_ADD_ERROR]", error);
        return { success: false, error: `DB Error: ${error.message} (${error.code})` };
     }
+
     console.log("[STAFF_ADD_SUCCESS]", data);
-    return { success: true, msg: "Staff account provisioned.", staff: data?.[0] };
+    return { success: true, msg: "Staff account synchronized across all boards.", staff: data?.[0] };
   } catch (error: any) {
     console.error("[STAFF_ADD_EXCEPTION]", error);
     return { success: false, error: `Exception: ${error.message}` };
@@ -377,9 +407,23 @@ export async function addStaffAccount(name: string, email: string, password: str
 export async function deleteStaffAccount(id: string) {
   if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
   try {
+    // 1. Get email to delete from auth
+    const { data: member } = await supabase.from("staff").select("email").eq("id", id).single();
+    
+    if (member?.email) {
+       // Note: Deleting from auth by email is tricky without ID, but we can list users
+       const { data: { users } } = await supabase.auth.admin.listUsers();
+       const authUser = users.find(u => u.email === member.email);
+       if (authUser) {
+          await supabase.auth.admin.deleteUser(authUser.id);
+       }
+    }
+
+    // 2. Delete from staff table
     const { error } = await supabase.from("staff").delete().eq("id", id);
     if (error) throw error;
-    return { success: true, msg: "Access revoked." };
+    
+    return { success: true, msg: "Access revoked from all boards." };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
