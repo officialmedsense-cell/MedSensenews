@@ -55,21 +55,29 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
         try {
            feed = await parser.parseURL(url);
         } catch (rssErr) {
-           const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+           // More robust headers to bypass basic blocks and accept both JSON & XML
+           const res = await fetch(url, { 
+             headers: { 
+               'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+               'Accept': 'application/json, application/rss+xml, application/xml, text/xml, */*'
+             } 
+           });
            const text = await res.text();
            try {
               feed = await parser.parseString(text);
            } catch (xmlErr) {
               try {
                  const json = JSON.parse(text);
+                 const itemsArray = Array.isArray(json) ? json : (json.articles || json.items || json.data || json.results || [json]); // Fallback to wrap object in array if single
+                 
                  feed = {
-                   title: json.name || json.title || "Intelligence Hub",
-                   items: (json.articles || json.items || json.data || []).map((item: any) => ({
-                     title: item.title || item.headline,
-                     contentSnippet: item.description || item.summary || item.excerpt,
-                     content: item.content || item.body || item.description,
-                     link: item.url || item.link || item.source_url,
-                     isoDate: item.publishedAt || item.date || item.created_at
+                   title: json.name || json.title || json.source || (Array.isArray(json) ? "JSON Hub" : "Intelligence Hub"),
+                   items: itemsArray.map((item: any) => ({
+                     title: item.title || item.headline || item.name || "Untitled Alert",
+                     contentSnippet: item.description || item.summary || item.excerpt || "No summary provided.",
+                     content: item.content || item.body || item.description || item.summary || "No full content available.",
+                     link: item.url || item.link || item.source_url || url,
+                     isoDate: item.publishedAt || item.date || item.created_at || new Date().toISOString()
                    }))
                  };
               } catch (jsonErr) {
@@ -173,17 +181,41 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
       // Continue with deduplicated list if DB check fails
     }
     
-    // Sort globally by pubDate descending to ensure freshest news from ALL hubs
+    // Sort each source's articles by date descending
     deduplicated.sort((a, b) => {
       const dateA = new Date(a.pubDate || 0).getTime();
       const dateB = new Date(b.pubDate || 0).getTime();
       return dateB - dateA;
     });
 
+    // Group by source to ensure diversity (Round-Robin interleaving)
+    const groupedBySource: Record<string, any[]> = {};
+    deduplicated.forEach(art => {
+      if (!groupedBySource[art.source]) groupedBySource[art.source] = [];
+      groupedBySource[art.source].push(art);
+    });
+
+    const interleaved = [];
+    let hasMore = true;
+    let idx = 0;
+    while (hasMore) {
+      hasMore = false;
+      for (const source in groupedBySource) {
+        if (idx < groupedBySource[source].length) {
+          interleaved.push(groupedBySource[source][idx]);
+          hasMore = true;
+        }
+      }
+      idx++;
+    }
+
+    // Take top 75 (most recent but diverse) and randomize their final presentation
+    const randomizedTopFeeds = interleaved.slice(0, 75).sort(() => Math.random() - 0.5);
+
     return {
       success: true,
-      articles: deduplicated.slice(0, 75), // Deliver up to 75 total articles per scan
-      count: deduplicated.length
+      articles: randomizedTopFeeds,
+      count: randomizedTopFeeds.length
     };
   } catch (error: any) {
     console.error("RSS Fetch Error:", error);
