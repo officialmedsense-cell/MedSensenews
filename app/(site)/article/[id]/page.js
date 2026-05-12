@@ -217,24 +217,29 @@ export default async function ArticlePage({ params }) {
         />
 
         {/* MedSense News Copyright Notice */}
-        <div style={{
+        <div className="medsense-copyright-notice" style={{
           marginTop: '2.5rem',
           padding: '1.25rem 1.5rem',
-          borderTop: '2px solid var(--primary, #0057a8)',
-          borderBottom: '1px solid var(--border, #e5e7eb)',
-          background: 'var(--bg-secondary, #f9fafb)',
-          borderRadius: '0 0 8px 8px'
+          borderTop: '3px solid #c8102e',
+          borderRadius: '0 0 8px 8px',
+          background: 'color-mix(in srgb, var(--bg-secondary, #f3f4f6) 100%, transparent)',
         }}>
           <p style={{
-            fontSize: '12px',
-            color: 'var(--text-muted, #6b7280)',
-            lineHeight: '1.7',
-            margin: 0
+            fontSize: '12.5px',
+            color: 'var(--text-secondary, inherit)',
+            lineHeight: '1.8',
+            margin: 0,
+            opacity: 1
           }}>
-            <strong style={{ color: 'var(--text-primary, #111827)', fontSize: '13px' }}>
+            <strong style={{ 
+              display: 'block',
+              fontSize: '13.5px', 
+              marginBottom: '4px',
+              color: 'var(--text-primary, inherit)',
+              letterSpacing: '0.01em'
+            }}>
               © {new Date().getFullYear()} MedSense News. All rights reserved.
             </strong>
-            <br />
             No part of this website or its content may be copied, reproduced, republished, uploaded, posted, transmitted, or distributed in any form without prior express written consent from MedSense News.
           </p>
         </div>

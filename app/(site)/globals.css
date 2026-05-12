@@ -4970,3 +4970,32 @@ img {
     .email-link { font-size: 1rem; padding: 1rem 1.5rem; }
     .contact-container { padding: 4rem 1.25rem; }
 }
+
+/* ============================================
+   MedSense Copyright Notice
+   ============================================ */
+.medsense-copyright-notice {
+  background: var(--bg-secondary, #f3f4f6);
+  border-top: 3px solid #c8102e;
+}
+
+.medsense-copyright-notice p {
+  color: var(--text, #1f2937);
+}
+
+.medsense-copyright-notice strong {
+  color: var(--text, #111827);
+}
+
+[data-theme="dark"] .medsense-copyright-notice {
+  background: #111111;
+  border-top: 3px solid #c8102e;
+}
+
+[data-theme="dark"] .medsense-copyright-notice p {
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .medsense-copyright-notice strong {
+  color: #f9fafb;
+}
