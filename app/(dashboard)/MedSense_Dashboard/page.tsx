@@ -1067,7 +1067,7 @@ export default function MedSenseDashboard() {
       {selectedArticle && (
         <div className="modal-overlay" onClick={() => setSelectedArticle(null)}>
            <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <div style={{ padding: '40px', borderBottom: '1px solid var(--border-dim)' }}>
+              <div className="modal-section" style={{ borderBottom: '1px solid var(--border-dim)' }}>
                  <div className="intel-meta">
                     <span className="badge badge-health">{selectedArticle.category}</span>
                     <span style={{ fontWeight: '700' }}>By {settings.authorName}</span>
@@ -1084,8 +1084,8 @@ export default function MedSenseDashboard() {
                  </div>
                  <h2 style={{ fontSize: '32px', fontWeight: '800', lineHeight: '1.2', marginTop: '16px' }}>{selectedArticle.title}</h2>
               </div>
-              <div style={{ padding: '40px', fontSize: '18px', lineHeight: '1.8', color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: selectedArticle.fullText }} />
-              <div style={{ padding: '32px 40px', background: 'var(--bg-surface)', borderTop: '1px solid var(--border-dim)', display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
+              <div className="modal-section" style={{ fontSize: '18px', lineHeight: '1.8', color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: selectedArticle.fullText }} />
+              <div className="modal-section" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-dim)', display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
                  <button className="btn btn-ghost" onClick={() => setSelectedArticle(null)}>Close</button>
                  <button 
                   className="btn btn-primary" 
