@@ -26,9 +26,9 @@ export default function TermsPage() {
           </div>
 
           <div className="legal-section">
-            <h3><i className="fas fa-copyright" style={{ marginRight: '0.6rem', color: 'var(--primary)' }}></i>Content Usage</h3>
+            <h3><i className="fas fa-copyright" style={{ marginRight: '0.6rem', color: 'var(--primary)' }}></i>Content Usage &amp; Copyright</h3>
             <p>
-              Users may not reproduce, republish, or distribute content from MedSense News without proper permission or attribution.
+              © 2026 MedSense News. All rights reserved. Readers may share article links and excerpts with proper credit to MedSense News. Unauthorized reproduction, redistribution, or commercial use of our content without written permission is prohibited.
             </p>
           </div>
 

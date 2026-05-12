@@ -240,7 +240,7 @@ export default async function ArticlePage({ params }) {
             }}>
               © {new Date().getFullYear()} MedSense News. All rights reserved.
             </strong>
-            No part of this website or its content may be copied, reproduced, republished, uploaded, posted, transmitted, or distributed in any form without prior express written consent from MedSense News.
+            No part of this website or its content may be copied, reproduced, republished, uploaded, posted, transmitted, or distributed in any form without prior express written consent from MedSense News. Readers may share article links and excerpts with proper credit to MedSense News. Unauthorized reproduction, redistribution, or commercial use of our content without written permission is prohibited.
           </p>
         </div>
 

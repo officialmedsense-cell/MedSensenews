@@ -202,7 +202,7 @@ export default async function SiteLayout({ children }) {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; 2026 MedSense News. All rights reserved. Powered by AOJ Group.</p>
+          <p>&copy; 2026 MedSense News. All rights reserved. Readers may share article links and excerpts with proper credit to MedSense News. Unauthorized reproduction, redistribution, or commercial use of our content without written permission is prohibited.</p>
           <div className="footer-bottom-links" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '2rem', fontSize: '0.75rem', opacity: 0.7 }}>
               <a href="/privacy" style={{ color: 'white', textDecoration: 'none' }}>Privacy Policy</a>
               <a href="/terms" style={{ color: 'white', textDecoration: 'none' }}>Terms of Service</a>
