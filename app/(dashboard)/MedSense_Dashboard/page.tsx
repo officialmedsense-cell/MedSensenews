@@ -11,7 +11,9 @@ import {
   searchExternalNews,
   getStaffAccounts,
   addStaffAccount,
-  deleteStaffAccount
+  deleteStaffAccount,
+  getSourcesFromCloud,
+  saveSourcesToCloud
 } from "./actions";
 
 // --- Types ---
@@ -143,9 +145,16 @@ export default function MedSenseDashboard() {
     const savedTheme = localStorage.getItem('medsense_theme') as 'dark' | 'light';
     const savedUser = localStorage.getItem('medsense_user');
     
-    if (savedSources) {
-      try { setSources(JSON.parse(savedSources)); } catch (e) {}
-    }
+    // Cloud sync for sources
+    getSourcesFromCloud().then(res => {
+      if (res.success && res.sources && res.sources.length > 0) {
+         setSources(res.sources);
+         localStorage.setItem('medsense_sources', JSON.stringify(res.sources));
+      } else if (savedSources) {
+         try { setSources(JSON.parse(savedSources)); } catch (e) {}
+      }
+    });
+
     if (savedSettings) {
       try { setSettings(JSON.parse(savedSettings)); } catch (e) {}
     }
@@ -162,7 +171,10 @@ export default function MedSenseDashboard() {
 
   useEffect(() => {
     localStorage.setItem('medsense_sources', JSON.stringify(sources));
-  }, [sources]);
+    if (authChecked) {
+      saveSourcesToCloud(sources).catch(console.error);
+    }
+  }, [sources, authChecked]);
 
   useEffect(() => {
     localStorage.setItem('medsense_settings', JSON.stringify(settings));
@@ -907,7 +919,9 @@ export default function MedSenseDashboard() {
                     <div className="intel-body">
                       <div className="intel-meta">
                         <span className={`badge ${article.category === 'Research' ? 'badge-tech' : 'badge-health'}`}>{article.category}</span>
-                        <span style={{ color: 'var(--text-muted)' }}>{article.source}</span>
+                        <a href={article.sourceUrl !== "#" ? article.sourceUrl : undefined} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
+                           {article.source}
+                        </a>
                         <span>•</span>
                         <span style={{ color: 'var(--accent-primary)', fontWeight: '700' }}>{article.relevance}% Match</span>
                       </div>
@@ -1059,6 +1073,14 @@ export default function MedSenseDashboard() {
                     <span style={{ fontWeight: '700' }}>By {settings.authorName}</span>
                     <span>•</span>
                     <span>{selectedArticle.date}</span>
+                    {selectedArticle.sourceUrl && selectedArticle.sourceUrl !== "#" && (
+                      <>
+                        <span>•</span>
+                        <a href={selectedArticle.sourceUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'underline' }}>
+                          Source: {selectedArticle.source}
+                        </a>
+                      </>
+                    )}
                  </div>
                  <h2 style={{ fontSize: '32px', fontWeight: '800', lineHeight: '1.2', marginTop: '16px' }}>{selectedArticle.title}</h2>
               </div>

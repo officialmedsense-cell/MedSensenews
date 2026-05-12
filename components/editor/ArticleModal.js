@@ -206,6 +206,11 @@ export default function ArticleModal({ article, session, onClose, onSaved, onErr
         <p className={styles.modalSub}>
           {isEditing ? `Editing: ${article.title.slice(0, 50)}…` : 'Publish a new medical report to MedSense News readers'}
         </p>
+        {isEditing && article.source_url && (
+          <p style={{ fontSize: '0.85rem', marginBottom: '1rem', color: 'var(--text-muted)' }}>
+            <strong>Source AI Link:</strong> <a href={article.source_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>{article.source_url}</a>
+          </p>
+        )}
 
         <form onSubmit={e => handleSubmit(e, null)} className={styles.articleForm}>
 

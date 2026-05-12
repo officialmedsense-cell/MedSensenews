@@ -644,3 +644,58 @@ export async function publishToNewsSite(payload: {
     return { success: false, error: String(error.message || error) };
   }
 }
+
+/**
+ * Cloud Sync for Intelligence Hubs
+ * Stores sources configuration in the articles table to persist across devices.
+ */
+export async function getSourcesFromCloud() {
+  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  try {
+    const { data, error } = await supabase
+      .from("articles")
+      .select("content")
+      .eq("title", "SYSTEM_HUBS_CONFIG")
+      .maybeSingle();
+
+    if (error && error.code !== "PGRST116") throw error; // ignore no rows found
+    if (data && data.content) {
+       return { success: true, sources: JSON.parse(data.content) };
+    }
+    return { success: true, sources: [] };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function saveSourcesToCloud(sources: any[]) {
+  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  try {
+    // Delete existing
+    await supabase
+      .from("articles")
+      .delete()
+      .eq("title", "SYSTEM_HUBS_CONFIG");
+      
+    // Insert new config
+    const { error: insError } = await supabase
+      .from("articles")
+      .insert([{
+         title: "SYSTEM_HUBS_CONFIG",
+         content: JSON.stringify(sources),
+         category: "SYSTEM",
+         status: "draft",
+         slug: "system-hubs-config",
+         author: "system",
+         date: new Date().toISOString(),
+         excerpt: "System configuration for Intelligence Hubs",
+         views: 0,
+         trending: false
+      }]);
+      
+    if (insError) throw insError;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

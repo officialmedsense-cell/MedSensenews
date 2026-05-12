@@ -66,13 +66,15 @@ export default function EditorDashboard() {
     try {
       const { data, error } = await supabase
         .from('articles')
-        .select('id, title, category, status, author, date, created_at, image, excerpt')
+        .select('id, title, category, status, author, date, created_at, image, excerpt, source_url')
         .order('date', { ascending: false });
         
       if (error) {
         setDataError('Failed to load articles: ' + error.message);
       }
-      setArticles(data || []);
+      const filteredData = (data || []).filter(a => a.title !== 'SYSTEM_HUBS_CONFIG');
+      setArticles(filteredData);
+
     } catch (err) {
       setDataError('Network exception: ' + err.message);
     } finally {
@@ -527,6 +529,11 @@ export default function EditorDashboard() {
                         </td>
                         <td>
                           <div className={styles.actions}>
+                            {article.source_url && (
+                              <button title="View original source" className={styles.actionBtn} onClick={() => window.open(article.source_url, '_blank')}>
+                                <i className="fas fa-external-link-alt" />
+                              </button>
+                            )}
                             <button title="Copy live link" className={styles.actionBtn} onClick={() => copyLink(article.id)}>
                               <i className="fas fa-link" />
                             </button>
