@@ -30,33 +30,16 @@ async function getArticle(identifier) {
 
 async function getOtherArticles(currentId, category) {
   try {
-    // 1. Fetch from same category
-    const { data: categoryArticles } = await supabase
+    const { data } = await supabase
       .from('articles')
       .select('*')
       .eq('status', 'published')
       .eq('category', category)
       .neq('id', currentId)
-      .limit(8);
+      .order('date', { ascending: false })
+      .limit(20);
 
-    let otherArticles = categoryArticles || [];
-
-    // 2. If less than 8, fill with latest published articles
-    if (otherArticles.length < 8) {
-      const excludeIds = [currentId, ...otherArticles.map(a => a.id)];
-      const { data: latestArticles } = await supabase
-        .from('articles')
-        .select('*')
-        .eq('status', 'published')
-        .not('id', 'in', `(${excludeIds.join(',')})`)
-        .order('date', { ascending: false })
-        .limit(8 - otherArticles.length);
-      
-      if (latestArticles) {
-        otherArticles = [...otherArticles, ...latestArticles];
-      }
-    }
-    return otherArticles;
+    return data || [];
   } catch (err) {
     console.error('Error fetching other articles:', err);
     return [];
