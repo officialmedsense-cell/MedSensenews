@@ -51,10 +51,8 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
           return itemDate >= twoDaysAgo;
         });
 
-        // Fallback: If the source hasn't posted in 48 hours, grab their single freshest article
-        if (filtered.length === 0 && feed.items.length > 0) {
-           filtered = [feed.items[0]];
-        }
+        // Strictly ignore news that is not within the 48-hour window
+        if (filtered.length === 0) continue;
 
         allArticles.push(...filtered.map(item => {
           // Extract Original Image
@@ -125,9 +123,10 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
             content: `You are a professional medical journalist. Rewrite the provided medical news into a high-fidelity, journalistic article.
             
             STRICT FORMATTING RULES:
-            1. Use exactly ONE main heading (the title).
-            2. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
-            3. Use <h3> for sub-sections like "Why This Is Escalating" or "Understanding the Condition".
+            1. Use exactly ONE main heading (the title). NEVER repeat this title inside the "content" field.
+            2. NEVER include <h1> or <h2> tags in the "content" field. The "content" must start directly with the article body.
+            3. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
+            4. Use <h3> for sub-sections like "Why This Is Escalating" or "Understanding the Condition".
             4. Use bullet points (<ul> and <li>) for clarity in technical lists.
             5. Always end with a "MedSense Insight" section and a "Key Takeaway" section.
             6. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.

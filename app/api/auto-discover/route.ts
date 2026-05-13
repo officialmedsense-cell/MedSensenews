@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         const pubResult = await publishToNewsSite({
           headline: aiResult.transformed.title,
           category: aiResult.transformed.category || 'Health',
-          author: 'MedSense AI',
+          author: 'Damilare',
           summary: aiResult.transformed.summary,
           fullReport: aiResult.transformed.content,
           visualKeyword: aiResult.transformed.visual_keyword,

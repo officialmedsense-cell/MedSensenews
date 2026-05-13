@@ -96,20 +96,18 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
            }
         }
 
-        // Freshness Window: 7 Days (Expanded to capture more sources)
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        // Freshness Window: 48 Hours (As requested)
+        const fortyEightHoursAgo = new Date();
+        fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
         
         let filtered = feed.items.filter((item: any) => {
           if (!item.isoDate && !item.pubDate) return false;
           const itemDate = new Date(item.isoDate || item.pubDate!);
-          return itemDate >= oneWeekAgo;
+          return itemDate >= fortyEightHoursAgo;
         });
 
-        // Fallback: Freshest signal if none in window
-        if (filtered.length === 0 && feed.items.length > 0) {
-           filtered = [feed.items[0]];
-        }
+        // Strictly ignore news that is not within the 48-hour window
+        if (filtered.length === 0) continue;
 
         allArticles.push(...filtered.map((item: any) => {
           let imgUrl = null;
@@ -287,8 +285,9 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
             content: `You are a professional medical journalist. Rewrite the provided medical news into a high-fidelity, journalistic article.
             
             STRICT FORMATTING RULES:
-            1. Use exactly ONE main heading (the title). NEVER include sub-headlines or alternative titles in the body.
-            2. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
+            1. Use exactly ONE main heading (the title). NEVER repeat this title inside the "content" field.
+            2. NEVER include <h1> or <h2> tags in the "content" field. The "content" must start directly with the article body.
+            3. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
             3. Use <h3> for sub-sections like "Why This Is Escalating" or "Understanding the Condition".
             4. Use bullet points (<ul> and <li>) for clarity in technical lists.
             5. Always end with a "MedSense Insight" section and a "Key Takeaway" section.
@@ -605,38 +604,51 @@ export async function publishToNewsSite(payload: {
 
   try {
     // 1. DUPLICATE CHECK — by source URL first (most reliable), then by title
-    if (payload.sourceUrl) {
+    // Also normalize titles for better matching
+    if (payload.sourceUrl && payload.sourceUrl !== "#") {
       const { data: urlDup } = await pubClient
         .from('articles')
-        .select('id')
+        .select('id, title')
         .eq('source_url', payload.sourceUrl)
         .maybeSingle();
       if (urlDup) {
-        return { success: false, error: "Article already exists on MedSense News (Duplicate Prevented)." };
+        return { success: false, error: `Article already exists (Source Link Match): "${urlDup.title}"` };
       }
     }
 
+    const normalizedHeadline = payload.headline.toLowerCase().trim().replace(/[^\w\s]/g, '');
     const { data: existing, error: checkError } = await pubClient
       .from('articles')
-      .select('id')
-      .eq('title', payload.headline)
+      .select('id, title')
+      .ilike('title', payload.headline.trim())
       .maybeSingle();
 
     if (checkError) throw checkError;
     if (existing) {
-      return { success: false, error: "Article already exists on MedSense News (Duplicate Prevented)." };
+      return { success: false, error: `Article already exists (Title Match): "${existing.title}"` };
     }
 
     const exactPublishTime = new Date().toISOString();
     
     // 2. IMAGE SELECTION PRIORITY:
     // Try to use the original photo from the news site first.
-    // If it doesn't exist, fallback to searching a global photo database (Flickr) using the AI's keyword.
+    // If it doesn't exist OR looks like a generic logo/placeholder, fallback to AI search.
     let heroImage = payload.originalImage;
-    if (!heroImage) {
-      const searchTerms = payload.visualKeyword || payload.category || 'medicine';
+    
+    const isGenericImage = heroImage && (
+      heroImage.toLowerCase().includes('logo') || 
+      heroImage.toLowerCase().includes('placeholder') || 
+      heroImage.toLowerCase().includes('default') ||
+      heroImage.toLowerCase().includes('favicon') ||
+      heroImage.toLowerCase().includes('avatar')
+    );
+
+    if (!heroImage || isGenericImage || heroImage.length < 10) {
+      const searchTerms = payload.visualKeyword || payload.category || 'medical research';
       // Search Flickr for real, authentic photos matching the medical keyword
-      heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},medical/all`;
+      // Added a random seed (?lock=) to ensure each article gets a unique image even if using the same keyword
+      const randomSeed = Math.floor(Math.random() * 1000000);
+      heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},medical/all?lock=${randomSeed}`;
     }
 
     const createSlug = (text: string) => {
