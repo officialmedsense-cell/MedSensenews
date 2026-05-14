@@ -6,7 +6,7 @@ import ArticleModal from './ArticleModal';
 import StaffModal from './StaffModal';
 import styles from './editor.module.css';
 
-const CATEGORIES = ['Health', 'Medicine', 'Research', 'Public Health', 'Technology'];
+const CATEGORIES = ['Health', 'Medicine', 'Research', 'Public Health', 'Technology', 'Weather'];
 
 export default function EditorDashboard() {
   // ── Auth ─────────────────────────────────────────────

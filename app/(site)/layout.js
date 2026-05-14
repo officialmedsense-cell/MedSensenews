@@ -3,7 +3,11 @@ import { Inter, Playfair_Display } from 'next/font/google';
 import Link from 'next/link';
 import NavbarActions from '@/components/NavbarActions';
 import MobileMenu from '@/components/MobileMenu';
+import ScrollToTop from '@/components/ScrollToTop';
+import CookieConsent from '@/components/CookieConsent';
 import SmartHeader from '@/components/SmartHeader';
+import PageLoader from '@/components/PageLoader';
+import { Suspense } from 'react';
 import LiveClock from '@/components/LiveClock';
 import SubscribeModal from '@/components/SubscribeModal';
 import NewsletterForm from '@/components/NewsletterForm';
@@ -64,7 +68,7 @@ export default async function SiteLayout({ children }) {
           display: 'flex',
           alignItems: 'center',
           width: '100%', 
-          padding: '1rem 2rem',
+          padding: '0.5rem 2rem',
           borderBottom: '1px solid var(--border)',
           background: 'var(--bg)',
         }}>
@@ -91,8 +95,8 @@ export default async function SiteLayout({ children }) {
             justifyContent: 'center', 
             alignItems: 'center', 
             width: '100%', 
-            position: 'relative',
-            minHeight: '50px'
+            transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
+            minHeight: '40px'
           }}>
             
             <div className="mobile-menu-btn" style={{ position: 'absolute', left: '1.5rem' }}>
@@ -134,18 +138,31 @@ export default async function SiteLayout({ children }) {
                     <i className="fas fa-fire"></i> Trending
                   </Link>
                 </li>
-                {['Home', 'Health', 'Medicine', 'Research', 'Public Health', 'Technology'].map(cat => (
-                  <li key={cat}>
-                    <Link href={cat === 'Home' ? '/' : `/category/${cat}`} style={{ 
-                      textDecoration: 'none', 
-                      color: 'var(--text)', 
-                      fontWeight: 700, 
-                      fontSize: '0.9rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px'
-                    }}>{cat}</Link>
-                  </li>
-                ))}
+                {['Home', 'Health', 'Medicine', 'Research', 'Global Health', 'Public Health', 'Technology', 'Weather', 'Health Alerts', 'Nigeria/Africa Health'].map(cat => {
+                  // Shorthand mapping for top nav to keep it on one line
+                  const displayNames = {
+                    'Medicine': 'Med',
+                    'Global Health': 'Global',
+                    'Public Health': 'Public',
+                    'Technology': 'Tech',
+                    'Health Alerts': 'Alerts',
+                    'Nigeria/Africa Health': 'Africa'
+                  };
+                  return (
+                    <li key={cat}>
+                      <Link href={cat === 'Home' ? '/' : `/category/${encodeURIComponent(cat)}`} style={{ 
+                        textDecoration: 'none', 
+                        color: 'var(--text)', 
+                        fontWeight: 700, 
+                        fontSize: '0.8rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.2px'
+                      }}>
+                        {displayNames[cat] || cat}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </nav>
           </div>
@@ -178,11 +195,16 @@ export default async function SiteLayout({ children }) {
             <div className="footer-links">
               <h4>Categories</h4>
               <ul>
-                <li><a href="/category/Health">Health</a></li>
-                <li><a href="/category/Medicine">Medicine</a></li>
-                <li><a href="/category/Research">Research</a></li>
-                <li><a href="/category/Public Health">Public Health</a></li>
-                <li><a href="/category/Technology">Technology</a></li>
+                <li><Link href="/">Home</Link></li>
+                <li><Link href="/category/Health">Health</Link></li>
+                <li><Link href="/category/Medicine">Medicine</Link></li>
+                <li><Link href="/category/Research">Research</Link></li>
+                <li><Link href={`/category/${encodeURIComponent('Global Health')}`}>Global Health</Link></li>
+                <li><Link href={`/category/${encodeURIComponent('Public Health')}`}>Public Health</Link></li>
+                <li><Link href="/category/Technology">Technology</Link></li>
+                <li><Link href="/category/Weather">Weather</Link></li>
+                <li><Link href={`/category/${encodeURIComponent('Health Alerts')}`}>Health Alerts</Link></li>
+                <li><Link href={`/category/${encodeURIComponent('Nigeria/Africa Health')}`}>Nigeria & Africa Health</Link></li>
               </ul>
             </div>
             <div className="footer-links">
@@ -202,7 +224,7 @@ export default async function SiteLayout({ children }) {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; 2026 MedSense News. All rights reserved. Readers may share article links and excerpts with proper credit to MedSense News. Unauthorized reproduction, redistribution, or commercial use of our content without written permission is prohibited.</p>
+          <p>&copy; 2026 MedSense News. All rights reserved. Unauthorized reproduction, distribution, modification, or commercial use of any content on this platform without prior written permission is strictly prohibited. For licensing, partnerships, or research inquiries, contact the MedSense News.</p>
           <div className="footer-bottom-links" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '2rem', fontSize: '0.75rem', opacity: 0.7 }}>
               <a href="/privacy" style={{ color: 'white', textDecoration: 'none' }}>Privacy Policy</a>
               <a href="/terms" style={{ color: 'white', textDecoration: 'none' }}>Terms of Service</a>
@@ -214,8 +236,13 @@ export default async function SiteLayout({ children }) {
 
   return (
     <div className={`${inter.variable} ${playfair.variable} ${inter.className}`}>
+      <Suspense fallback={null}>
+        <PageLoader />
+      </Suspense>
       <ConditionalShell header={header} footer={footer}>
         {children}
+        <ScrollToTop />
+        <CookieConsent />
       </ConditionalShell>
     </div>
   );

@@ -107,6 +107,16 @@ export default async function ArticlePage({ params }) {
 
   const otherArticles = await getOtherArticles(article.id, article.category);
 
+  const calculateReadingTime = (content) => {
+    if (!content) return 0;
+    const wordsPerMinute = 225;
+    const text = content.replace(/<[^>]*>/g, '');
+    const words = text.split(/\s+/).length;
+    return Math.ceil(words / wordsPerMinute);
+  };
+
+  const readingTime = calculateReadingTime(article.content);
+
   const formatDate = (dateString) => {
     if (!dateString) return '';
     // If it's a simple YYYY-MM-DD, parse as local to avoid UTC shift
@@ -159,23 +169,36 @@ export default async function ArticlePage({ params }) {
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
     />
-    <article className="article-container">
+    <article className="article-container" style={{ paddingBottom: '4rem' }}>
       <header className="article-header">
-        <span className="category-tag article-category">{article.category}</span>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <span className="category-tag article-category" style={{ margin: 0 }}>{article.category}</span>
+
+          {article.category === 'Research' && (
+            <span className="fact-check-badge" style={{ background: 'var(--intel-blue)' }}>
+              <i className="fas fa-microscope"></i> Peer Reviewed
+            </span>
+          )}
+        </div>
+
         <h1 className="article-title">{article.title}</h1>
-        <div className="article-meta">
+        
+        <div className="article-meta" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '2rem', marginBottom: '2rem', justifyContent: 'center' }}>
           <div className="author-info">
-            <div className="author-avatar">
+            <div className="author-avatar" style={{ background: 'var(--intel-blue)' }}>
               {article.author.charAt(0).toUpperCase()}
             </div>
-            <span>By {article.author}</span>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontWeight: 800, color: 'var(--text)' }}>{article.author}</span>
+            </div>
           </div>
-          &bull; 
-          <span>{formatDate(article.created_at || article.date)}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <span style={{ fontSize: '0.9rem', opacity: 0.7 }}>{formatDate(article.created_at || article.date)}</span>
+          </div>
         </div>
       </header>
 
-      <div className="image-branding-wrapper article-main-image-container" style={{ position: 'relative', width: '100%' }}>
+      <div className="image-branding-wrapper article-main-image-container" style={{ position: 'relative', width: '100%', borderRadius: '12px', overflow: 'hidden', marginBottom: '3rem' }}>
         <Image 
           src={article.image} 
           alt={article.title} 
@@ -187,28 +210,31 @@ export default async function ArticlePage({ params }) {
         <div className="download-protection-overlay"></div>
       </div>
 
-
-
         <div 
           className="article-content"
+          style={{ fontSize: '1.2rem', lineHeight: 1.8 }}
           dangerouslySetInnerHTML={{ __html: article.content }} 
         />
 
-        <SocialShare 
-          url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app'}/article/${article.slug || article.id}`} 
-          title={article.title} 
-        />
+
+
+        <div style={{ margin: '3rem 0' }}>
+          <SocialShare 
+            url={`${process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app'}/article/${article.slug || article.id}`} 
+            title={article.title} 
+          />
+        </div>
 
         {/* MedSense News Copyright Notice */}
         <div className="medsense-copyright-notice" style={{
           marginTop: '2.5rem',
-          padding: '1.25rem 1.5rem',
-          borderTop: '3px solid #c8102e',
+          padding: '1.5rem',
+          borderTop: '4px solid var(--intel-blue)',
           borderRadius: '0 0 8px 8px',
-          background: 'color-mix(in srgb, var(--bg-secondary, #f3f4f6) 100%, transparent)',
+          background: 'var(--bg-secondary)',
         }}>
           <p style={{
-            fontSize: '12.5px',
+            fontSize: '13px',
             color: 'var(--text-secondary, inherit)',
             lineHeight: '1.8',
             margin: 0,
@@ -216,18 +242,16 @@ export default async function ArticlePage({ params }) {
           }}>
             <strong style={{ 
               display: 'block',
-              fontSize: '13.5px', 
-              marginBottom: '4px',
+              fontSize: '14px', 
+              marginBottom: '6px',
               color: 'var(--text-primary, inherit)',
               letterSpacing: '0.01em'
             }}>
               © {new Date().getFullYear()} MedSense News. All rights reserved.
             </strong>
-            No part of this website or its content may be copied, reproduced, republished, uploaded, posted, transmitted, or distributed in any form without prior express written consent from MedSense News. Readers may share article links and excerpts with proper credit to MedSense News. Unauthorized reproduction, redistribution, or commercial use of our content without written permission is prohibited.
+            Unauthorized reproduction, distribution, modification, or commercial use of any content on this platform without prior written permission is strictly prohibited. For licensing, partnerships, or research inquiries, contact the MedSense News.
           </p>
         </div>
-
-
 
       <CommentSection articleId={article.id} />
     </article>

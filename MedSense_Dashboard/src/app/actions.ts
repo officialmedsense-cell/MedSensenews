@@ -136,7 +136,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
               "title": "A compelling, journalistic headline (e.g., Rising Concern: ...)",
               "summary": "A 2-sentence professional summary.",
               "content": "Full HTML content following the rules above.",
-              "category": "One of: [Health, Medicine, Research, Public Health, Technology]",
+              "category": "One of: [Health, Medicine, Research, Public Health, Technology, Weather]",
               "visual_keyword": "A single specific medical keyword for image searching (e.g., stethoscope, lab-technician, surgery, dna)"
             }
             
@@ -238,9 +238,9 @@ const CATEGORY_IMAGES: Record<string, string> = {
   'Medicine': "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200",
   'Research': "https://images.unsplash.com/photo-1579154273821-396417646a7d?auto=format&fit=crop&q=80&w=1200",
   'Vaccine': "https://images.unsplash.com/photo-1618961734760-466979ce35b0?auto=format&fit=crop&q=80&w=1200",
-  'AI / Robotics': "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=1200",
   'Public Health': "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=1200",
   'Technology': "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=1200",
+  'Weather': "https://images.unsplash.com/photo-1592210454359-9043f067919b?auto=format&fit=crop&q=80&w=1200",
   'Breaking': "https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&q=80&w=1200"
 };
 

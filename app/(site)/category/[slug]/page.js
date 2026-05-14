@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import BbcCard from '@/components/BbcCard';
+import WeatherWidget from '@/components/WeatherWidget';
 
 export const revalidate = 60; // Revalidate every minute
 
@@ -13,42 +14,131 @@ export async function generateMetadata({ params }) {
 }
 
 async function getCategoryArticles(category) {
-  const { data, error } = await supabase
+  let query = supabase
     .from('articles')
     .select('*')
-    .eq('status', 'published')
-    .ilike('category', category) // Case-insensitive matching
-    .order('date', { ascending: false });
-  
+    .eq('status', 'published');
+
+  if (category === 'Health Alerts') {
+    query = query.or(`category.ilike.Health Alerts,category.ilike.Outbreak,title.ilike.%outbreak%,excerpt.ilike.%outbreak%,title.ilike.%emergency%,excerpt.ilike.%emergency%`);
+  } else if (category === 'Weather') {
+    query = query.or(`category.ilike.Weather,category.ilike.Environment,title.ilike.%weather%,title.ilike.%climate%,excerpt.ilike.%weather%,excerpt.ilike.%climate%,title.ilike.%storm%,title.ilike.%heat%`);
+  } else if (category === 'Global Health') {
+    query = query.or(`category.ilike.Global Health,category.ilike.Public Health,title.ilike.%global%,title.ilike.%world%,title.ilike.%who%,title.ilike.%international%,title.ilike.%pandemic%,excerpt.ilike.%global%,excerpt.ilike.%world%`);
+  } else if (category === 'Nigeria/Africa Health') {
+    query = query.or(`category.ilike.Nigeria/Africa Health,category.ilike.Health,title.ilike.%nigeria%,title.ilike.%africa%,excerpt.ilike.%nigeria%,excerpt.ilike.%africa%`);
+  } else {
+    query = query.ilike('category', category);
+  }
+
+  const { data, error } = await query.order('date', { ascending: false }).limit(200);
+
   if (error) return [];
   return data;
+}
+
+function EditorialCycle({ articles, cycleIndex }) {
+  // Desktop Pattern: 2 - 4 - 3 - 8L - 4 - 4 (Total 25)
+  // Mobile Pattern:  1 - 3 - 2 - 8L - 3 - 3 ... (Total 20 per set)
+  
+  // To satisfy both perfectly while sharing content, we'll use a 25-article slice
+  // and handle the mobile specific counts using CSS hide/show or just let them flow.
+  // However, since the user was very specific, we will render TWO distinct layouts 
+  // and toggle them with CSS for zero layout-shift.
+
+  return (
+    <div className="cycle-container">
+      {cycleIndex > 0 && <hr className="cycle-divider" />}
+
+      {/* DESKTOP EXCLUSIVE VIEW (2-4-3-8L-4-4) */}
+      <div className="desktop-cycle-layout">
+        <div className="grid-2">{articles.slice(0, 2).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="grid-4">{articles.slice(2, 6).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="grid-3">{articles.slice(6, 9).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="list-section">
+          <h3 className="list-header">Editorial Intelligence</h3>
+          <div className="list-grid">{articles.slice(9, 17).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
+        </div>
+        <div className="grid-4">{articles.slice(17, 21).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="grid-4">{articles.slice(21, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
+      </div>
+
+      {/* MOBILE EXCLUSIVE VIEW (1-3-2-8L-3-3) */}
+      <div className="mobile-cycle-layout">
+        <div className="m-grid-1">{articles.slice(0, 1).map(a => <BbcCard key={a.id} article={a} isFeatured={cycleIndex === 0} />)}</div>
+        <div className="m-grid-3">{articles.slice(1, 4).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="m-grid-2">{articles.slice(4, 6).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="list-section">
+           <div className="list-grid">{articles.slice(6, 14).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
+        </div>
+        <div className="m-grid-3">{articles.slice(14, 17).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="m-grid-3">{articles.slice(17, 20).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        {/* Remaining 5 articles in cycle of 25 shown as standard grid on mobile */}
+        <div className="m-grid-2">{articles.slice(20, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
+      </div>
+    </div>
+  );
 }
 
 export default async function CategoryPage({ params }) {
   const { slug } = await params;
   const category = decodeURIComponent(slug);
   const articles = await getCategoryArticles(category);
+  const isWeather = category === 'Weather';
+
+  const cycles = [];
+  for (let i = 0; i < articles.length; i += 25) {
+    cycles.push(articles.slice(i, i + 25));
+  }
 
   return (
-    <div className="container" style={{ marginTop: '3rem', marginBottom: '5rem', minHeight: '60vh' }}>
-      <div className="section-header" style={{ marginBottom: '2rem', borderBottom: '2px solid var(--border)', paddingBottom: '1rem' }}>
-        <h1 className="article-title" style={{ fontSize: '2.2rem', color: 'var(--primary)', fontWeight: 800 }}>
-          {category}
+    <div className="container" style={{ marginTop: '2.5rem', marginBottom: '8rem' }}>
+      <div className="section-header" style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1.25rem' }}>
+        <h1 className="article-title" style={{ fontSize: '2.2rem', color: 'var(--intel-navy)', fontWeight: 900, textTransform: 'uppercase' }}>
+          {isWeather && <i className="fas fa-cloud-sun-rain" style={{ marginRight: '0.75rem', color: 'var(--intel-blue)' }}></i>}
+          {category === 'Nigeria/Africa Health' ? 'Nigeria & Africa Health' : category}
         </h1>
       </div>
 
-      {articles.length === 0 ? (
-        <div className="empty-state" style={{ textAlign: 'center', padding: '4rem 0', opacity: 0.7 }}>
-          <i className="fas fa-newspaper" style={{ fontSize: '3rem', marginBottom: '1rem' }}></i>
-          <p>No articles found for the {category} category yet. Please check back later!</p>
-        </div>
-      ) : (
-        <div className="bbc-bottom-section">
-          {articles.map(article => (
-            <BbcCard key={article.id} article={article} />
-          ))}
-        </div>
-      )}
+      {isWeather && <WeatherWidget />}
+
+      <div className="dynamic-editorial-flow">
+        {cycles.map((chunk, index) => (
+          <EditorialCycle key={index} articles={chunk} cycleIndex={index} />
+        ))}
+      </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .mobile-cycle-layout { display: none; }
+        .desktop-cycle-layout { display: flex; flex-direction: column; gap: 3rem; }
+        
+        .cycle-divider { border: 0; border-top: 1px solid var(--border); margin: 4rem 0; opacity: 0.5; }
+        .grid-2, .grid-3, .grid-4 { display: grid; gap: 1.5rem; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+        .list-section { background: var(--bg-secondary); padding: 3rem; border-radius: 12px; }
+        .list-header { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; margin-bottom: 2.5rem; color: var(--intel-blue); text-align: center; }
+        .list-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.5rem; }
+
+        @media (max-width: 1023px) {
+          .desktop-cycle-layout { display: none; }
+          .mobile-cycle-layout { display: flex; flex-direction: column; gap: 1.5rem; }
+          
+          .m-grid-1, .m-grid-2, .m-grid-3 { display: grid; gap: 0.75rem; }
+          .m-grid-1 { grid-template-columns: 1fr; }
+          .m-grid-2 { grid-template-columns: repeat(2, 1fr); }
+          .m-grid-3 { grid-template-columns: repeat(3, 1fr); }
+
+          .mobile-cycle-layout .list-section { padding: 1.5rem 0.75rem; border-radius: 8px; }
+          .mobile-cycle-layout .list-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+          
+          .m-grid-3 h3 { font-size: 0.75rem !important; line-height: 1.2 !important; }
+          .m-grid-3 p { display: none !important; }
+          .m-grid-3 .bbc-card-meta { font-size: 0.6rem !important; }
+        }
+      `}} />
     </div>
   );
 }

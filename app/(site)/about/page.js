@@ -126,7 +126,7 @@ export default function AboutPage() {
       </section>
 
       {/* Core Values */}
-      <section className="core-values">
+      <section className="core-values" style={{ padding: '5rem 0' }}>
         <div className="container">
           <div className="section-header-v2 center">
             <h2 className="section-title-v2">Our Core Values</h2>
@@ -148,6 +148,38 @@ export default function AboutPage() {
                 <p>{value.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Editorial & Fact-Check Policies */}
+      <section style={{ background: 'var(--intel-navy)', color: 'white', padding: '6rem 0' }}>
+        <div className="container">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5rem' }} className="mobile-grid-1">
+            <div>
+              <h2 className="intelligence-section-title" style={{ color: 'white', borderLeftColor: 'var(--intel-accent)' }}>
+                Editorial Standards
+              </h2>
+              <p style={{ opacity: 0.8, lineHeight: 1.8 }}>
+                Our editorial process is rigorous. Every article undergoes a three-stage review:
+                <br /><br />
+                1. <strong>Verification</strong>: Cross-referencing with primary medical journals and official health bodies (WHO, CDC, NCDC).
+                <br />
+                2. <strong>Medical Review</strong>: Ensuring scientific terminology is used accurately.
+                <br />
+                3. <strong>Ethical Filter</strong>: Avoiding sensationalism and ensuring patient privacy.
+              </p>
+            </div>
+            <div>
+              <h2 className="intelligence-section-title" style={{ color: 'white', borderLeftColor: 'var(--fact-green)' }}>
+                Fact-Checking Policy
+              </h2>
+              <p style={{ opacity: 0.8, lineHeight: 1.8 }}>
+                In an era of medical misinformation, MedSense News serves as a shield. Our Fact-Check Hub specifically targets viral health myths and social media claims, providing evidence-based rebuttals from qualified experts.
+                <br /><br />
+                We prioritize transparent sourcing, always linking to the original data that supports or refutes a claim.
+              </p>
+            </div>
           </div>
         </div>
       </section>

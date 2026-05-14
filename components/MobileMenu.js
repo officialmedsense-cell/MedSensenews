@@ -5,6 +5,8 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+const CATEGORIES = ['Research', 'Global Health', 'Public Health', 'Technology', 'Weather', 'Health Alerts', 'Nigeria/Africa Health'];
+
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -153,9 +155,11 @@ export default function MobileMenu() {
           <Link href="/" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Home</Link>
           <Link href="/category/Health" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Health</Link>
           <Link href="/category/Medicine" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Medicine</Link>
-          <Link href="/category/Research" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Research</Link>
-          <Link href="/category/Public Health" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Public Health</Link>
-          <Link href="/category/Technology" style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Technology</Link>
+          {CATEGORIES.map(cat => (
+            <Link key={cat} href={`/category/${encodeURIComponent(cat)}`} style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>
+              {cat === 'Nigeria/Africa Health' ? 'Nigeria & Africa Health' : cat}
+            </Link>
+          ))}
         </nav>
 
         <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>

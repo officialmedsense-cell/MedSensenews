@@ -55,7 +55,7 @@ interface StaffAccount {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export default function MedSenseDashboard() {
+export default function EditorialStaffPortal() {
   // --- State ---
   const [articles, setArticles] = useState<Article[]>([]);
   const [sources, setSources] = useState<Source[]>([
@@ -514,8 +514,8 @@ export default function MedSenseDashboard() {
 
         <header className="header-row">
           <div className="page-title">
-            <h1 style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '-1px' }}>Intelligence Command</h1>
-            <p>Real-time autonomous medical news discovery and synthesis.</p>
+            <h1 style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '-1px' }}>Editorial Staff Portal</h1>
+            <p>High-fidelity medical intelligence discovery and news uplink.</p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
@@ -545,15 +545,15 @@ export default function MedSenseDashboard() {
           <section className="glass-card" id="dashboard" style={{ gridRow: 'span 2' }}>
             <div className="feed-header" style={{ marginBottom: viewMode === 'fullFeed' ? '12px' : '24px' }}>
                <h2 style={{ fontSize: '18px', fontWeight: '800' }}>
-                 {viewMode === 'fullFeed' ? 'Global Intelligence Feed' : 'Active Intelligence Feed'}
+                 {viewMode === 'fullFeed' ? 'Intelligence Feed' : 'Active Intelligence Feed'}
                </h2>
-               <div style={{ display: 'flex', gap: '8px' }}>
-                  {['all', 'Medicine', 'Research', 'Health'].map(cat => (
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {['all', 'Medicine', 'Health', 'Research', 'Public Health', 'Technology', 'Weather'].map(cat => (
                     <button 
                       key={cat} 
                       onClick={() => setActiveCategory(cat)}
                       className={`badge ${activeCategory === cat ? 'badge-tech' : 'badge-health'}`}
-                      style={{ cursor: 'pointer', border: 'none' }}
+                      style={{ cursor: 'pointer', border: 'none', fontSize: '10px' }}
                     >
                       {cat.toUpperCase()}
                     </button>
@@ -581,11 +581,12 @@ export default function MedSenseDashboard() {
                 (viewMode === 'dashboard' ? filteredArticles.slice(0, 3) : filteredArticles).map(article => (
                   <div key={article.id} className="intel-card" onClick={() => setSelectedArticle(article)}>
                     <div className="intel-thumb">
-                       {article.category === 'Medicine' && '🔬'}
-                       {article.category === 'Technology' && '🤖'}
-                       {article.category === 'Research' && '📊'}
-                       {article.category === 'Health' && '🏥'}
-                       {!['Medicine', 'Technology', 'Research', 'Health'].includes(article.category) && '📢'}
+                        {article.category === 'Medicine' && '🔬'}
+                        {article.category === 'Technology' && '🤖'}
+                        {article.category === 'Research' && '📊'}
+                        {article.category === 'Health' && '🏥'}
+                        {article.category === 'Weather' && '☁️'}
+                        {!['Medicine', 'Technology', 'Research', 'Health', 'Weather'].includes(article.category) && '📢'}
                     </div>
                     <div className="intel-body">
                       <div className="intel-meta">
