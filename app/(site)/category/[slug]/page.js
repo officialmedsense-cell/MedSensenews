@@ -2,7 +2,8 @@ import { supabase } from '@/lib/supabase';
 import BbcCard from '@/components/BbcCard';
 import WeatherWidget from '@/components/WeatherWidget';
 
-export const revalidate = 60; // Revalidate every minute
+export const revalidate = 10; // Check for updates every 10 seconds
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;

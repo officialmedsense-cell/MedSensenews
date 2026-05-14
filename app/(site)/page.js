@@ -3,7 +3,8 @@ import BbcCard from '@/components/BbcCard';
 import Link from 'next/link';
 import WeatherWidget from '@/components/WeatherWidget';
 
-export const revalidate = 60; // Revalidate every minute
+export const revalidate = 10; // Check for updates every 10 seconds
+export const dynamic = 'force-dynamic'; // Ensure we always see fresh data from Supabase
 
 async function getArticles() {
   const { data, error } = await supabase
