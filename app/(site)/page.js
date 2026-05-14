@@ -152,16 +152,23 @@ export default async function Home() {
           {trendingArticles.map((article, idx) => (
             <Link key={article.id} href={`/article/${article.slug || article.id}`} className="mobile-trending-item" style={{ 
               textDecoration: 'none',
-              flex: '0 0 280px',
+              flex: '0 0 320px', // Slightly wider to accommodate image
               background: 'linear-gradient(135deg, var(--intel-blue) 0%, var(--intel-navy) 100%)',
               margin: '0 1.25rem 0 0',
-              borderRadius: '12px'
+              borderRadius: '12px',
+              overflow: 'hidden',
+              padding: '0.75rem'
             }}>
-              <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'rgba(255,255,255,0.2)', lineHeight: 1 }}>0{idx + 1}</span>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.4, color: 'white' }}>{article.title}</h4>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--intel-blue)', fontWeight: 700, textTransform: 'uppercase' }}>{article.category}</span>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <div style={{ width: '70px', height: '70px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
+                  <img src={article.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} />
+                </div>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1.2rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>{idx + 1}</span>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.3, color: 'white', fontWeight: 700, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h4>
+                    <span style={{ fontSize: '0.7rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.25rem', display: 'block' }}>{article.category}</span>
+                  </div>
                 </div>
               </div>
             </Link>
