@@ -57,14 +57,14 @@ export default async function CategoriesPage() {
         ))}
       </div>
 
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .category-hover-card:hover {
           transform: translateY(-5px);
           box-shadow: 0 10px 30px rgba(0,0,0,0.05);
           border-color: var(--intel-blue);
           background: white;
         }
-      `}</style>
+      `}} />
     </div>
   );
 }
