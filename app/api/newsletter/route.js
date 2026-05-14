@@ -2,7 +2,14 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Move initialization inside handler to prevent build-time crashes if key is missing
+const getResend = () => {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[Resend] API Key missing. Email functionality will be disabled.');
+    return null;
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+};
 
 // Use the service-role key on the server for trusted inserts
 const supabaseAdmin = createClient(
@@ -69,7 +76,9 @@ export async function POST(request) {
 
     // Send Welcome Email
     try {
-      await resend.emails.send({
+      const resend = getResend();
+      if (resend) {
+        await resend.emails.send({
         from: 'MedSense News <onboarding@resend.dev>',
         to: email.toLowerCase().trim(),
         subject: 'Welcome to MedSense News!',

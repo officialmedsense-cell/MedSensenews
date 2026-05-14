@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Move initialization inside handler to prevent build-time crashes if key is missing
+const getResend = () => {
+  if (!process.env.RESEND_API_KEY) return null;
+  return new Resend(process.env.RESEND_API_KEY);
+};
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -169,6 +173,11 @@ export async function POST(request) {
     const BATCH = 50;
     let sent = 0;
     let failed = 0;
+
+    const resend = getResend();
+    if (!resend) {
+      return NextResponse.json({ error: 'Resend API key missing on server.' }, { status: 500 });
+    }
 
     for (let i = 0; i < targets.length; i += BATCH) {
       const batch = targets.slice(i, i + BATCH);
