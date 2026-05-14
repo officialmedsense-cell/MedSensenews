@@ -63,18 +63,14 @@ function EditorialCycle({ articles, cycleIndex }) {
         <div className="grid-4">{articles.slice(21, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
       </div>
 
-      {/* MOBILE EXCLUSIVE VIEW (1-3-2-8L-3-3) */}
+      {/* MOBILE EXCLUSIVE VIEW (Full-Screen + 2-Column Grid) */}
       <div className="mobile-cycle-layout">
         <div className="m-grid-1">{articles.slice(0, 1).map(a => <BbcCard key={a.id} article={a} isFeatured={cycleIndex === 0} />)}</div>
-        <div className="m-grid-3">{articles.slice(1, 4).map(a => <BbcCard key={a.id} article={a} />)}</div>
-        <div className="m-grid-2">{articles.slice(4, 6).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="m-grid-2">{articles.slice(1, 5).map(a => <BbcCard key={a.id} article={a} />)}</div>
         <div className="list-section">
-           <div className="list-grid">{articles.slice(6, 14).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
+           <div className="list-grid">{articles.slice(5, 13).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
         </div>
-        <div className="m-grid-3">{articles.slice(14, 17).map(a => <BbcCard key={a.id} article={a} />)}</div>
-        <div className="m-grid-3">{articles.slice(17, 20).map(a => <BbcCard key={a.id} article={a} />)}</div>
-        {/* Remaining 5 articles in cycle of 25 shown as standard grid on mobile */}
-        <div className="m-grid-2">{articles.slice(20, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="m-grid-2">{articles.slice(13, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
       </div>
     </div>
   );
@@ -117,26 +113,28 @@ export default async function CategoryPage({ params }) {
         .grid-2 { grid-template-columns: repeat(2, 1fr); }
         .grid-3 { grid-template-columns: repeat(3, 1fr); }
         .grid-4 { grid-template-columns: repeat(4, 1fr); }
-
+ 
         .list-section { background: var(--bg-secondary); padding: 3rem; border-radius: 12px; }
         .list-header { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; margin-bottom: 2.5rem; color: var(--intel-blue); text-align: center; }
         .list-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.5rem; }
-
+ 
         @media (max-width: 1023px) {
-          .desktop-cycle-layout { display: none; }
-          .mobile-cycle-layout { display: flex; flex-direction: column; gap: 1.5rem; }
+          /* Make container fill more screen */
+          .container { padding: 0 0.75rem !important; }
           
-          .m-grid-1, .m-grid-2, .m-grid-3 { display: grid; gap: 0.75rem; }
+          .desktop-cycle-layout { display: none; }
+          .mobile-cycle-layout { display: flex; flex-direction: column; gap: 1rem; }
+          
+          .m-grid-1, .m-grid-2 { display: grid; gap: 0.75rem; }
           .m-grid-1 { grid-template-columns: 1fr; }
           .m-grid-2 { grid-template-columns: repeat(2, 1fr); }
-          .m-grid-3 { grid-template-columns: repeat(3, 1fr); }
-
-          .mobile-cycle-layout .list-section { padding: 1.5rem 0.75rem; border-radius: 8px; }
-          .mobile-cycle-layout .list-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+ 
+          .mobile-cycle-layout .list-section { padding: 1.25rem 0.5rem; border-radius: 8px; margin: 0 -0.25rem; }
+          .mobile-cycle-layout .list-grid { grid-template-columns: 1fr; gap: 1rem; }
           
-          .m-grid-3 h3 { font-size: 0.75rem !important; line-height: 1.2 !important; }
-          .m-grid-3 p { display: none !important; }
-          .m-grid-3 .bbc-card-meta { font-size: 0.6rem !important; }
+          /* Forced 2-column density for consistency */
+          .m-grid-2 h3 { font-size: 0.85rem !important; line-height: 1.25 !important; }
+          .m-grid-2 p { display: none !important; }
         }
       `}} />
     </div>

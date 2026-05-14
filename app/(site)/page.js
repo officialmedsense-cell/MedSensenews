@@ -286,7 +286,7 @@ export default async function Home() {
         <h3 className="intelligence-section-title section-title-desktop-stack" style={{ borderLeftColor: 'var(--intel-blue)', marginBottom: '1.25rem', fontSize: '1.5rem' }}>
           <i className="fas fa-globe-africa" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Nigeria & Africa Health
         </h3>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
+        <div className="section-grid-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
           {nigeriaArticles.map((article, i) => {
             let flexBasis = 'calc(50% - 0.75rem)'; // 2 across for top row
             let isSmall = false;
@@ -296,7 +296,7 @@ export default async function Home() {
             }
             
             return (
-              <div key={article.id} style={{ 
+              <div key={article.id} className={i === 0 ? "mobile-featured-row" : ""} style={{ 
                 flex: i === 0 ? '0 0 100%' : `0 0 ${flexBasis}`, 
                 maxWidth: i === 0 ? '700px' : 'none',
                 margin: i === 0 ? '0 auto 2.5rem' : '0',
@@ -314,7 +314,7 @@ export default async function Home() {
         <h3 className="intelligence-section-title section-title-desktop-stack" style={{ borderLeftColor: 'var(--accent)', marginBottom: '1.25rem', fontSize: '1.5rem' }}>
           <i className="fas fa-globe" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Global Health Insights
         </h3>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
+        <div className="section-grid-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
           {globalArticles.map((article, i) => {
             let flexBasis = 'calc(50% - 0.75rem)'; // 2 across for top row
             let isSmall = false;
@@ -324,7 +324,7 @@ export default async function Home() {
             }
 
             return (
-              <div key={article.id} style={{ 
+              <div key={article.id} className={i === 0 ? "mobile-featured-row" : ""} style={{ 
                 flex: i === 0 ? '0 0 100%' : `0 0 ${flexBasis}`, 
                 maxWidth: i === 0 ? '700px' : 'none',
                 margin: i === 0 ? '0 auto 2.5rem' : '0',
@@ -356,6 +356,37 @@ export default async function Home() {
       </section>
 
 
+      <style dangerouslySetInnerHTML={{ __html: `
+        @media (max-width: 1023px) {
+          .container { padding: 0 0.75rem !important; }
+          .bbc-homepage-wrapper { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+          
+          .main-editorial-grid { 
+            grid-template-columns: 1fr !important; 
+            gap: 1.5rem !important; 
+          }
+          
+          .mobile-hide { display: none !important; }
+          
+          /* Regional sections 2-column grid */
+          .section-grid-mobile {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.75rem !important;
+            width: 100% !important;
+          }
+          
+          .mobile-featured-row {
+            grid-column: span 2 !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 0 1rem 0 !important;
+          }
+          
+          .section-grid-mobile h3 { font-size: 0.85rem !important; line-height: 1.25 !important; }
+          .section-grid-mobile p { display: none !important; }
+        }
+      `}} />
     </div>
   );
 }
