@@ -12,7 +12,8 @@ export default function BbcCard({ article, isFeatured = false, isList = false, i
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
+        timeZone: 'Africa/Lagos'
       });
     }
     return new Date(dateString).toLocaleString('en-US', {
@@ -20,7 +21,8 @@ export default function BbcCard({ article, isFeatured = false, isList = false, i
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
+      timeZone: 'Africa/Lagos'
     });
   };
 

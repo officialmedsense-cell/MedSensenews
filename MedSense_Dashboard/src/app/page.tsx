@@ -146,7 +146,7 @@ export default function EditorialStaffPortal() {
           source: a.source || 'Archive',
           sourceUrl: a.sourceUrl || '#',
           date: a.date,
-          time: a.created_at ? new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '00:00',
+          time: a.created_at ? new Date(a.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Lagos' }) : '00:00',
           category: a.category,
           relevance: a.relevance || 99,
           severity: a.severity || 'Normal',
@@ -566,7 +566,7 @@ export default function EditorialStaffPortal() {
               const el = document.getElementById('dashboard-live-clock');
               if (el) {
                 const now = new Date();
-                el.innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' | ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                el.innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Africa/Lagos' }) + ' | ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Africa/Lagos' });
               }
             }, 1000);
           `}} />
