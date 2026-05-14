@@ -185,18 +185,20 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
  * Fetch and Save articles to your Supabase database.
  */
 export async function getArticlesFromSupabase() {
-  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  // Always try to fetch from the LIVE news site first
+  if (!pubClient) return { success: false, error: "Publication Site not configured." };
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await pubClient
       .from("articles")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(50);
 
     if (error) throw error;
     return { success: true, articles: data };
   } catch (error: any) {
-    console.error("Supabase Fetch Error:", error);
+    console.error("News Site Fetch Error:", error);
     return { success: false, error: error.message };
   }
 }

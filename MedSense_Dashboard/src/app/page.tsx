@@ -131,6 +131,32 @@ export default function EditorialStaffPortal() {
       try { setStaffAccounts(JSON.parse(savedStaff)); } catch(e){}
     }
     setAuthChecked(true);
+
+    // Synchronize with Supabase articles
+    const syncArticles = async () => {
+      const { success, articles: fetched } = await getArticlesFromSupabase();
+      if (success && fetched) {
+        // Map database fields to the Article interface used in the UI
+        const mapped = fetched.map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          summary: a.summary || a.excerpt,
+          fullText: a.content || a.fullText,
+          source: a.source || 'Archive',
+          sourceUrl: a.sourceUrl || '#',
+          date: a.date,
+          time: a.created_at ? new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '00:00',
+          category: a.category,
+          relevance: a.relevance || 99,
+          severity: a.severity || 'Normal',
+          read: true,
+          publishedToNews: true,
+          originalImage: a.image
+        }));
+        setArticles(mapped);
+      }
+    };
+    syncArticles();
   }, []);
 
   useEffect(() => {
