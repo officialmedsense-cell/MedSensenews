@@ -94,7 +94,8 @@ export async function POST(request) {
             </div>
           </div>
         `
-      });
+        });
+      }
     } catch (emailErr) {
       console.warn('[Newsletter Welcome Email Failed]', emailErr);
     }
