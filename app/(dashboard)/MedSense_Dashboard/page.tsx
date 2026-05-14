@@ -498,11 +498,7 @@ export default function MedSenseDashboard() {
           
           <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
              {loginError && <div style={{ padding: '12px', background: 'hsla(0, 100%, 50%, 0.1)', color: 'var(--danger)', borderRadius: 'var(--radius-sm)', fontSize: '13px', textAlign: 'center', border: '1px solid hsla(0, 100%, 50%, 0.2)' }}>{loginError}</div>}
-             {staffAccounts.length > 0 && (
-               <div style={{ fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center', opacity: 0.7 }}>
-                  DEBUG: First sync'd account is "{staffAccounts[0].email}"
-               </div>
-             )}
+
              <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>EMAIL ADDRESS</label>
                 <input type="email" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} required style={{ width: '100%', padding: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: 'var(--radius-md)', color: 'var(--text-primary)' }} />
