@@ -512,11 +512,37 @@ export default function EditorialStaffPortal() {
            </section>
          )}
 
-        <header className="header-row">
+        <header className="header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div className="page-title">
-            <h1 style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '-1px' }}>Editorial Staff Portal</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <h1 style={{ fontSize: '28px', fontWeight: '800', letterSpacing: '-1px' }}>Editorial Staff Portal</h1>
+              <div style={{ 
+                background: 'rgba(30, 58, 138, 0.1)', 
+                padding: '4px 12px', 
+                borderRadius: '100px', 
+                fontSize: '12px', 
+                fontWeight: 700, 
+                color: 'var(--primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                border: '1px solid rgba(30, 58, 138, 0.2)'
+              }}>
+                <i className="fas fa-clock"></i>
+                <span id="dashboard-live-clock">Syncing...</span>
+              </div>
+            </div>
             <p>High-fidelity medical intelligence discovery and news uplink.</p>
           </div>
+          <script dangerouslySetInnerHTML={{ __html: `
+            setInterval(() => {
+              const el = document.getElementById('dashboard-live-clock');
+              if (el) {
+                const now = new Date();
+                el.innerText = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' | ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+              }
+            }, 1000);
+          `}} />
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
                 <input 

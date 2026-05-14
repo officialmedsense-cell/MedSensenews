@@ -11,7 +11,8 @@ async function getArticles() {
     .from('articles')
     .select('*')
     .eq('status', 'published')
-    .order('date', { ascending: false })
+    .order('created_at', { ascending: false }) // Use created_at for high-precision sorting
+    .order('date', { ascending: false }) // Fallback for legacy articles
     .limit(150);
   
   if (error) return [];

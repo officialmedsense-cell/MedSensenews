@@ -32,7 +32,10 @@ async function getCategoryArticles(category) {
     query = query.ilike('category', category);
   }
 
-  const { data, error } = await query.order('date', { ascending: false }).limit(200);
+  const { data, error } = await query
+    .order('created_at', { ascending: false })
+    .order('date', { ascending: false })
+    .limit(200);
 
   if (error) return [];
   return data;
