@@ -32,10 +32,10 @@ export default async function Home() {
     );
   }
 
-  // News Distribution (2-1-2 Grid)
-  const leftArticles = articles.slice(0, 2);
-  const featuredArticle = articles[2]; 
-  const rightArticles = articles.slice(3, 5);
+  // News Distribution (Optimized for Instant Headlines)
+  const featuredArticle = articles[0]; // Absolute newest as main headline
+  const leftArticles = articles.slice(1, 3); // #2 and #3 on the left
+  const rightArticles = articles.slice(3, 5); // #4 and #5 on the right
   const trendingArticles = articles.slice(5, 15);
   
   // Editorial Categories
