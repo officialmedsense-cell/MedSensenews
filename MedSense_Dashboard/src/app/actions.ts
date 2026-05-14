@@ -130,6 +130,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
             4. Use bullet points (<ul> and <li>) for clarity in technical lists.
             5. Always end with a "MedSense Insight" section and a "Key Takeaway" section.
             6. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.
+            7. Write the content using cohesive <p> tags without extra blank lines, <br> tags, or \n. The publishing system will automatically apply professional spacing.
             
             JSON structure:
             {
