@@ -60,7 +60,7 @@ function EditorialCycle({ articles, cycleIndex }) {
         <div className="grid-4">{articles.slice(2, 6).map(a => <BbcCard key={a.id} article={a} />)}</div>
         <div className="grid-3">{articles.slice(6, 9).map(a => <BbcCard key={a.id} article={a} />)}</div>
         <div className="list-section">
-          <h3 className="list-header">Editorial Intelligence</h3>
+          <h3 className="list-header">Inside the Story</h3>
           <div className="list-grid">{articles.slice(9, 17).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
         </div>
         <div className="grid-4">{articles.slice(17, 21).map(a => <BbcCard key={a.id} article={a} />)}</div>
