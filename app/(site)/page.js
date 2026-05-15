@@ -221,9 +221,14 @@ export default async function Home() {
              <h3 className="intelligence-section-title" style={{ marginBottom: '1.25rem', fontSize: '1.5rem' }}>
               <i className="fas fa-clock" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Latest Insights
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="latest-insights-desktop" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {latestArticles.slice(0, 12).map((article) => (
                 <BbcCard key={article.id} article={article} isList={true} />
+              ))}
+            </div>
+            <div className="latest-insights-mobile section-grid-mobile" style={{ display: 'none' }}>
+              {latestArticles.slice(0, 12).map((article) => (
+                <BbcCard key={article.id} article={article} isSmall={true} />
               ))}
             </div>
           </div>
@@ -369,6 +374,9 @@ export default async function Home() {
           }
           
           .mobile-hide { display: none !important; }
+          
+          .latest-insights-desktop { display: none !important; }
+          .latest-insights-mobile { display: grid !important; }
           
           /* Regional sections 2-column grid */
           .section-grid-mobile {
