@@ -394,7 +394,6 @@ export default async function Home() {
           }
           
           .section-grid-mobile h3 { font-size: 0.85rem !important; line-height: 1.25 !important; }
-          .section-grid-mobile p { display: none !important; }
         }
       `}} />
     </div>
