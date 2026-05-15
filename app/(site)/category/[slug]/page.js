@@ -94,7 +94,7 @@ export default async function CategoryPage({ params }) {
   return (
     <div className="container" style={{ marginTop: '2.5rem', marginBottom: '8rem' }}>
       <div className="section-header" style={{ marginBottom: '2rem', borderBottom: '1px solid var(--border)', paddingBottom: '1.25rem' }}>
-        <h1 className="article-title" style={{ fontSize: '2.2rem', color: 'var(--intel-navy)', fontWeight: 900, textTransform: 'uppercase' }}>
+        <h1 className="article-title category-page-title" style={{ fontSize: '2.2rem', fontWeight: 900, textTransform: 'uppercase' }}>
           {isWeather && <i className="fas fa-cloud-sun-rain" style={{ marginRight: '0.75rem', color: 'var(--intel-blue)' }}></i>}
           {category === 'Nigeria/Africa Health' ? 'Nigeria & Africa Health' : category}
         </h1>
@@ -109,6 +109,9 @@ export default async function CategoryPage({ params }) {
       </div>
 
       <style dangerouslySetInnerHTML={{ __html: `
+        .category-page-title { color: var(--intel-navy); }
+        [data-theme="dark"] .category-page-title { color: #ffffff !important; }
+        
         .mobile-cycle-layout { display: none; }
         .desktop-cycle-layout { display: flex; flex-direction: column; gap: 3rem; }
         
