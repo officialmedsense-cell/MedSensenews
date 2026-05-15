@@ -43,8 +43,8 @@ export async function GET(request: Request) {
             sourceUrl: article.sourceUrl,
             originalImage: article.originalImage,
           },
-          'mistral-small',
-          'professional'
+          'mistral-small-latest',
+          'urgent and journalistic — with a powerful, call-to-action headline that commands immediate reader attention'
         );
 
         if (!aiResult.success || !aiResult.transformed) {
