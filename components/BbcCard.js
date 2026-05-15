@@ -57,7 +57,7 @@ export default function BbcCard({ article, isFeatured = false, isList = false, i
           <span>{formatDate(article.created_at || article.date)}</span>
         </div>
         <h3 className="bbc-card-title">{article.title}</h3>
-        {!isSmall && article.excerpt && <p className="bbc-card-excerpt">{article.excerpt}</p>}
+        {article.excerpt && <p className="bbc-card-excerpt">{article.excerpt}</p>}
       </div>
     </Link>
   );

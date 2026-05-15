@@ -3553,6 +3553,14 @@ img {
     line-height: 1.3;
 }
 
+.bbc-small-card .bbc-card-excerpt {
+    font-size: 0.75rem;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    margin-top: 0.25rem;
+    opacity: 0.8;
+}
+
 /* Handle wrapper applied by applyBranding */
 .bbc-card-image .image-branding-wrapper {
     width: 100%;
