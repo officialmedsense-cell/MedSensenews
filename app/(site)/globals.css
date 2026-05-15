@@ -102,10 +102,20 @@
 
 @media (max-width: 640px) {
   .other-news-grid {
-    grid-template-columns: 1fr;
-    max-width: 400px; /* Center single column */
+    grid-template-columns: repeat(2, 1fr);
+    width: 100%;
     margin: 0 auto;
-    gap: 32px;
+    gap: 12px;
+    padding: 0 0.5rem;
+  }
+  
+  .other-news-grid h3 {
+    font-size: 0.85rem !important;
+    line-height: 1.25 !important;
+  }
+  
+  .other-news-grid p {
+    display: none !important;
   }
   
   .other-news-item {
