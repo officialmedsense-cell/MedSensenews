@@ -19,15 +19,13 @@ export default function LiveClock() {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
-    year: 'numeric',
-    timeZone: 'Africa/Lagos'
+    year: 'numeric'
   });
 
   const timeStr = now.toLocaleTimeString('en-US', {
     hour: '2-digit',
     minute: '2-digit',
-    second: '2-digit',
-    timeZone: 'Africa/Lagos'
+    second: '2-digit'
   });
 
   return (
