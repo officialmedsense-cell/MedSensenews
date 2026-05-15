@@ -119,8 +119,11 @@
   }
   
   .other-news-item {
-    display: flex;
-    justify-content: center;
+    width: 100%;
+    display: block;
+  }
+  
+  .other-news-item .bbc-article-card {
     width: 100%;
   }
 }
