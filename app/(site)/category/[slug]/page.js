@@ -59,10 +59,12 @@ function EditorialCycle({ articles, cycleIndex }) {
         <div className="grid-2">{articles.slice(0, 2).map(a => <BbcCard key={a.id} article={a} />)}</div>
         <div className="grid-4">{articles.slice(2, 6).map(a => <BbcCard key={a.id} article={a} />)}</div>
         <div className="grid-3">{articles.slice(6, 9).map(a => <BbcCard key={a.id} article={a} />)}</div>
-        <div className="list-section">
-          <h3 className="list-header">Inside the Story</h3>
-          <div className="list-grid">{articles.slice(9, 17).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
-        </div>
+        {articles.slice(9, 17).length > 0 && (
+          <div className="list-section">
+            <h3 className="list-header">Inside the Story</h3>
+            <div className="list-grid">{articles.slice(9, 17).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
+          </div>
+        )}
         <div className="grid-4">{articles.slice(17, 21).map(a => <BbcCard key={a.id} article={a} />)}</div>
         <div className="grid-4">{articles.slice(21, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
       </div>
@@ -71,9 +73,11 @@ function EditorialCycle({ articles, cycleIndex }) {
       <div className="mobile-cycle-layout">
         <div className="m-grid-1">{articles.slice(0, 1).map(a => <BbcCard key={a.id} article={a} isFeatured={cycleIndex === 0} />)}</div>
         <div className="m-grid-2">{articles.slice(1, 5).map(a => <BbcCard key={a.id} article={a} />)}</div>
-        <div className="list-section">
-           <div className="list-grid">{articles.slice(5, 13).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
-        </div>
+        {articles.slice(5, 13).length > 0 && (
+          <div className="list-section">
+             <div className="list-grid">{articles.slice(5, 13).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
+          </div>
+        )}
         <div className="m-grid-2">{articles.slice(13, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
       </div>
     </div>
