@@ -379,12 +379,11 @@ export default function MedSenseDashboard() {
     }
   };
 
-  const handleSendChatMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || isChatting) return;
-
-    const userMsg = chatInput.trim();
-    setChatInput("");
+  const handleSendChatMessage = async (e?: React.FormEvent, overrideMsg?: string) => {
+    if (e) e.preventDefault();
+    const userMsg = overrideMsg || chatInput.trim();
+    if (!userMsg || isChatting) return;
+    if (!overrideMsg) setChatInput("");
     setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setIsChatting(true);
 
@@ -489,6 +488,21 @@ export default function MedSenseDashboard() {
             }
           }
         } 
+        
+        else if (action === 'GENERATE_SOCIAL_KIT' && targetId) {
+          const article = articles.find(a => a.id === targetId);
+          if (article) {
+             setChatMessages(prev => [...prev, { role: 'ai', content: `📣 Generating promotional assets for "${article.title}"...` }]);
+             const res = await processArticleWithAI(
+                { title: article.title, summary: article.summary, fullText: article.fullText || "", sourceUrl: article.sourceUrl },
+                settings.aiModel,
+                "Generate a social media promotion kit: Twitter Thread (3-5 tweets), a LinkedIn Post, and an Instagram Caption. Use high-authority medical tone."
+             );
+             if (res.success && res.transformed) {
+                setChatMessages(prev => [...prev, { role: 'ai', content: `✨ **SOCIAL ASSETS GENERATED**\n\n${res.transformed.content || res.transformed.summary}` }]);
+             }
+          }
+        }
         
         else if (action === 'RUN_DISCOVERY') {
           runScraper();
@@ -885,6 +899,7 @@ export default function MedSenseDashboard() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                      {[
                         { title: "Delete Articles", desc: "Permanently remove any discovered signal from the database.", cmd: "'Delete article about...'" },
+                        { title: "Social Kits", desc: "Generate Twitter threads and LinkedIn posts for any news.", cmd: "'Generate social kit for...'" },
                         { title: "Uplink to Site", desc: "Publish a report directly to the MedSense News live site.", cmd: "'Publish report on...'" },
                         { title: "Run Discovery", desc: "Trigger a fresh scan of all intelligence hubs.", cmd: "'Start news scan'" },
                         { title: "Summarize Feed", desc: "Get an AI summary of current top intelligence signals.", cmd: "'What are the top stories?'" }
@@ -956,7 +971,20 @@ export default function MedSenseDashboard() {
                         <span>•</span>
                         <span style={{ color: 'var(--accent-primary)', fontWeight: '700' }}>{article.relevance}% Match</span>
                       </div>
-                      <h3>{article.title}</h3>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+                        <h3 style={{ margin: 0, flex: 1 }}>{article.title}</h3>
+                        <button 
+                          className="btn btn-ghost" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveNav('aichat');
+                            handleSendChatMessage(undefined, `Generate a professional social media promotion kit for this article: "${article.title}"`);
+                          }}
+                          style={{ padding: '4px 8px', fontSize: '10px', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)' }}
+                        >
+                          📣 SOCIAL
+                        </button>
+                      </div>
                       <p className="intel-summary">{article.summary}</p>
                     </div>
                   </div>

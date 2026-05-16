@@ -567,6 +567,7 @@ export async function processAICommand(prompt: string, context: { articles: any[
             - PUBLISH_ARTICLE: Use this to push a draft to the live site.
             - EDIT_ARTICLE: Use this to refine headlines or content.
             - RUN_DISCOVERY: Use this to trigger a fresh scan of all intelligence hubs.
+            - GENERATE_SOCIAL_KIT: Use this when a staff member asks for a social kit, twitter thread, or linkedin post.
             - CHAT: Use this for general medical questions, explaining news, or friendly conversation.
 
             CURRENT CONTEXT:
@@ -576,7 +577,7 @@ export async function processAICommand(prompt: string, context: { articles: any[
             RESPONSE FORMAT (JSON):
             {
               "message": "A friendly, conversational response. IMPORTANT: If the user asks to delete more than 2 articles, or says 'delete all', your message MUST be a warning asking for confirmation, and you MUST set action to 'CHAT' instead of 'DELETE_ARTICLE' until they confirm.",
-              "action": "SEARCH_NEWS" | "DELETE_ARTICLE" | "PUBLISH_ARTICLE" | "EDIT_ARTICLE" | "RUN_DISCOVERY" | "CHAT",
+              "action": "SEARCH_NEWS" | "DELETE_ARTICLE" | "PUBLISH_ARTICLE" | "EDIT_ARTICLE" | "RUN_DISCOVERY" | "GENERATE_SOCIAL_KIT" | "CHAT",
               "query": "search terms if applicable",
               "targetId": "ID of primary item",
               "targetIds": ["ID1", "ID2"],
@@ -584,7 +585,10 @@ export async function processAICommand(prompt: string, context: { articles: any[
               "confidence": 0.0 to 1.0
             }` 
           },
-          { role: "user", content: prompt }
+          { 
+            role: "user", 
+            content: prompt + (prompt.toLowerCase().includes('social') ? "\n\nIf generating a social kit, provide a Twitter Thread (3-5 tweets), a LinkedIn Post, and an Instagram Caption. Use high-authority medical tone." : "") 
+          }
         ],
         response_format: { type: "json_object" }
       })
