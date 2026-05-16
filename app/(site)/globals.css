@@ -4455,8 +4455,27 @@ img {
     .desktop-logo-row { display: none !important; }
     .desktop-nav-links { display: none !important; }
     .mobile-centered-logo { display: flex !important; }
-    .mobile-menu-btn { display: flex !important; }
     
+    .mobile-menu-container,
+    .mobile-subscribe-container {
+        display: flex !important;
+        align-items: center;
+    }
+    
+    /* Mobile Shrink Effect */
+    .navbar-nav-inner {
+        position: relative !important;
+        padding: 1.1rem 1.5rem !important; /* Initial "big" state */
+        transition: padding 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+
+    .is-scrolled .navbar-nav-inner {
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
     .smart-header-hidden {
         max-height: 150px !important;
         opacity: 1 !important;

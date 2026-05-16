@@ -92,24 +92,25 @@ export default async function SiteLayout({ children }) {
         <SmartHeader>
           <div className="navbar-nav-inner" style={{ 
             display: 'flex', 
-            justifyContent: 'center', 
+            justifyContent: 'space-between', 
             alignItems: 'center', 
             width: '100%', 
             transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-            minHeight: '40px'
+            minHeight: '40px',
+            padding: '0 1.5rem'
           }}>
             
-            <div className="mobile-menu-btn" style={{ position: 'absolute', left: '1.5rem' }}>
+            <div className="mobile-menu-container" style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
               <MobileMenu />
             </div>
 
-            <div className="mobile-centered-logo">
+            <div className="mobile-centered-logo" style={{ flex: '0 0 auto', display: 'flex', justifyContent: 'center' }}>
               <Link href="/" className="logo">
                 <img src="/logo.png" alt="MedSense News" style={{ maxHeight: '28px', objectFit: 'contain' }} />
               </Link>
             </div>
 
-            <div className="mobile-menu-btn" style={{ position: 'absolute', right: '1.5rem' }}>
+            <div className="mobile-subscribe-container" style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
               <SubscribeModal iconOnly={true} />
             </div>
 
