@@ -154,6 +154,11 @@ export default function MedSenseDashboard() {
     const savedSettings = localStorage.getItem('medsense_settings');
     const savedTheme = localStorage.getItem('medsense_theme') as 'dark' | 'light';
     const savedUser = localStorage.getItem('medsense_user');
+    const savedArticles = localStorage.getItem('medsense_discovery_articles');
+    
+    if (savedArticles) {
+      try { setArticles(JSON.parse(savedArticles)); } catch (e) {}
+    }
     
     // Cloud sync for sources
     getSourcesFromCloud().then(res => {
@@ -186,6 +191,10 @@ export default function MedSenseDashboard() {
       saveSourcesToCloud(sources).catch(console.error);
     }
   }, [sources, authChecked]);
+
+  useEffect(() => {
+    localStorage.setItem('medsense_discovery_articles', JSON.stringify(articles));
+  }, [articles]);
 
   useEffect(() => {
     localStorage.setItem('medsense_settings', JSON.stringify(settings));

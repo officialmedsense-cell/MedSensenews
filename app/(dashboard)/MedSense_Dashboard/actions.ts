@@ -96,17 +96,17 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
            }
         }
 
-        // Freshness Window: 48 Hours (As requested)
-        const fortyEightHoursAgo = new Date();
-        fortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);
+        // Freshness Window: 24 Hours (As requested)
+        const twentyFourHoursAgo = new Date();
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
         
         let filtered = feed.items.filter((item: any) => {
           if (!item.isoDate && !item.pubDate) return false;
           const itemDate = new Date(item.isoDate || item.pubDate!);
-          return itemDate >= fortyEightHoursAgo;
+          return itemDate >= twentyFourHoursAgo;
         });
 
-        // Strictly ignore news that is not within the 48-hour window
+        // Strictly ignore news that is not within the 24-hour window
         if (filtered.length === 0) continue;
 
         allArticles.push(...filtered.map((item: any) => {
@@ -207,8 +207,8 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
       idx++;
     }
 
-    // Take top 75 (most recent but diverse) and randomize their final presentation
-    const randomizedTopFeeds = interleaved.slice(0, 75).sort(() => Math.random() - 0.5);
+    // Take top 100 (most recent but diverse) and randomize their final presentation
+    const randomizedTopFeeds = interleaved.slice(0, 100).sort(() => Math.random() - 0.5);
 
     return {
       success: true,
@@ -323,7 +323,11 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
               "visual_keyword": "A single specific medical keyword for image searching. CRITICAL: Use high-quality, professional, and clinical keywords only (e.g., 'clinical-laboratory', 'modern-hospital', 'medical-research-microscope', 'professional-doctor-consultation'). Avoid generic or low-quality terms."
             }
 
-            The tone should be ${tone}. REMEMBER: A mediocre headline kills a great story. Make it unforgettable.` 
+            The tone should be ${tone}. 
+            
+            ★ WRITING STYLE GUIDELINE: Limit the usage of hyphens (-) in headlines and body text. Use professional commas or punctuation instead to maintain a clean, high-end editorial flow.
+            
+            REMEMBER: A mediocre headline kills a great story. Make it unforgettable.` 
           },
           { 
             role: "user", 
@@ -571,7 +575,7 @@ export async function processAICommand(prompt: string, context: { articles: any[
 
             RESPONSE FORMAT (JSON):
             {
-              "message": "A friendly, conversational response explaining what you're doing or explaining the news.",
+              "message": "A friendly, conversational response. IMPORTANT: If the user asks to delete more than 2 articles, or says 'delete all', your message MUST be a warning asking for confirmation, and you MUST set action to 'CHAT' instead of 'DELETE_ARTICLE' until they confirm.",
               "action": "SEARCH_NEWS" | "DELETE_ARTICLE" | "PUBLISH_ARTICLE" | "EDIT_ARTICLE" | "RUN_DISCOVERY" | "CHAT",
               "query": "search terms if applicable",
               "targetId": "ID of primary item",
