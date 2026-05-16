@@ -9,12 +9,14 @@ import {
   processAICommand,
   deleteArticleFromSupabase,
   searchExternalNews,
-  getStaffAccounts,
-  addStaffAccount,
-  deleteStaffAccount,
-  getSourcesFromCloud,
+  getStaffAccounts, 
+  addStaffAccount, 
+  deleteStaffAccount, 
+  getArticlesFromSupabase,
+  getSourcesFromCloud, 
   saveSourcesToCloud
 } from "./actions";
+import ReactMarkdown from 'react-markdown';
 
 // --- Types ---
 interface Article {
@@ -111,6 +113,7 @@ export default function MedSenseDashboard() {
   const [chatInput, setChatInput] = useState("");
   const [isChatting, setIsChatting] = useState(false);
   const [draftArticle, setDraftArticle] = useState<any>(null);
+  const [publishedArticles, setPublishedArticles] = useState<any[]>([]);
 
   // --- Auth State ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -135,6 +138,13 @@ export default function MedSenseDashboard() {
         setStaffAccounts(res.staff);
      } else if (!res.success) {
         setStaffError(res.error || "Failed to load staff");
+     }
+  };
+
+  const fetchPublished = async () => {
+     const res = await getArticlesFromSupabase();
+     if (res.success && res.articles) {
+        setPublishedArticles(res.articles.slice(0, 30)); // Top 30 for AI context
      }
   };
 
@@ -166,6 +176,7 @@ export default function MedSenseDashboard() {
     }
     
     fetchStaff();
+    fetchPublished();
     setAuthChecked(true);
   }, []);
 
@@ -370,7 +381,11 @@ export default function MedSenseDashboard() {
 
     try {
       const res = await processAICommand(userMsg, { 
-        articles: draftArticle ? [draftArticle, ...articles] : articles, 
+        articles: [
+          ...(draftArticle ? [draftArticle] : []),
+          ...articles,
+          ...publishedArticles
+        ], 
         sources 
       });
 
@@ -818,8 +833,17 @@ export default function MedSenseDashboard() {
                              fontSize: '15px',
                              lineHeight: '1.6',
                              boxShadow: msg.role === 'ai' ? 'var(--shadow-premium)' : 'none'
-                          }}>
-                             {msg.content}
+                          }} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                             {msg.role === 'ai' ? (
+                                <ReactMarkdown components={{
+                                  p: ({node, ...props}) => <p style={{marginBottom: '1rem'}} {...props} />,
+                                  ul: ({node, ...props}) => <ul style={{paddingLeft: '1.5rem', marginBottom: '1rem'}} {...props} />,
+                                  li: ({node, ...props}) => <li style={{marginBottom: '0.5rem'}} {...props} />,
+                                  strong: ({node, ...props}) => <strong style={{fontWeight: '800', color: 'var(--accent-primary)'}} {...props} />
+                                }}>
+                                  {msg.content}
+                                </ReactMarkdown>
+                             ) : msg.content}
                           </div>
                        </div>
                      ))}
