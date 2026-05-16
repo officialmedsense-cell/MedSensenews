@@ -4485,8 +4485,15 @@ img {
 }
 
 @media (min-width: 769px) {
-    .mobile-centered-logo { display: none !important; }
-    .mobile-menu-btn { display: none !important; }
+    .mobile-centered-logo,
+    .mobile-menu-container,
+    .mobile-subscribe-container { 
+        display: none !important; 
+    }
+    
+    .navbar-nav-inner {
+        justify-content: center !important;
+    }
 }
 
 /* ============================================
