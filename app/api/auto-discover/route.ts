@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchLiveMedicalNews, processArticleWithAI, publishToNewsSite, searchExternalNews } from '@/app/(dashboard)/MedSense_Dashboard/actions';
+import { fetchLiveMedicalNews, processArticleWithAI, publishToNewsSite, searchExternalNews, isDuplicateArticle } from '@/app/(dashboard)/MedSense_Dashboard/actions';
 import { HEALTH_DAYS } from '@/lib/healthDays';
 
 // Security: Only Vercel's cron service can call this
@@ -54,6 +54,15 @@ export async function GET(request: Request) {
     }
     for (const article of newsResult.articles) {
       try {
+        // 2. Pre-Check: Is this article already on the platform?
+        if (article.sourceUrl) {
+          const isDuplicate = await isDuplicateArticle(article.sourceUrl);
+          if (isDuplicate) {
+            console.log(`[AutoDiscover] Skipping known origin: "${article.title?.substring(0, 40)}"`);
+            continue;
+          }
+        }
+
         const aiResult = await processArticleWithAI(
           {
             title: article.title,

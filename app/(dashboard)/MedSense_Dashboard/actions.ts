@@ -155,7 +155,16 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
     // We check the source_url column in the articles table
     try {
       if (pubClient) {
-        const urlsToCheck = deduplicated.map(a => a.sourceUrl).filter(url => url !== "#");
+        const normalizeUrl = (url: string) => {
+          try {
+            const u = new URL(url);
+            return u.origin + u.pathname;
+          } catch (e) {
+            return url;
+          }
+        };
+
+        const urlsToCheck = deduplicated.map(a => normalizeUrl(a.sourceUrl)).filter(url => url !== "#");
         const titlesToCheck = deduplicated.map(a => a.title);
 
         const { data: existingByUrl } = urlsToCheck.length > 0 
@@ -170,7 +179,7 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
         const existingTitles = new Set((existingByTitle || []).map((a: any) => a.title.toLowerCase().trim()));
         
         deduplicated = deduplicated.filter(a => 
-          !existingUrls.has(a.sourceUrl) && 
+          !existingUrls.has(normalizeUrl(a.sourceUrl)) && 
           !existingTitles.has(a.title.toLowerCase().trim())
         );
       }
@@ -617,6 +626,34 @@ const CATEGORY_IMAGES: Record<string, string> = {
 };
 
 /**
+ * Duplicate Check Helper
+ * Checks if an article with the same source URL already exists.
+ */
+export async function isDuplicateArticle(sourceUrl: string) {
+  if (!pubClient || !sourceUrl || sourceUrl === "#") return false;
+  try {
+    const normalizeUrl = (url: string) => {
+      try {
+        const u = new URL(url);
+        return u.origin + u.pathname;
+      } catch (e) {
+        return url;
+      }
+    };
+    
+    const targetUrl = normalizeUrl(sourceUrl);
+    const { data } = await pubClient
+      .from('articles')
+      .select('id')
+      .eq('source_url', targetUrl)
+      .maybeSingle();
+    return !!data;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
  * Publication Service
  * Pushes the final report to the MedSense News database.
  */
@@ -638,12 +675,21 @@ export async function publishToNewsSite(payload: {
 
   try {
     // 1. DUPLICATE CHECK — by source URL first (most reliable), then by title
-    // Also normalize titles for better matching
+    const normalizeUrl = (url: string) => {
+      try {
+        const u = new URL(url);
+        return u.origin + u.pathname;
+      } catch (e) {
+        return url;
+      }
+    };
+
     if (payload.sourceUrl && payload.sourceUrl !== "#") {
+      const targetUrl = normalizeUrl(payload.sourceUrl);
       const { data: urlDup } = await pubClient
         .from('articles')
         .select('id, title')
-        .eq('source_url', payload.sourceUrl)
+        .eq('source_url', targetUrl)
         .maybeSingle();
       if (urlDup) {
         return { success: false, error: `Article already exists (Source Link Match): "${urlDup.title}"` };
@@ -678,11 +724,16 @@ export async function publishToNewsSite(payload: {
     );
 
     if (!heroImage || isGenericImage || heroImage.length < 10) {
-      const searchTerms = payload.visualKeyword || payload.category || 'medical research';
-      // Search for high-quality, clinical images
-      const randomSeed = Math.floor(Math.random() * 1000000);
-      // Use Source Unsplash or LoremFlickr with high-quality clinical keywords
-      heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},clinical,professional/all?lock=${randomSeed}`;
+      // Use curated internal category image first
+      heroImage = CATEGORY_IMAGES[payload.category || 'Medicine'];
+      
+      if (!heroImage) {
+        const searchTerms = payload.visualKeyword || payload.category || 'medical research';
+        // Search for high-quality, clinical images
+        const randomSeed = Math.floor(Math.random() * 1000000);
+        // Use Source Unsplash or LoremFlickr with high-quality clinical keywords
+        heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},clinical,professional/all?lock=${randomSeed}`;
+      }
     }
 
     const createSlug = (text: string) => {
@@ -706,7 +757,7 @@ export async function publishToNewsSite(payload: {
         image: heroImage,
         status: 'published',
         date: exactPublishTime,
-        source_url: payload.sourceUrl || null,
+        source_url: payload.sourceUrl ? normalizeUrl(payload.sourceUrl) : null,
         views: 0,
         trending: false
       }]);

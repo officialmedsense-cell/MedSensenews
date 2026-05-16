@@ -41,14 +41,14 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
       try {
         const feed = await parser.parseURL(url);
         
-        // 48-Hour Rolling Window (Ensures we catch fresh news across timezones)
-        const twoDaysAgo = new Date();
-        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        // 24-Hour Rolling Window (Ensures we catch the freshest news)
+        const oneDayAgo = new Date();
+        oneDayAgo.setHours(oneDayAgo.getHours() - 24);
         
         let filtered = feed.items.filter(item => {
           if (!item.isoDate && !item.pubDate) return false;
           const itemDate = new Date(item.isoDate || item.pubDate!);
-          return itemDate >= twoDaysAgo;
+          return itemDate >= oneDayAgo;
         });
 
         // Strictly ignore news that is not within the 48-hour window
@@ -248,6 +248,26 @@ const CATEGORY_IMAGES: Record<string, string> = {
 };
 
 /**
+ * Duplicate Check Helper
+ * Checks if an article with the same source URL already exists.
+ */
+export async function isDuplicateArticle(sourceUrl: string) {
+  if (!pubClient || !sourceUrl) return false;
+  try {
+    const { data, error } = await pubClient
+      .from('articles')
+      .select('id')
+      .eq('source_url', sourceUrl)
+      .maybeSingle();
+    
+    if (error) return false;
+    return !!data;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
  * Publication Service
  * Pushes the final report to the MedSense News database.
  */
@@ -259,6 +279,7 @@ export async function publishToNewsSite(payload: {
   fullReport: string,
   visualKeyword?: string,
   originalImage?: string | null,
+  sourceUrl?: string,
   targetUrl?: string,
   token?: string
 }) {
@@ -267,27 +288,44 @@ export async function publishToNewsSite(payload: {
   }
 
   try {
-    // 1. DUPLICATE CHECK
-    const { data: existing, error: checkError } = await pubClient
+    // 1. DUPLICATE CHECK (Enhanced: Checks both Title and Source URL)
+    let query = pubClient.from('articles').select('id');
+    
+    if (payload.sourceUrl) {
+      const { data: existingSource, error: sourceError } = await query
+        .eq('source_url', payload.sourceUrl)
+        .maybeSingle();
+      
+      if (sourceError) throw sourceError;
+      if (existingSource) {
+        return { success: false, error: "Article origin already exists on MedSense News (Duplicate Prevented)." };
+      }
+    }
+
+    const { data: existingTitle, error: titleError } = await pubClient
       .from('articles')
       .select('id')
       .eq('title', payload.headline)
       .maybeSingle();
 
-    if (checkError) throw checkError;
-    if (existing) {
-      return { success: false, error: "Article already exists on MedSense News (Duplicate Prevented)." };
+    if (titleError) throw titleError;
+    if (existingTitle) {
+      return { success: false, error: "An article with this headline already exists (Duplicate Prevented)." };
     }
 
     const fullTimestamp = new Date().toISOString();
     
     // 2. IMAGE SELECTION PRIORITY:
-    // Try to use the original photo from the news site first.
-    // If it doesn't exist, fallback to searching a global photo database (Flickr) using the AI's keyword.
+    // Priority 1: Use original photo from the news source.
+    // Priority 2: Use internal curated category image.
+    // Priority 3: Fallback to searching global photo database (Flickr) using AI keyword.
     let heroImage = payload.originalImage;
     if (!heroImage) {
+      heroImage = CATEGORY_IMAGES[payload.category || 'Medicine'];
+    }
+    
+    if (!heroImage) {
       const searchTerms = payload.visualKeyword || payload.category || 'medicine';
-      // Search Flickr for real, authentic photos matching the medical keyword
       heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},medical/all`;
     }
 
@@ -303,6 +341,7 @@ export async function publishToNewsSite(payload: {
         status: 'published',
         date: fullTimestamp, 
         created_at: fullTimestamp,
+        source_url: payload.sourceUrl,
         views: 0,
         trending: false
       }]);

@@ -6,7 +6,8 @@ import {
   processArticleWithAI, 
   saveArticleToSupabase, 
   publishToNewsSite,
-  getArticlesFromSupabase
+  getArticlesFromSupabase,
+  isDuplicateArticle
 } from "./actions";
 
 // --- Types ---
@@ -144,7 +145,7 @@ export default function EditorialStaffPortal() {
           summary: a.summary || a.excerpt,
           fullText: a.content || a.fullText,
           source: a.source || 'Archive',
-          sourceUrl: a.sourceUrl || '#',
+          sourceUrl: a.source_url || a.sourceUrl || '#',
           date: a.date,
           time: a.created_at ? new Date(a.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Lagos' }) : '00:00',
           category: a.category,
@@ -233,6 +234,7 @@ export default function EditorialStaffPortal() {
       fullReport: article.fullText,
       visualKeyword: article.visualKeyword,
       originalImage: article.originalImage,
+      sourceUrl: article.sourceUrl,
       targetUrl: settings.publishUrl
     });
 
@@ -286,6 +288,15 @@ export default function EditorialStaffPortal() {
         
         if (stage === 'process') {
           for (const item of discovered) {
+            // Pre-Check: Skip if already published
+            if (item.sourceUrl) {
+               const isDuplicate = await isDuplicateArticle(item.sourceUrl);
+               if (isDuplicate) {
+                 addLog(`Skipping existing signal: ${item.title.substring(0, 30)}...`, "info");
+                 continue;
+               }
+            }
+
             const res = await processArticleWithAI(item, settings.aiModel, settings.tone);
             if (res.success && res.transformed) {
               const newArticle: Article = {

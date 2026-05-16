@@ -14,7 +14,8 @@ import {
   deleteStaffAccount, 
   getArticlesFromSupabase,
   getSourcesFromCloud, 
-  saveSourcesToCloud
+  saveSourcesToCloud,
+  isDuplicateArticle
 } from "./actions";
 import ReactMarkdown from 'react-markdown';
 
@@ -266,6 +267,7 @@ export default function MedSenseDashboard() {
       fullReport: article.fullText,
       visualKeyword: article.visualKeyword,
       originalImage: article.originalImage,
+      sourceUrl: article.sourceUrl,
       targetUrl: settings.publishUrl
     });
 
@@ -337,6 +339,15 @@ export default function MedSenseDashboard() {
         
         if (stage === 'process') {
           for (const item of discovered) {
+            // Pre-Check: Skip if already published
+            if (item.sourceUrl) {
+               const isDuplicate = await isDuplicateArticle(item.sourceUrl);
+               if (isDuplicate) {
+                 addLog(`Skipping existing signal: ${item.title.substring(0, 30)}...`, "info");
+                 continue;
+               }
+            }
+
             const res = await processArticleWithAI(item, settings.aiModel, settings.tone);
             if (res.success && res.transformed) {
               const newArticle: Article = {
