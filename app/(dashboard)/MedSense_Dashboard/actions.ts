@@ -320,7 +320,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
               "summary": "A 2-sentence professional summary that amplifies the urgency of the headline and draws the reader deeper.",
               "content": "Full HTML content following the formatting rules above.",
               "category": "One of: [Health, Medicine, Research, Public Health, Technology]",
-              "visual_keyword": "A single specific medical keyword for image searching (e.g., stethoscope, lab-technician, surgery, dna)"
+              "visual_keyword": "A single specific medical keyword for image searching. CRITICAL: Use high-quality, professional, and clinical keywords only (e.g., 'clinical-laboratory', 'modern-hospital', 'medical-research-microscope', 'professional-doctor-consultation'). Avoid generic or low-quality terms."
             }
 
             The tone should be ${tone}. REMEMBER: A mediocre headline kills a great story. Make it unforgettable.` 
@@ -666,10 +666,10 @@ export async function publishToNewsSite(payload: {
 
     if (!heroImage || isGenericImage || heroImage.length < 10) {
       const searchTerms = payload.visualKeyword || payload.category || 'medical research';
-      // Search Flickr for real, authentic photos matching the medical keyword
-      // Added a random seed (?lock=) to ensure each article gets a unique image even if using the same keyword
+      // Search for high-quality, clinical images
       const randomSeed = Math.floor(Math.random() * 1000000);
-      heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},medical/all?lock=${randomSeed}`;
+      // Use Source Unsplash or LoremFlickr with high-quality clinical keywords
+      heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},clinical,professional/all?lock=${randomSeed}`;
     }
 
     const createSlug = (text: string) => {

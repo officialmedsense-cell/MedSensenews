@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import BbcCard from '@/components/BbcCard';
 import Link from 'next/link';
 import WeatherWidget from '@/components/WeatherWidget';
+import { HEALTH_DAYS } from '@/lib/healthDays';
 
 export const revalidate = 10; // Check for updates every 10 seconds
 export const dynamic = 'force-dynamic'; // Ensure we always see fresh data from Supabase
@@ -114,6 +115,21 @@ export default async function Home() {
     a.category !== 'Environment' &&
     !mustReadArticles.find(m => m.id === a.id)
   );
+
+  // Health Awareness Days Logic
+  const today = new Date();
+  const activeHealthDay = HEALTH_DAYS.find(d => d.month === today.getMonth() && d.day === today.getDate());
+  
+  let healthDayArticles = [];
+  if (activeHealthDay) {
+    healthDayArticles = articles.filter(a => {
+      const text = (a.title + ' ' + (a.excerpt || '')).toLowerCase();
+      return (
+        text.includes(activeHealthDay.name.toLowerCase()) ||
+        activeHealthDay.keywords.some(kw => text.includes(kw.toLowerCase()))
+      );
+    }).slice(0, 4);
+  }
 
   return (
     <div className="homepage-shell">
@@ -282,6 +298,32 @@ export default async function Home() {
                   ))}
                 </div>
              </div>
+
+             {/* Health Days Awareness (Conditional) */}
+             {activeHealthDay && healthDayArticles.length > 0 && (
+               <div style={{ marginTop: '3rem' }}>
+                  <h3 className="intelligence-section-title" style={{ borderLeftColor: '#f59e0b', fontSize: '1.25rem', marginBottom: '1.5rem' }}>
+                    <i className="fas fa-calendar-check" style={{ color: '#f59e0b' }}></i> Health Days: {activeHealthDay.name}
+                  </h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    {healthDayArticles.map(article => (
+                      <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} className="hover-bg">
+                          <div style={{ width: '80px', height: '60px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+                            <img src={article.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div>
+                            <span style={{ color: '#f59e0b', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
+                              Awareness Event
+                            </span>
+                            <h4 style={{ fontSize: '0.9rem', margin: 0, lineHeight: 1.3, fontWeight: 700 }}>{article.title}</h4>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+               </div>
+             )}
           </div>
         </div>
       </section>
