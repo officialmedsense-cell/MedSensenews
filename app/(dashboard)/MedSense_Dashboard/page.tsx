@@ -832,8 +832,10 @@ export default function MedSenseDashboard() {
                              border: msg.role === 'ai' ? '1px solid var(--border-dim)' : 'none',
                              fontSize: '15px',
                              lineHeight: '1.6',
-                             boxShadow: msg.role === 'ai' ? 'var(--shadow-premium)' : 'none'
-                          }} style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                             boxShadow: msg.role === 'ai' ? 'var(--shadow-premium)' : 'none',
+                             whiteSpace: 'pre-wrap',
+                             wordBreak: 'break-word'
+                          }}>
                              {msg.role === 'ai' ? (
                                 <ReactMarkdown components={{
                                   p: ({node, ...props}) => <p style={{marginBottom: '1rem'}} {...props} />,
