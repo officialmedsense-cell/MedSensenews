@@ -54,43 +54,60 @@ export default async function Home() {
     (a.excerpt && a.excerpt.toLowerCase().includes('outbreak'))
   ).slice(0, 5);
   
-  const nigeriaArticles = articles.filter(a => {
+  const isAfricanNews = (a) => {
     const title = a.title.toLowerCase();
     const excerpt = (a.excerpt || '').toLowerCase();
-    return (
-      a.category === 'Nigeria/Africa Health' || 
-      a.category === 'Nigeria Health' || 
-      a.category === 'Africa Health' ||
-      title.includes('nigeria') || 
-      title.includes('africa') ||
-      excerpt.includes('nigeria') ||
-      excerpt.includes('africa')
-    );
-  }).slice(0, 20);
-
-  const globalArticles = articles.filter(a => {
-    const title = a.title.toLowerCase();
-    const excerpt = (a.excerpt || '').toLowerCase();
+    const text = `${title} ${excerpt}`;
     
-    // 1. Exclude Regional (Nigeria/Africa)
-    if (title.includes('nigeria') || title.includes('africa') || 
-        excerpt.includes('nigeria') || excerpt.includes('africa') ||
-        a.category === 'Nigeria/Africa Health' || a.category === 'Nigeria Health' || a.category === 'Africa Health') {
+    // Explicit categories
+    if (a.category === 'Nigeria/Africa Health' || a.category === 'Nigeria Health' || a.category === 'Africa Health') {
+      return true;
+    }
+    
+    // "unless global is mention" -> yield to global
+    const hasGlobal = ['global', 'world health', 'who ', 'international', 'pandemic'].some(kw => text.includes(kw));
+    if (hasGlobal) {
       return false;
     }
 
-    // 2. Detect Global Entities
-    return (
-      a.category === 'Global Health' ||
-      a.category === 'Public Health' ||
-      title.includes('global') ||
-      title.includes('world') ||
-      title.includes('who') ||
-      title.includes('international') ||
-      title.includes('pandemic') ||
-      title.includes('cdc')
-    );
-  }).slice(0, 20);
+    // Check for African keywords (Countries, Nigerian States, Organizations)
+    const africanKeywords = [
+      'nigeria', 'africa', 'lagos', 'abuja', 'kano', 'port harcourt', 'ibadan', 'kaduna', 
+      'enugu', 'anambra', 'oyo', 'delta state', 'edo state', 'ogun', 'ncdc', 'nafdac', 
+      'south africa', 'kenya', 'ghana', 'egypt', 'ethiopia', 'tanzania', 'uganda', 
+      'rwanda', 'senegal', 'zimbabwe', 'cameroon', 'mali', 'sudan', 'somalia'
+    ];
+    return africanKeywords.some(kw => text.includes(kw));
+  };
+
+  const isGlobalNews = (a) => {
+    const title = a.title.toLowerCase();
+    const excerpt = (a.excerpt || '').toLowerCase();
+    const text = `${title} ${excerpt}`;
+
+    if (a.category === 'Global Health') return true;
+
+    // Explicitly regional -> exclude from global (unless it had global keywords, but we check that below)
+    if (a.category === 'Nigeria/Africa Health' || a.category === 'Nigeria Health' || a.category === 'Africa Health') {
+      return false;
+    }
+
+    // Check for global keywords
+    const globalKeywords = ['global', 'world', 'who ', 'international', 'pandemic', 'cdc'];
+    if (globalKeywords.some(kw => text.includes(kw))) {
+      return true;
+    }
+
+    // If it's Public Health and NOT African, default to global
+    if (a.category === 'Public Health' && !isAfricanNews(a)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const nigeriaArticles = articles.filter(isAfricanNews).slice(0, 20);
+  const globalArticles = articles.filter(isGlobalNews).slice(0, 20);
   
   const weatherArticles = articles.filter(a => 
     a.category === 'Weather' || 
