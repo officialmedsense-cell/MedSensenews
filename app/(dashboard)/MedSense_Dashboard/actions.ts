@@ -281,116 +281,142 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
     return { success: false, error: "Mistral API Key is missing." };
   }
 
-  try {
-    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        "Authorization": `Bearer ${MISTRAL_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: model || "mistral-small-latest",
-        messages: [
-          { 
-            role: "system", 
-            content: `You are an elite medical journalist and headline strategist for MedSense News, one of Africa's most-read health intelligence platforms. Your mission is to rewrite the provided medical news into a gripping, high-fidelity journalistic article that STOPS readers mid-scroll.
+  let attempts = 0;
+  const maxAttempts = 3;
+  let retryDelayMs = 4000;
 
-            ═══════════════════════════════════════
-            ★ HEADLINE MASTERY RULES (MANDATORY) ★
-            ═══════════════════════════════════════
-            The title is your most powerful weapon. Every headline MUST:
-            1. TRIGGER EMOTION — Use urgency, curiosity, fear, hope, or outrage. Never be neutral.
-            2. USE POWER WORDS — Integrate words like: "Breakthrough", "Crisis", "Warning", "Urgent", "Revealed", "Hidden", "Shocking", "Now", "Finally", "Deadly", "Life-Saving", "Alarming", "Must-Know", "You Need to Know", "Doctors Warn", "Study Confirms", "Experts Reveal".
-            3. BE SPECIFIC — Include numbers, timeframes, or a bold claim where possible. Vague headlines are FORBIDDEN.
-            4. DRIVE ACTION — The reader must feel compelled to click and read immediately.
-            5. MAXIMUM 12 WORDS — Sharp, punchy, impossible to ignore.
+  while (attempts < maxAttempts) {
+    try {
+      const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${MISTRAL_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: model || "mistral-small-latest",
+          messages: [
+            { 
+              role: "system", 
+              content: `You are an elite medical journalist and headline strategist for MedSense News, one of Africa's most-read health intelligence platforms. Your mission is to rewrite the provided medical news into a gripping, high-fidelity journalistic article that STOPS readers mid-scroll.
 
-            PROVEN HEADLINE PATTERNS (use these as templates):
-            - "[Power Word]: [Specific Claim or Statistic] That [Audience] Must Know Now"
-            - "Doctors Issue Urgent Warning About [Topic] — Here's What You Need to Do"
-            - "[Number] Silent Signs of [Condition] Millions Are Dangerously Ignoring"
-            - "Breakthrough Study Reveals [Surprising Fact] — And It Changes Everything"
-            - "The Hidden [Health Risk] Affecting [Specific Group] Right Now"
-            - "Why [Common Belief] About [Topic] Is Putting Your Health at Risk"
-            - "[Shocking Stat]: [Topic] Is Rising — What You Can Do About It"
+              ═══════════════════════════════════════
+              ★ HEADLINE MASTERY RULES (MANDATORY) ★
+              ═══════════════════════════════════════
+              The title is your most powerful weapon. Every headline MUST:
+              1. TRIGGER EMOTION — Use urgency, curiosity, fear, hope, or outrage. Never be neutral.
+              2. USE POWER WORDS — Integrate words like: "Breakthrough", "Crisis", "Warning", "Urgent", "Revealed", "Hidden", "Shocking", "Now", "Finally", "Deadly", "Life-Saving", "Alarming", "Must-Know", "You Need to Know", "Doctors Warn", "Study Confirms", "Experts Reveal".
+              3. BE SPECIFIC — Include numbers, timeframes, or a bold claim where possible. Vague headlines are FORBIDDEN.
+              4. DRIVE ACTION — The reader must feel compelled to click and read immediately.
+              5. MAXIMUM 12 WORDS — Sharp, punchy, impossible to ignore.
 
-            ═══════════════════════════════
-            STRICT ARTICLE FORMATTING RULES
-            ═══════════════════════════════
-            1. Use exactly ONE main heading (the title). NEVER repeat this title inside the "content" field.
-            2. NEVER include <h1> or <h2> tags in the "content" field. The "content" must start directly with the article body.
-            3. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
-            4. Use <h3> for sub-sections like "Why This Is Escalating" or "What You Should Do Now" or "Understanding the Risk".
-            5. Use bullet points (<ul> and <li>) for clarity in technical lists.
-            6. Always end with a "MedSense Insight" section and a "Key Takeaway" section.
-            7. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.
-            8. STRICT CONTENT FILTER: You are exclusively a MEDICAL news AI. If the provided article is primarily about sports, football, general politics, entertainment, celebrities, or any topic that is NOT strictly related to health, medicine, medical research, or public health, you MUST reject it.
-            9. GEOGRAPHICAL CATEGORIZATION: If the news is specifically about Nigeria or any African country (e.g., Nigerian doctors, NCDC, African outbreaks, local healthcare), the category MUST be 'Nigeria/Africa Health'. If the news is about international organizations (WHO, UN), global pandemics, or broad health trends outside Africa, the category MUST be 'Global Health'.
+              PROVEN HEADLINE PATTERNS (use these as templates):
+              - "[Power Word]: [Specific Claim or Statistic] That [Audience] Must Know Now"
+              - "Doctors Issue Urgent Warning About [Topic] — Here's What You Need to Do"
+              - "[Number] Silent Signs of [Condition] Millions Are Dangerously Ignoring"
+              - "Breakthrough Study Reveals [Surprising Fact] — And It Changes Everything"
+              - "The Hidden [Health Risk] Affecting [Specific Group] Right Now"
+              - "Why [Common Belief] About [Topic] Is Putting Your Health at Risk"
+              - "[Shocking Stat]: [Topic] Is Rising — What You Can Do About It"
 
-            JSON structure:
-            {
-              "rejected": boolean (Set to true ONLY if the article is non-medical, otherwise false),
-              "title": "A POWERFUL, call-to-action headline that DEMANDS attention and drives clicks — following all Headline Mastery Rules above.",
-              "summary": "A 2-sentence professional summary that amplifies the urgency of the headline and draws the reader deeper.",
-              "content": "Full HTML content following the formatting rules above. (Leave empty if rejected: true)",
-              "category": "One of: [Health, Medicine, Research, Public Health, Technology, Global Health, Nigeria/Africa Health, Health Alerts]",
-              "visual_keyword": "A single specific medical keyword for image searching. CRITICAL: Use high-quality, professional, and clinical keywords only."
+              ═══════════════════════════════
+              STRICT ARTICLE FORMATTING RULES
+              ═══════════════════════════════
+              1. Use exactly ONE main heading (the title). NEVER repeat this title inside the "content" field.
+              2. NEVER include <h1> or <h2> tags in the "content" field. The "content" must start directly with the article body.
+              3. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
+              4. Use <h3> for sub-sections like "Why This Is Escalating" or "What You Should Do Now" or "Understanding the Risk".
+              5. Use bullet points (<ul> and <li>) for clarity in technical lists.
+              6. Always end with a "MedSense Insight" section and a "Key Takeaway" section.
+              7. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.
+              8. STRICT CONTENT FILTER: You are exclusively a MEDICAL news AI. If the provided article is primarily about sports, football, general politics, entertainment, celebrities, or any topic that is NOT strictly related to health, medicine, medical research, or public health, you MUST reject it.
+              9. GEOGRAPHICAL CATEGORIZATION: If the news is specifically about Nigeria or any African country (e.g., Nigerian doctors, NCDC, African outbreaks, local healthcare), the category MUST be 'Nigeria/Africa Health'. If the news is about international organizations (WHO, UN), global pandemics, or broad health trends outside Africa, the category MUST be 'Global Health'.
+
+              JSON structure:
+              {
+                "rejected": boolean (Set to true ONLY if the article is non-medical, otherwise false),
+                "title": "A POWERFUL, call-to-action headline that DEMANDS attention and drives clicks — following all Headline Mastery Rules above.",
+                "summary": "A 2-sentence professional summary that amplifies the urgency of the headline and draws the reader deeper.",
+                "content": "Full HTML content following the formatting rules above. (Leave empty if rejected: true)",
+                "category": "One of: [Health, Medicine, Research, Public Health, Technology, Global Health, Nigeria/Africa Health, Health Alerts]",
+                "visual_keyword": "A single specific medical keyword for image searching. CRITICAL: Use high-quality, professional, and clinical keywords only."
+              }
+
+              The tone should be ${tone}. 
+              
+              ★ WRITING STYLE GUIDELINE: Limit the usage of hyphens (-) in headlines and body text. Use professional commas or punctuation instead to maintain a clean, high-end editorial flow.
+              
+              REMEMBER: A mediocre headline kills a great story. Make it unforgettable.` 
+            },
+            { 
+              role: "user", 
+              content: `Title: ${sourceArticle.title}\nSummary: ${sourceArticle.summary}\nFull Text: ${sourceArticle.fullText.replace(/All rights reserved[\s\S]*?(?:permission from|PUNCH)[\s\S]*/gi, '').replace(/This material, and other digital content.*/gi, '').trim()}` 
             }
+          ],
+          response_format: { type: "json_object" }
+        })
+      });
 
-            The tone should be ${tone}. 
-            
-            ★ WRITING STYLE GUIDELINE: Limit the usage of hyphens (-) in headlines and body text. Use professional commas or punctuation instead to maintain a clean, high-end editorial flow.
-            
-            REMEMBER: A mediocre headline kills a great story. Make it unforgettable.` 
-          },
-          { 
-            role: "user", 
-            content: `Title: ${sourceArticle.title}\nSummary: ${sourceArticle.summary}\nFull Text: ${sourceArticle.fullText.replace(/All rights reserved[\s\S]*?(?:permission from|PUNCH)[\s\S]*/gi, '').replace(/This material, and other digital content.*/gi, '').trim()}` 
-          }
-        ],
-        response_format: { type: "json_object" }
-      })
-    });
-    if (!response.ok) {
-      const errText = await response.text();
-      let errMsg = errText;
-      try {
-        const parsed = JSON.parse(errText);
-        errMsg = parsed.detail || parsed.message || parsed.error?.message || errText;
-      } catch (e) {}
-      throw new Error(`Mistral HTTP ${response.status}: ${errMsg}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.choices && data.choices.length > 0) {
-      let rawContent = data.choices[0].message.content;
-      // Strip markdown code blocks if Mistral returns them
-      rawContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
-      
-      const result = JSON.parse(rawContent);
-      
-      if (result.rejected === true) {
-        throw new Error("Article rejected by AI: Content is non-medical (e.g., sports, politics, entertainment).");
+      if (response.status === 429) {
+        attempts++;
+        if (attempts >= maxAttempts) {
+          throw new Error("Mistral HTTP 429: Rate limit exceeded (Max retries reached)");
+        }
+        console.warn(`[MISTRAL] Rate limit hit (429). Retrying in ${retryDelayMs / 1000}s... (Attempt ${attempts}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        retryDelayMs *= 2.5; // Exponential backoff: 4s -> 10s -> 25s
+        continue;
       }
 
-      return { 
-        success: true, 
-        transformed: {
-          ...result,
-          originalImage: sourceArticle.originalImage
-        },
-        msg: "Intelligence classified and report generated."
-      };
-    } else {
-      const errMsg = data?.detail || data?.message || data?.error?.message || "Invalid response from Mistral AI";
-      throw new Error(`Mistral Error: ${errMsg}`);
+      if (!response.ok) {
+        const errText = await response.text();
+        let errMsg = errText;
+        try {
+          const parsed = JSON.parse(errText);
+          errMsg = parsed.detail || parsed.message || parsed.error?.message || errText;
+        } catch (e) {}
+        throw new Error(`Mistral HTTP ${response.status}: ${errMsg}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.choices && data.choices.length > 0) {
+        let rawContent = data.choices[0].message.content;
+        rawContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
+        
+        const result = JSON.parse(rawContent);
+        
+        if (result.rejected === true) {
+          throw new Error("Article rejected by AI: Content is non-medical (e.g., sports, politics, entertainment).");
+        }
+
+        return { 
+          success: true, 
+          transformed: {
+            ...result,
+            originalImage: sourceArticle.originalImage
+          },
+          msg: "Intelligence classified and report generated."
+        };
+      } else {
+        const errMsg = data?.detail || data?.message || data?.error?.message || "Invalid response from Mistral AI";
+        throw new Error(`Mistral Error: ${errMsg}`);
+      }
+
+    } catch (error: any) {
+      if ((error.message?.includes("429") || error.message?.includes("rate limit")) && attempts < maxAttempts - 1) {
+        attempts++;
+        console.warn(`[MISTRAL] Caught rate limit error in catch block. Retrying in ${retryDelayMs / 1000}s...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        retryDelayMs *= 2.5;
+        continue;
+      }
+      console.error("AI Processing Error:", error);
+      return { success: false, error: String(error.message || error) };
     }
-  } catch (error: any) {
-    console.error("AI Processing Error:", error);
-    return { success: false, error: String(error.message || error) };
   }
+  return { success: false, error: "Failed to process article after multiple rate-limit retries." };
 }
 
 /**
