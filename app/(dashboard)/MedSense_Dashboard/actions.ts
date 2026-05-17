@@ -96,14 +96,17 @@ export async function fetchLiveMedicalNews(customFeeds?: string[], freshnessHour
            }
         }
 
-        // Freshness Window (Configurable)
-        const cutoffTime = new Date();
-        cutoffTime.setHours(cutoffTime.getHours() - freshnessHours);
+        // Freshness Window (Configurable: from 1 hour ago to freshnessHours ago)
+        const lowerBound = new Date();
+        lowerBound.setHours(lowerBound.getHours() - freshnessHours);
+        
+        const upperBound = new Date();
+        upperBound.setHours(upperBound.getHours() - 1);
         
         let filtered = feed.items.filter((item: any) => {
           if (!item.isoDate && !item.pubDate) return false;
           const itemDate = new Date(item.isoDate || item.pubDate!);
-          return itemDate >= cutoffTime;
+          return itemDate >= lowerBound && itemDate <= upperBound;
         });
 
         // Strictly ignore news that is not within the 24-hour window
