@@ -322,14 +322,16 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
             5. Use bullet points (<ul> and <li>) for clarity in technical lists.
             6. Always end with a "MedSense Insight" section and a "Key Takeaway" section.
             7. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.
+            8. STRICT CONTENT FILTER: You are exclusively a MEDICAL news AI. If the provided article is primarily about sports, football, general politics, entertainment, celebrities, or any topic that is NOT strictly related to health, medicine, medical research, or public health, you MUST reject it.
 
             JSON structure:
             {
+              "rejected": boolean (Set to true ONLY if the article is non-medical, otherwise false),
               "title": "A POWERFUL, call-to-action headline that DEMANDS attention and drives clicks — following all Headline Mastery Rules above.",
               "summary": "A 2-sentence professional summary that amplifies the urgency of the headline and draws the reader deeper.",
-              "content": "Full HTML content following the formatting rules above.",
+              "content": "Full HTML content following the formatting rules above. (Leave empty if rejected: true)",
               "category": "One of: [Health, Medicine, Research, Public Health, Technology]",
-              "visual_keyword": "A single specific medical keyword for image searching. CRITICAL: Use high-quality, professional, and clinical keywords only (e.g., 'clinical-laboratory', 'modern-hospital', 'medical-research-microscope', 'professional-doctor-consultation'). Avoid generic or low-quality terms."
+              "visual_keyword": "A single specific medical keyword for image searching. CRITICAL: Use high-quality, professional, and clinical keywords only."
             }
 
             The tone should be ${tone}. 
@@ -356,6 +358,9 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
       
       const result = JSON.parse(rawContent);
       
+      if (result.rejected === true) {
+        throw new Error("Article rejected by AI: Content is non-medical (e.g., sports, politics, entertainment).");
+      }
 
       return { 
         success: true, 
