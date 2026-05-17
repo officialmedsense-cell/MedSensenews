@@ -55,51 +55,63 @@ export default async function Home() {
   ).slice(0, 5);
   
   const isAfricanNews = (a) => {
-    const title = a.title.toLowerCase();
+    const title = (a.title || '').toLowerCase();
     const excerpt = (a.excerpt || '').toLowerCase();
-    const text = `${title} ${excerpt}`;
+    const content = (a.content || '').toLowerCase();
     
-    // Explicit categories
+    // We scan title, excerpt, and content for African keywords
+    const fullText = `${title} ${excerpt} ${content}`;
+    
+    // 1. Check if AI explicitly marked it as Regional (Strongest signal)
     if (a.category === 'Nigeria/Africa Health' || a.category === 'Nigeria Health' || a.category === 'Africa Health') {
       return true;
     }
     
-    // "unless global is mention" -> yield to global
-    const hasGlobal = ['global', 'world health', 'who ', 'international', 'pandemic'].some(kw => text.includes(kw));
-    if (hasGlobal) {
+    // 2. Check if AI explicitly marked it as Global (Strongest signal)
+    if (a.category === 'Global Health') {
       return false;
     }
 
-    // Check for African keywords (Countries, Nigerian States, Organizations)
+    // 3. "Unless global is mention" - Let's check title and excerpt only for global dominance.
+    // If the headline is clearly global, yield to global to prevent false positive African assignments.
+    const titleExcerpt = `${title} ${excerpt}`;
+    const hasGlobalHeadline = ['global health', 'world health', 'who ', 'international ', 'pandemic'].some(kw => titleExcerpt.includes(kw));
+    if (hasGlobalHeadline) {
+      return false;
+    }
+
+    // 4. Now check for African keywords in the FULL text
     const africanKeywords = [
       'nigeria', 'africa', 'lagos', 'abuja', 'kano', 'port harcourt', 'ibadan', 'kaduna', 
       'enugu', 'anambra', 'oyo', 'delta state', 'edo state', 'ogun', 'ncdc', 'nafdac', 
       'south africa', 'kenya', 'ghana', 'egypt', 'ethiopia', 'tanzania', 'uganda', 
       'rwanda', 'senegal', 'zimbabwe', 'cameroon', 'mali', 'sudan', 'somalia'
     ];
-    return africanKeywords.some(kw => text.includes(kw));
+    return africanKeywords.some(kw => fullText.includes(kw));
   };
 
   const isGlobalNews = (a) => {
-    const title = a.title.toLowerCase();
+    const title = (a.title || '').toLowerCase();
     const excerpt = (a.excerpt || '').toLowerCase();
-    const text = `${title} ${excerpt}`;
+    const content = (a.content || '').toLowerCase();
+    const fullText = `${title} ${excerpt} ${content}`;
 
+    // 1. Explicit Category
     if (a.category === 'Global Health') return true;
 
-    // Explicitly regional -> exclude from global (unless it had global keywords, but we check that below)
-    if (a.category === 'Nigeria/Africa Health' || a.category === 'Nigeria Health' || a.category === 'Africa Health') {
+    // 2. STONG EXCLUSION: If it is successfully classified as African News by our robust function, it CANNOT be Global.
+    if (isAfricanNews(a)) {
       return false;
     }
 
-    // Check for global keywords
-    const globalKeywords = ['global', 'world', 'who ', 'international', 'pandemic', 'cdc'];
-    if (globalKeywords.some(kw => text.includes(kw))) {
+    // 3. Check for global keywords in FULL text since we know it's not African
+    const globalKeywords = ['global', 'world', 'who ', 'international', 'pandemic', 'cdc '];
+    if (globalKeywords.some(kw => fullText.includes(kw))) {
       return true;
     }
 
-    // If it's Public Health and NOT African, default to global
-    if (a.category === 'Public Health' && !isAfricanNews(a)) {
+    // 4. Fallback for Public Health
+    if (a.category === 'Public Health') {
       return true;
     }
 
