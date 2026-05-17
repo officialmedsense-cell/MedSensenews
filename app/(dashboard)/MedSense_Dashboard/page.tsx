@@ -321,6 +321,11 @@ export default function MedSenseDashboard() {
   const runScraper = async () => {
     if (isRunning) return;
     setIsRunning(true);
+    
+    // Clear old articles to make them disappear and start completely fresh
+    setArticles([]);
+    localStorage.removeItem('medsense_discovery_articles');
+    
     try {
       addLog("Establishing Neural Uplink to Global News Feeds...", "info");
       const stages = ["collect", "extract", "filter", "process", "output"] as const;
@@ -334,12 +339,22 @@ export default function MedSenseDashboard() {
         addLog(`Discovered ${discovered.length} live medical signals today.`, "success");
       }
 
+      const processedUrls = new Set<string>();
+      const processedTitles = new Set<string>();
+
       for (const stage of stages) {
         setPipelineState(prev => ({ ...prev, [stage]: { ...prev[stage], status: 'running' } }));
         
         if (stage === 'process') {
           for (const item of discovered) {
-            // Pre-Check: Skip if already published
+            const normalizedUrl = item.sourceUrl ? item.sourceUrl.toLowerCase().trim() : '';
+            const normalizedTitle = item.title ? item.title.toLowerCase().trim() : '';
+            
+            if ((normalizedUrl && processedUrls.has(normalizedUrl)) || (normalizedTitle && processedTitles.has(normalizedTitle))) {
+              continue;
+            }
+
+            // Pre-Check: Skip if already published in Supabase
             if (item.sourceUrl) {
                const isDuplicate = await isDuplicateArticle(item.sourceUrl);
                if (isDuplicate) {
@@ -366,6 +381,10 @@ export default function MedSenseDashboard() {
                 severity: "High",
                 read: false
               };
+              
+              if (normalizedUrl) processedUrls.add(normalizedUrl);
+              if (normalizedTitle) processedTitles.add(normalizedTitle);
+              
               setArticles(prev => [newArticle, ...prev]);
             } else {
               addLog(`AI Processing failed for "${item.title.substring(0, 20)}...": ${res.error || "Unknown error"}`, "error");
