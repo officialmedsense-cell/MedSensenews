@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import BbcCard from '@/components/BbcCard';
 import Link from 'next/link';
+import Image from 'next/image';
 import WeatherWidget from '@/components/WeatherWidget';
 import { HEALTH_DAYS } from '@/lib/healthDays';
 
@@ -178,8 +179,8 @@ export default async function Home() {
               padding: '0.75rem'
             }}>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <div style={{ width: '70px', height: '70px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0 }}>
-                  <img src={article.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} />
+                <div style={{ width: '70px', height: '70px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
+                  <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="70px" style={{ objectFit: 'cover', opacity: 0.9 }} />
                 </div>
                 <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                   <span style={{ fontSize: '1.2rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>{idx + 1}</span>
@@ -261,7 +262,7 @@ export default async function Home() {
                     <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} className="hover-bg">
                         <div style={{ width: '80px', height: '60px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                          <img src={article.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="80px" style={{ objectFit: 'cover' }} />
                         </div>
                         <div>
                           <span style={{ color: 'var(--alert-red)', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
@@ -285,7 +286,7 @@ export default async function Home() {
                     <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} className="hover-bg">
                         <div style={{ width: '80px', height: '60px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                          <img src={article.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="80px" style={{ objectFit: 'cover' }} />
                         </div>
                         <div>
                           <span style={{ color: 'var(--primary)', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
@@ -310,7 +311,7 @@ export default async function Home() {
                       <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} className="hover-bg">
                           <div style={{ width: '80px', height: '60px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                            <img src={article.image} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="80px" style={{ objectFit: 'cover' }} />
                           </div>
                           <div>
                             <span style={{ color: '#f59e0b', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
