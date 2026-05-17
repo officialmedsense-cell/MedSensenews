@@ -4448,8 +4448,18 @@ img {
 }
 
 @media (max-width: 768px) {
-    .main-header.header-hidden {
-        transform: translateY(-100%);
+    .main-header.header-hidden .navbar-top {
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        opacity: 0;
+        overflow: hidden;
+    }
+    
+    .navbar-top {
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 60px;
+        overflow: hidden;
     }
 }
 
