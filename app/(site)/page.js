@@ -54,66 +54,76 @@ export default async function Home() {
     (a.excerpt && a.excerpt.toLowerCase().includes('outbreak'))
   ).slice(0, 5);
   
-  const isAfricanNews = (a) => {
+  const getGeographicScore = (a) => {
     const title = (a.title || '').toLowerCase();
     const excerpt = (a.excerpt || '').toLowerCase();
     const content = (a.content || '').toLowerCase();
-    
-    // We scan title, excerpt, and content for African keywords
-    const fullText = `${title} ${excerpt} ${content}`;
-    
-    // 1. Check if AI explicitly marked it as Regional (Strongest signal)
+
+    // AI explicitly categorized it (very strong signal)
     if (a.category === 'Nigeria/Africa Health' || a.category === 'Nigeria Health' || a.category === 'Africa Health') {
-      return true;
+      return { africa: 100, global: 0 };
     }
-    
-    // 2. Check if AI explicitly marked it as Global (Strongest signal)
     if (a.category === 'Global Health') {
-      return false;
+      return { africa: 0, global: 100 };
     }
 
-    // 3. "Unless global is mention" - The user wants any mention of global to override Africa.
-    // By scanning the FULL text for global keywords, we prevent global articles that casually mention an African country from being trapped here.
-    const hasGlobalMention = ['global health', 'world health', 'who ', 'international ', 'pandemic'].some(kw => fullText.includes(kw));
-    if (hasGlobalMention) {
-      return false;
-    }
+    let africaScore = 0;
+    let globalScore = 0;
 
-    // 4. Now check for African keywords in the FULL text
     const africanKeywords = [
       'nigeria', 'africa', 'lagos', 'abuja', 'kano', 'port harcourt', 'ibadan', 'kaduna', 
       'enugu', 'anambra', 'oyo', 'delta state', 'edo state', 'ogun', 'ncdc', 'nafdac', 
       'south africa', 'kenya', 'ghana', 'egypt', 'ethiopia', 'tanzania', 'uganda', 
       'rwanda', 'senegal', 'zimbabwe', 'cameroon', 'mali', 'sudan', 'somalia'
     ];
-    return africanKeywords.some(kw => fullText.includes(kw));
+
+    const globalKeywords = [
+      'global', 'world health', 'who ', 'international', 'pandemic', 'cdc ', 'un ', 'united nations', 
+      'fda ', 'europe', 'america', 'usa', 'united states', 'london', 'uk '
+    ];
+
+    // 1. Check title (highest priority)
+    africanKeywords.forEach(kw => {
+      if (title.includes(kw)) africaScore += 10;
+    });
+    globalKeywords.forEach(kw => {
+      if (title.includes(kw)) globalScore += 10;
+    });
+
+    // 2. Check excerpt (medium priority)
+    africanKeywords.forEach(kw => {
+      if (excerpt.includes(kw)) africaScore += 5;
+    });
+    globalKeywords.forEach(kw => {
+      if (excerpt.includes(kw)) globalScore += 5;
+    });
+
+    // 3. Check content (lowest priority to prevent casual mentions from overriding)
+    africanKeywords.forEach(kw => {
+      const matches = content.split(kw).length - 1;
+      africaScore += matches * 0.5;
+    });
+    globalKeywords.forEach(kw => {
+      const matches = content.split(kw).length - 1;
+      globalScore += matches * 0.5;
+    });
+
+    return { africa: africaScore, global: globalScore };
+  };
+
+  const isAfricanNews = (a) => {
+    const { africa, global } = getGeographicScore(a);
+    return africa > 0 && africa >= global;
   };
 
   const isGlobalNews = (a) => {
-    const title = (a.title || '').toLowerCase();
-    const excerpt = (a.excerpt || '').toLowerCase();
-    const content = (a.content || '').toLowerCase();
-    const fullText = `${title} ${excerpt} ${content}`;
+    const { africa, global } = getGeographicScore(a);
+    if (global > 0 && global > africa) return true;
 
-    // 1. Explicit Category
-    if (a.category === 'Global Health') return true;
-
-    // 2. STONG EXCLUSION: If it is successfully classified as African News by our robust function, it CANNOT be Global.
-    if (isAfricanNews(a)) {
-      return false;
-    }
-
-    // 3. Check for global keywords in FULL text since we know it's not African
-    const globalKeywords = ['global', 'world', 'who ', 'international', 'pandemic', 'cdc '];
-    if (globalKeywords.some(kw => fullText.includes(kw))) {
+    // Fallback for Public Health if not African
+    if (a.category === 'Public Health' && !isAfricanNews(a)) {
       return true;
     }
-
-    // 4. Fallback for Public Health
-    if (a.category === 'Public Health') {
-      return true;
-    }
-
     return false;
   };
 
