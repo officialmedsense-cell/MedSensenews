@@ -54,12 +54,19 @@ export default async function Home() {
     (a.excerpt && a.excerpt.toLowerCase().includes('outbreak'))
   ).slice(0, 5);
   
-  const nigeriaArticles = articles.filter(a => 
-    a.category === 'Health' || 
-    a.title.toLowerCase().includes('nigeria') || 
-    a.title.toLowerCase().includes('africa') ||
-    (a.excerpt && a.excerpt.toLowerCase().includes('nigeria'))
-  ).slice(0, 20);
+  const nigeriaArticles = articles.filter(a => {
+    const title = a.title.toLowerCase();
+    const excerpt = (a.excerpt || '').toLowerCase();
+    return (
+      a.category === 'Nigeria/Africa Health' || 
+      a.category === 'Nigeria Health' || 
+      a.category === 'Africa Health' ||
+      title.includes('nigeria') || 
+      title.includes('africa') ||
+      excerpt.includes('nigeria') ||
+      excerpt.includes('africa')
+    );
+  }).slice(0, 20);
 
   const globalArticles = articles.filter(a => {
     const title = a.title.toLowerCase();
@@ -68,19 +75,20 @@ export default async function Home() {
     // 1. Exclude Regional (Nigeria/Africa)
     if (title.includes('nigeria') || title.includes('africa') || 
         excerpt.includes('nigeria') || excerpt.includes('africa') ||
-        a.category === 'Nigeria Health' || a.category === 'Africa Health') {
+        a.category === 'Nigeria/Africa Health' || a.category === 'Nigeria Health' || a.category === 'Africa Health') {
       return false;
     }
 
     // 2. Detect Global Entities
     return (
-      a.category === 'Public Health' ||
       a.category === 'Global Health' ||
+      a.category === 'Public Health' ||
       title.includes('global') ||
       title.includes('world') ||
       title.includes('who') ||
       title.includes('international') ||
-      title.includes('pandemic')
+      title.includes('pandemic') ||
+      title.includes('cdc')
     );
   }).slice(0, 20);
   
