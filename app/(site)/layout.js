@@ -89,7 +89,7 @@ export default async function SiteLayout({ children }) {
           </div>
         </div>
 
-        <SmartHeader>
+        <div className="smart-header-wrapper smart-header-visible">
           <div className="navbar-nav-inner" style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
@@ -167,7 +167,7 @@ export default async function SiteLayout({ children }) {
               </ul>
             </nav>
           </div>
-        </SmartHeader>
+        </div>
       </nav>
     </SmartHeader>
   );
