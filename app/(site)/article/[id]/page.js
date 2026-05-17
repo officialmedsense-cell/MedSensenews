@@ -4,6 +4,7 @@ import Image from 'next/image';
 import CommentSection from '@/components/CommentSection';
 import BbcCard from '@/components/BbcCard';
 import SocialShare from '@/components/SocialShare';
+import AudioPlayer from '@/components/AudioPlayer';
 
 export const revalidate = 3600; // Cache articles for 1 hour
 
@@ -199,6 +200,13 @@ export default async function ArticlePage({ params }) {
           </div>
         </div>
       </header>
+
+      <AudioPlayer 
+        title={article.title}
+        author={article.author}
+        excerpt={article.excerpt}
+        content={article.content}
+      />
 
       <div className="image-branding-wrapper article-main-image-container" style={{ position: 'relative', width: '100%', borderRadius: '12px', overflow: 'hidden', marginBottom: '3rem' }}>
         <Image 
