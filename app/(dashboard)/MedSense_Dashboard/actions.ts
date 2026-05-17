@@ -372,6 +372,9 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
         msg: "Intelligence classified and report generated."
       };
     } else {
+      if (data && data.error && data.error.message) {
+         throw new Error(`Mistral API Error: ${data.error.message}`);
+      }
       throw new Error("Invalid response from Mistral AI");
     }
   } catch (error: any) {

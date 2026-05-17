@@ -389,6 +389,9 @@ export default function MedSenseDashboard() {
             } else {
               addLog(`AI Processing failed for "${item.title.substring(0, 20)}...": ${res.error || "Unknown error"}`, "error");
             }
+            
+            // Small delay to prevent hitting Mistral API rate limits (1.5 seconds)
+            await sleep(1500);
           }
         }
 
