@@ -105,8 +105,8 @@ export async function GET(request: Request) {
           }
         }
 
-        // Small delay to avoid hitting API rate limits
-        await new Promise(r => setTimeout(r, 1500));
+        // Small delay to avoid hitting API rate limits (3.5 seconds)
+        await new Promise(r => setTimeout(r, 3500));
 
       } catch (err: any) {
         results.failed++;
