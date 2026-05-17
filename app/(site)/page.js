@@ -72,11 +72,10 @@ export default async function Home() {
       return false;
     }
 
-    // 3. "Unless global is mention" - Let's check title and excerpt only for global dominance.
-    // If the headline is clearly global, yield to global to prevent false positive African assignments.
-    const titleExcerpt = `${title} ${excerpt}`;
-    const hasGlobalHeadline = ['global health', 'world health', 'who ', 'international ', 'pandemic'].some(kw => titleExcerpt.includes(kw));
-    if (hasGlobalHeadline) {
+    // 3. "Unless global is mention" - The user wants any mention of global to override Africa.
+    // By scanning the FULL text for global keywords, we prevent global articles that casually mention an African country from being trapped here.
+    const hasGlobalMention = ['global health', 'world health', 'who ', 'international ', 'pandemic'].some(kw => fullText.includes(kw));
+    if (hasGlobalMention) {
       return false;
     }
 
