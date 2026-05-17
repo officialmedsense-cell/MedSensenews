@@ -216,8 +216,8 @@ export async function fetchLiveMedicalNews(customFeeds?: string[], freshnessHour
       idx++;
     }
 
-    // Take top 100 (most recent but diverse) and randomize their final presentation
-    const randomizedTopFeeds = interleaved.slice(0, 100).sort(() => Math.random() - 0.5);
+    // Take top 200 (most recent but diverse) and randomize their final presentation
+    const randomizedTopFeeds = interleaved.slice(0, 200).sort(() => Math.random() - 0.5);
 
     return {
       success: true,
