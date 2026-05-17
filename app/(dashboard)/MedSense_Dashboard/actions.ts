@@ -349,6 +349,15 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
         response_format: { type: "json_object" }
       })
     });
+    if (!response.ok) {
+      const errText = await response.text();
+      let errMsg = errText;
+      try {
+        const parsed = JSON.parse(errText);
+        errMsg = parsed.detail || parsed.message || parsed.error?.message || errText;
+      } catch (e) {}
+      throw new Error(`Mistral HTTP ${response.status}: ${errMsg}`);
+    }
 
     const data = await response.json();
     
@@ -372,10 +381,8 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
         msg: "Intelligence classified and report generated."
       };
     } else {
-      if (data && data.error && data.error.message) {
-         throw new Error(`Mistral API Error: ${data.error.message}`);
-      }
-      throw new Error("Invalid response from Mistral AI");
+      const errMsg = data?.detail || data?.message || data?.error?.message || "Invalid response from Mistral AI";
+      throw new Error(`Mistral Error: ${errMsg}`);
     }
   } catch (error: any) {
     console.error("AI Processing Error:", error);
