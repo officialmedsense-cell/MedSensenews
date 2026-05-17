@@ -5,7 +5,7 @@ import { useState, useEffect, useRef } from 'react';
 export default function AudioPlayer({ title, author, content, excerpt }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [rate, setRate] = useState(1); // Speed: 1x, 1.25x, 1.5x
+  const [rate, setRate] = useState(0.85); // Speed: 0.85x (Normal), 1.0x, 1.15x, 1.3x
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const [supported, setSupported] = useState(false);
 
@@ -131,7 +131,7 @@ export default function AudioPlayer({ title, author, content, excerpt }) {
   };
 
   const handleSpeedChange = () => {
-    const speeds = [1, 1.25, 1.5, 2];
+    const speeds = [0.85, 1.0, 1.15, 1.3];
     const currentIndex = speeds.indexOf(rate);
     const nextSpeed = speeds[(currentIndex + 1) % speeds.length];
     setRate(nextSpeed);
@@ -229,7 +229,7 @@ export default function AudioPlayer({ title, author, content, excerpt }) {
           }}
           title="Change Reading Speed"
         >
-          {rate}x
+          {rate === 0.85 ? '1.0x' : rate === 1.0 ? '1.2x' : rate === 1.15 ? '1.4x' : '1.6x'}
         </button>
       </div>
     </div>
