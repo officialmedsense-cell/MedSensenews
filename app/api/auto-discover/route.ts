@@ -33,36 +33,8 @@ export async function GET(request: Request) {
     results.fetched = newsResult.articles.length;
     console.log(`[AutoDiscover] Fetched ${results.fetched} articles.`);
 
-    // 1.5 Special Logic: Official Health Day Priority
-    const today = new Date();
-    const activeHealthDay = HEALTH_DAYS.find(d => d.month === today.getMonth() && d.day === today.getDate());
-    
-    if (activeHealthDay) {
-      console.log(`[AutoDiscover] Official Health Day Detected: ${activeHealthDay.name}. Prioritizing awareness coverage.`);
-      const awarenessNews = await searchExternalNews(activeHealthDay.name);
-      if (awarenessNews.success && awarenessNews.articles?.length > 0) {
-        // Prepend the official awareness news to ensure it gets processed first
-        newsResult.articles.unshift({
-          ...awarenessNews.articles[0],
-          summary: `Today is ${activeHealthDay.name}. This global observance highlights the critical importance of ${activeHealthDay.keywords.join(', ')} in modern medicine.`,
-          fullText: `Global health authorities including the WHO and UN are observing ${activeHealthDay.name} today. This annual event serves as a vital platform for raising awareness and mobilizing international efforts to address challenges related to ${activeHealthDay.keywords[0]}.`,
-          originalImage: null,
-          source: 'World Health Organization',
-          pubDate: today.toISOString()
-        });
-      }
-    }
-    for (const article of newsResult.articles) {
+     for (const article of newsResult.articles) {
       try {
-        // 2. Pre-Check: Is this article already on the platform?
-        if (article.sourceUrl) {
-          const isDuplicate = await isDuplicateArticle(article.sourceUrl);
-          if (isDuplicate) {
-            console.log(`[AutoDiscover] Skipping known origin: "${article.title?.substring(0, 40)}"`);
-            continue;
-          }
-        }
-
         const aiResult = await processArticleWithAI(
           {
             title: article.title,
@@ -105,8 +77,8 @@ export async function GET(request: Request) {
           }
         }
 
-        // Small delay to avoid hitting API rate limits (5.0 seconds)
-        await new Promise(r => setTimeout(r, 5000));
+        // Small delay to avoid hitting API rate limits (1.0 second)
+        await new Promise(r => setTimeout(r, 1000));
 
       } catch (err: any) {
         results.failed++;

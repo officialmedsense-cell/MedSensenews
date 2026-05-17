@@ -34,6 +34,78 @@ const pubKey = process.env.PUBLICATION_SUPABASE_KEY || "";
 const pubClient = (pubUrl && pubKey) ? createClient(pubUrl, pubKey) : null;
 
 /**
+ * Scrapes the clean text content from the original HTML page of a news article.
+ * Extracts paragraphs inside <article> or standard containers and cleans up HTML elements.
+ */
+export async function scrapeFullArticleText(url: string): Promise<string> {
+  if (!url || url === "#") return "";
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
+      },
+      next: { revalidate: 3600 }
+    });
+    if (!res.ok) return "";
+    const html = await res.text();
+
+    // 1. Strip scripts, styles, headers, footers, navs, and comments
+    const cleanHtml = html
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+      .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+      .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+
+    // 2. Extract paragraphs inside the main article body container if possible
+    const articleMatch = cleanHtml.match(/<article[^>]*>([\s\S]*?)<\/article>/i) 
+      || cleanHtml.match(/<div[^>]*class="[^"]*(?:article|entry-content|post-content|story-body|main-content)[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
+    
+    const contentToParse = articleMatch ? articleMatch[1] : cleanHtml;
+
+    // 3. Extract text from <p> tags
+    const pMatches = contentToParse.match(/<p[^>]*>([\s\S]*?)<\/p>/gi);
+    if (!pMatches) return "";
+
+    const paragraphs = pMatches
+      .map(p => {
+        let text = p.replace(/<[^>]*>/g, '').trim();
+        text = text
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ');
+        return text;
+      })
+      .filter(text => {
+        const lowerText = text.toLowerCase();
+        return text.length > 50 && 
+          !lowerText.includes('copyright') && 
+          !lowerText.includes('all rights reserved') &&
+          !lowerText.includes('click here') &&
+          !lowerText.includes('follow us') &&
+          !lowerText.includes('privacy policy') &&
+          !lowerText.includes('terms of service') &&
+          !lowerText.includes('read more') &&
+          !lowerText.includes('advertisement') &&
+          !lowerText.includes('sign up for') &&
+          !lowerText.includes('subscribe to');
+      });
+
+    return paragraphs.join('\n\n');
+  } catch (e) {
+    console.error(`[Scraper] Failed to fetch full page from ${url}:`, e);
+    return "";
+  }
+}
+
+/**
  * Live News Discovery
  * Fetches real articles from global medical RSS feeds.
  * Filters for articles published TODAY only.
@@ -80,33 +152,22 @@ export async function fetchLiveMedicalNews(customFeeds?: string[], freshnessHour
                      isoDate: item.publishedAt || item.date || item.created_at || new Date().toISOString()
                    }))
                  };
-              } catch (jsonErr) {
-                 // If all parsing fails, generate a synthetic error signal
-                 feed = {
-                   title: "System Diagnostics",
-                   items: [{
-                     title: `[UPLINK FAILED] Unreadable Source: ${new URL(url).hostname}`,
-                     contentSnippet: `The AI could not extract structured data from ${url}. Please verify that this is a valid RSS Feed or JSON API endpoint, and not a standard HTML webpage.`,
-                     content: `Diagnostic Failure. The system attempted RSS, XML, and JSON extraction protocols but all returned invalid formats.`,
-                     link: url,
-                     isoDate: new Date().toISOString()
-                   }]
-                 };
-              }
+               } catch (jsonErr) {
+                  console.warn(`[DISCOVERY] Hub parse failed for URL ${url}. Skipping.`);
+                  continue;
+               }
            }
         }
 
-        // Freshness Window (Configurable: from 1 hour ago to freshnessHours ago)
+        // Freshness Window (Configurable: up to freshnessHours ago, no upper limit delay to get the absolute latest)
         const lowerBound = new Date();
         lowerBound.setHours(lowerBound.getHours() - freshnessHours);
         
-        const upperBound = new Date();
-        upperBound.setHours(upperBound.getHours() - 1);
-        
         let filtered = feed.items.filter((item: any) => {
-          if (!item.isoDate && !item.pubDate) return false;
-          const itemDate = new Date(item.isoDate || item.pubDate!);
-          return itemDate >= lowerBound && itemDate <= upperBound;
+          const itemDateString = item.isoDate || item.pubDate;
+          if (!itemDateString) return true; // Default to fresh if no date is provided by the feed
+          const itemDate = new Date(itemDateString);
+          return itemDate >= lowerBound && itemDate <= new Date();
         });
 
         // Strictly ignore news that is not within the 24-hour window
@@ -155,36 +216,50 @@ export async function fetchLiveMedicalNews(customFeeds?: string[], freshnessHour
     let deduplicated = Array.from(uniqueMap.values());
 
     // 2. Database check: Filter out articles that are already published
-    // We check the source_url column in the articles table
+    // Fetch last 300 articles to perform case/punctuation-insensitive matching in-memory
     try {
       if (pubClient) {
         const normalizeUrl = (url: string) => {
           try {
             const u = new URL(url);
-            return u.origin + u.pathname;
+            return (u.origin + u.pathname).toLowerCase().replace(/\/$/, ''); // lowercase and strip trailing slash
           } catch (e) {
-            return url;
+            return url.toLowerCase().replace(/\/$/, '');
           }
         };
 
-        const urlsToCheck = deduplicated.map(a => normalizeUrl(a.sourceUrl)).filter(url => url !== "#");
-        const titlesToCheck = deduplicated.map(a => a.title);
+        const cleanTitle = (t: string) => 
+          t.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
 
-        const { data: existingByUrl } = urlsToCheck.length > 0 
-          ? await pubClient.from('articles').select('source_url').in('source_url', urlsToCheck)
-          : { data: [] };
+        const { data: recentArticles } = await pubClient
+          .from('articles')
+          .select('title, source_url')
+          .order('date', { ascending: false })
+          .limit(300);
+
+        if (recentArticles && recentArticles.length > 0) {
+          const existingUrls = new Set(
+            recentArticles
+              .map((a: any) => a.source_url ? normalizeUrl(a.source_url) : '')
+              .filter(u => u !== '')
+          );
           
-        const { data: existingByTitle } = titlesToCheck.length > 0
-          ? await pubClient.from('articles').select('title').in('title', titlesToCheck)
-          : { data: [] };
-        
-        const existingUrls = new Set((existingByUrl || []).map((a: any) => a.source_url));
-        const existingTitles = new Set((existingByTitle || []).map((a: any) => a.title.toLowerCase().trim()));
-        
-        deduplicated = deduplicated.filter(a => 
-          !existingUrls.has(normalizeUrl(a.sourceUrl)) && 
-          !existingTitles.has(a.title.toLowerCase().trim())
-        );
+          const existingTitles = new Set(
+            recentArticles
+              .map((a: any) => a.title ? cleanTitle(a.title) : '')
+              .filter(t => t !== '')
+          );
+          
+          deduplicated = deduplicated.filter(a => {
+            const normUrl = a.sourceUrl && a.sourceUrl !== "#" ? normalizeUrl(a.sourceUrl) : '';
+            const cleanedTitle = a.title ? cleanTitle(a.title) : '';
+            
+            const isUrlDup = normUrl !== '' && existingUrls.has(normUrl);
+            const isTitleDup = cleanedTitle !== '' && existingTitles.has(cleanedTitle);
+            
+            return !isUrlDup && !isTitleDup;
+          });
+        }
       }
     } catch (dbErr) {
       console.error("Duplicate DB check error:", dbErr);
@@ -281,6 +356,20 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
     return { success: false, error: "Mistral API Key is missing." };
   }
 
+  // --- STRONG WEB SCRAPER INTEGRATION ---
+  // If the available fullText is very short (less than 300 characters), scrape the actual article page!
+  let fullTextToProcess = sourceArticle.fullText || sourceArticle.summary || "";
+  if (sourceArticle.sourceUrl && sourceArticle.sourceUrl !== "#" && fullTextToProcess.length < 300) {
+    console.log(`[SCRAPER] Content is too short (${fullTextToProcess.length} chars). Activating strong crawler for: ${sourceArticle.sourceUrl}`);
+    const scrapedContent = await scrapeFullArticleText(sourceArticle.sourceUrl);
+    if (scrapedContent && scrapedContent.length > fullTextToProcess.length) {
+      fullTextToProcess = scrapedContent;
+      console.log(`[SCRAPER] Successfully scraped high-fidelity content (${fullTextToProcess.length} chars).`);
+    } else {
+      console.log(`[SCRAPER] Scraper returned no content or shorter text; using feed snippet fallback.`);
+    }
+  }
+
   let attempts = 0;
   const maxAttempts = 3;
   let retryDelayMs = 4000;
@@ -351,7 +440,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
             },
             { 
               role: "user", 
-              content: `Title: ${sourceArticle.title}\nSummary: ${sourceArticle.summary}\nFull Text: ${sourceArticle.fullText.replace(/All rights reserved[\s\S]*?(?:permission from|PUNCH)[\s\S]*/gi, '').replace(/This material, and other digital content.*/gi, '').trim()}` 
+              content: `Title: ${sourceArticle.title}\nSummary: ${sourceArticle.summary}\nFull Text: ${fullTextToProcess.replace(/All rights reserved[\s\S]*?(?:permission from|PUNCH)[\s\S]*/gi, '').replace(/This material, and other digital content.*/gi, '').trim()}` 
             }
           ],
           response_format: { type: "json_object" }

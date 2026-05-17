@@ -360,16 +360,7 @@ export default function MedSenseDashboard() {
               continue;
             }
 
-            // Pre-Check: Skip if already published in Supabase
-            if (item.sourceUrl) {
-               const isDuplicate = await isDuplicateArticle(item.sourceUrl);
-               if (isDuplicate) {
-                 addLog(`Skipping existing signal: ${item.title.substring(0, 30)}...`, "info");
-                 continue;
-               }
-            }
-
-            const res = await processArticleWithAI(item, settings.aiModel, settings.tone);
+             const res = await processArticleWithAI(item, settings.aiModel, settings.tone);
             if (res.success && res.transformed) {
               const newArticle: Article = {
                 id: Math.random().toString(36).substr(2, 9),
@@ -396,8 +387,8 @@ export default function MedSenseDashboard() {
               addLog(`AI Processing failed for "${item.title.substring(0, 20)}...": ${res.error || "Unknown error"}`, "error");
             }
             
-            // Small delay to prevent hitting Mistral API rate limits (5.0 seconds)
-            await sleep(5000);
+            // Small delay to prevent hitting Mistral API rate limits (1.0 second)
+            await sleep(1000);
           }
         }
 
