@@ -48,7 +48,7 @@ export default async function SiteLayout({ children }) {
   } catch (err) {}
 
   const header = (
-    <header style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'var(--bg)', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
+    <SmartHeader isOuterHeader={true}>
       <div className="navbar-top" style={{ display: 'block' }}>
         <div className="navbar-top-content">
           <div className="desktop-nav-links">
@@ -169,7 +169,7 @@ export default async function SiteLayout({ children }) {
           </div>
         </SmartHeader>
       </nav>
-    </header>
+    </SmartHeader>
   );
 
   const footer = (

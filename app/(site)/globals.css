@@ -4442,6 +4442,17 @@ img {
     visibility: hidden;
 }
 
+.main-header {
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+}
+
+@media (max-width: 768px) {
+    .main-header.header-hidden {
+        transform: translateY(-100%);
+    }
+}
+
 .is-scrolled .sticky-logo-container {
     display: flex !important;
 }

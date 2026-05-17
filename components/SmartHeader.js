@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 
-export default function SmartHeader({ children }) {
+export default function SmartHeader({ children, isOuterHeader = false }) {
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const lastScrollY = useRef(0);
@@ -44,6 +44,17 @@ export default function SmartHeader({ children }) {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isVisible]);
+
+  if (isOuterHeader) {
+    return (
+      <header 
+        className={`main-header ${isVisible ? 'header-visible' : 'header-hidden'} ${isScrolled ? 'is-scrolled' : ''}`}
+        style={{ position: 'sticky', top: 0, zIndex: 1000, background: 'var(--bg)', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}
+      >
+        {children}
+      </header>
+    );
+  }
 
   return (
     <>
