@@ -38,7 +38,7 @@ const pubClient = (pubUrl && pubKey) ? createClient(pubUrl, pubKey) : null;
  * Fetches real articles from global medical RSS feeds.
  * Filters for articles published TODAY only.
  */
-export async function fetchLiveMedicalNews(customFeeds?: string[]) {
+export async function fetchLiveMedicalNews(customFeeds?: string[], freshnessHours: number = 24) {
   try {
     const allArticles: any[] = [];
     
@@ -96,14 +96,14 @@ export async function fetchLiveMedicalNews(customFeeds?: string[]) {
            }
         }
 
-        // Freshness Window: 24 Hours (As requested)
-        const twentyFourHoursAgo = new Date();
-        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
+        // Freshness Window (Configurable)
+        const cutoffTime = new Date();
+        cutoffTime.setHours(cutoffTime.getHours() - freshnessHours);
         
         let filtered = feed.items.filter((item: any) => {
           if (!item.isoDate && !item.pubDate) return false;
           const itemDate = new Date(item.isoDate || item.pubDate!);
-          return itemDate >= twentyFourHoursAgo;
+          return itemDate >= cutoffTime;
         });
 
         // Strictly ignore news that is not within the 24-hour window

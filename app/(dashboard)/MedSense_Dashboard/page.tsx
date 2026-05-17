@@ -76,6 +76,7 @@ export default function MedSenseDashboard() {
     { id: "3", name: "Nature Medicine", url: "https://www.nature.com/nm.rss", status: "online", type: "rss" }
   ]);
 
+  const [isInitialSourcesLoaded, setIsInitialSourcesLoaded] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -97,7 +98,8 @@ export default function MedSenseDashboard() {
     publishUrl: "",
     publishToken: "",
     autoPublish: false,
-    authorName: "Damilare"
+    authorName: "Damilare",
+    freshnessWindow: 24
   });
 
   const [showAddSource, setShowAddSource] = useState(false);
@@ -169,6 +171,9 @@ export default function MedSenseDashboard() {
       } else if (savedSources) {
          try { setSources(JSON.parse(savedSources)); } catch (e) {}
       }
+      setIsInitialSourcesLoaded(true);
+    }).catch(() => {
+      setIsInitialSourcesLoaded(true);
     });
 
     if (savedSettings) {
@@ -187,11 +192,12 @@ export default function MedSenseDashboard() {
   }, []);
 
   useEffect(() => {
+    if (!isInitialSourcesLoaded) return;
     localStorage.setItem('medsense_sources', JSON.stringify(sources));
     if (authChecked) {
       saveSourcesToCloud(sources).catch(console.error);
     }
-  }, [sources, authChecked]);
+  }, [sources, authChecked, isInitialSourcesLoaded]);
 
   useEffect(() => {
     localStorage.setItem('medsense_discovery_articles', JSON.stringify(articles));
@@ -331,7 +337,7 @@ export default function MedSenseDashboard() {
       const stages = ["collect", "extract", "filter", "process", "output"] as const;
       
       const sourceUrls = sources.map(s => s.url);
-      const discoveryResult = await fetchLiveMedicalNews(sourceUrls);
+      const discoveryResult = await fetchLiveMedicalNews(sourceUrls, Number(settings.freshnessWindow || 24));
       let discovered: any[] = [];
 
       if (discoveryResult.success && discoveryResult.articles) {
@@ -681,12 +687,22 @@ export default function MedSenseDashboard() {
         {activeNav === 'settings' && (
         <section className="glass-card" id="settings" style={{ marginBottom: '24px' }}>
            <h2 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '24px' }}>System Configuration</h2>
-           <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px' }}>
+           <div className="settings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
               <div>
                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>AI INTELLIGENCE CORE</label>
                  <select value={settings.aiModel} onChange={e => setSettings({...settings, aiModel: e.target.value})} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: 'var(--radius-md)', padding: '12px', color: 'var(--text-primary)' }}>
                     <option value="mistral-small-latest">Mistral Small (Optimized)</option>
                     <option value="mistral-large-latest">Mistral Large (High Fidelity)</option>
+                 </select>
+              </div>
+              <div>
+                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '8px', color: 'var(--text-muted)' }}>DISCOVERY FRESHNESS</label>
+                 <select value={settings.freshnessWindow || 24} onChange={e => setSettings({...settings, freshnessWindow: Number(e.target.value)})} style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: 'var(--radius-md)', padding: '12px', color: 'var(--text-primary)' }}>
+                    <option value={24}>Last 24 Hours</option>
+                    <option value={48}>Last 48 Hours</option>
+                    <option value={72}>Last 3 Days</option>
+                    <option value={168}>Last 7 Days</option>
+                    <option value={720}>Last 30 Days</option>
                  </select>
               </div>
               <div>
