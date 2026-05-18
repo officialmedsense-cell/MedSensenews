@@ -420,16 +420,17 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
               6. Always end with a "MedSense Insight" section and a "Key Takeaway" section.
               7. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.
               8. STRICT CONTENT FILTER: You are exclusively a MEDICAL news AI. If the provided article is primarily about sports, football, general politics, entertainment, celebrities, or any topic that is NOT strictly related to health, medicine, medical research, or public health, you MUST reject it.
-              9. GEOGRAPHICAL CATEGORIZATION: If the news is specifically about Nigeria or any African country (e.g., Nigerian doctors, NCDC, African outbreaks, local healthcare), the category MUST be 'Nigeria/Africa Health'. If the news is about international organizations (WHO, UN), global pandemics, or broad health trends outside Africa, the category MUST be 'Global Health'.
-
+ 
               JSON structure:
               {
                 "rejected": boolean (Set to true ONLY if the article is non-medical, otherwise false),
                 "title": "A POWERFUL, call-to-action headline that DEMANDS attention and drives clicks — following all Headline Mastery Rules above.",
                 "summary": "A 2-sentence professional summary that amplifies the urgency of the headline and draws the reader deeper.",
                 "content": "Full HTML content following the formatting rules above. (Leave empty if rejected: true)",
-                "category": "One of: [Health, Medicine, Research, Public Health, Technology, Global Health, Nigeria/Africa Health, Health Alerts]",
+                "category": "One of: [Health, Medicine, Research, Public Health, Technology, Health Alerts]",
                 "visual_keyword": "A single specific medical keyword for image searching. CRITICAL: Use high-quality, professional, and clinical keywords only."
+
+
               }
 
               The tone should be ${tone}. 
