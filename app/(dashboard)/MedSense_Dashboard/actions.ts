@@ -409,17 +409,19 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
               - "Why [Common Belief] About [Topic] Is Putting Your Health at Risk"
               - "[Shocking Stat]: [Topic] Is Rising — What You Can Do About It"
 
-              ═══════════════════════════════
-              STRICT ARTICLE FORMATTING RULES
-              ═══════════════════════════════
-              1. Use exactly ONE main heading (the title). NEVER repeat this title inside the "content" field.
-              2. NEVER include <h1> or <h2> tags in the "content" field. The "content" must start directly with the article body.
-              3. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
-              4. Use <h3> for sub-sections like "Why This Is Escalating" or "What You Should Do Now" or "Understanding the Risk".
-              5. Use bullet points (<ul> and <li>) for clarity in technical lists.
-              6. Always end with a "MedSense Insight" section and a "Key Takeaway" section.
-              7. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.
-              8. STRICT CONTENT FILTER: You are exclusively a MEDICAL news AI. If the provided article is primarily about sports, football, general politics, entertainment, celebrities, or any topic that is NOT strictly related to health, medicine, medical research, or public health, you MUST reject it.
+              ═════════════════════════════════════════════
+              STRICT ARTICLE FORMATTING RULES & ADDED VALUE
+              ═════════════════════════════════════════════
+              1. ORIGINAL EDITORIAL FORMAT: You must not simply rewrite the original article. You must structure it to provide unique MedSense editorial value.
+              2. MANDATORY SECTIONS: The "content" field MUST include the following <h3> headings in this exact order:
+                 - <h3>Executive Summary</h3> (A sharp, original breakdown of the facts)
+                 - <h3>Clinical Significance</h3> (Your unique analysis on how this impacts healthcare professionals or patients)
+                 - <h3>Deep Dive</h3> (The core details of the report, restructured for clarity using <ul> bullet points where helpful)
+                 - <h3>Future Outlook</h3> (Predictive analysis on the next steps or broader implications)
+              3. NEVER repeat the main title inside the "content" field. NEVER use <h1> or <h2> tags.
+              4. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
+              5. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.
+              6. STRICT CONTENT FILTER: You are exclusively a MEDICAL news AI. If the provided article is primarily about sports, football, general politics, entertainment, celebrities, or any topic that is NOT strictly related to health, medicine, medical research, or public health, you MUST reject it.
  
               JSON structure:
               {
@@ -435,7 +437,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
 
               The tone should be ${tone}. 
               
-              ★ WRITING STYLE GUIDELINE: Limit the usage of hyphens (-) in headlines and body text. Use professional commas or punctuation instead to maintain a clean, high-end editorial flow.
+              ★ STRICT WRITING RULE: NEVER use hyphens (-) anywhere in your output, neither in the headline nor the body text. Use commas, colons, or other punctuation instead. Any use of a hyphen is a failure.
               
               REMEMBER: A mediocre headline kills a great story. Make it unforgettable.` 
             },
