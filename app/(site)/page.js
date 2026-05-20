@@ -399,7 +399,9 @@ export default async function Home() {
                   // Filter to only show active outbreaks matching active system articles
                   const activeOutbreaks = diseases.map(d => {
                     const related = articles.filter(a => {
-                      const text = `${a.title} ${a.excerpt || ''} ${a.content || ''}`.toLowerCase();
+                      const titleLower = a.title.toLowerCase();
+                      const excerptLower = (a.excerpt || '').toLowerCase();
+                      const text = `${titleLower} ${excerptLower}`;
                       const matchesDisease = text.includes(d.name.toLowerCase()) || 
                                             (d.name === 'Bird flu' && (text.includes('avian') || text.includes('h5n1')));
                       
@@ -408,11 +410,11 @@ export default async function Home() {
                       // Identify active outbreak news (Health Alerts, Outbreaks, or titles signaling active crisis)
                       const isOutbreakAlert = a.category === 'Health Alerts' || 
                                               a.category === 'Outbreak' ||
-                                              a.title.toLowerCase().includes('outbreak') ||
-                                              a.title.toLowerCase().includes('emergency') ||
-                                              a.title.toLowerCase().includes('spread') ||
-                                              a.title.toLowerCase().includes('cases climb') ||
-                                              (a.excerpt && a.excerpt.toLowerCase().includes('outbreak'));
+                                              titleLower.includes('outbreak') ||
+                                              titleLower.includes('emergency') ||
+                                              titleLower.includes('spread') ||
+                                              titleLower.includes('cases climb') ||
+                                              excerptLower.includes('outbreak');
                       return isOutbreakAlert;
                     });
 
