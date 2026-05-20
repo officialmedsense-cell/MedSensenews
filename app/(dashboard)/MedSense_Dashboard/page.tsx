@@ -15,7 +15,9 @@ import {
   getArticlesFromSupabase,
   getSourcesFromCloud, 
   saveSourcesToCloud,
-  isDuplicateArticle
+  isDuplicateArticle,
+  getLegacyArticlesCountAndList,
+  upgradeSingleLegacyArticle
 } from "./actions";
 import ReactMarkdown from 'react-markdown';
 
@@ -36,6 +38,8 @@ interface Article {
   publishedToNews?: boolean;
   visualKeyword?: string;
   originalImage?: string;
+  quality_score?: number;
+  articleStatus?: 'ready' | 'draft';
 }
 
 interface Source {
@@ -132,6 +136,22 @@ export default function MedSenseDashboard() {
   const [editData, setEditData] = useState({ name: "", email: "", password: "" });
   const [staffError, setStaffError] = useState("");
 
+  // --- Legacy Batch Upgrade State ---
+  const [legacyCount, setLegacyCount] = useState<number>(0);
+  const [legacyArticles, setLegacyArticles] = useState<any[]>([]);
+  const [isUpgradingBatch, setIsUpgradingBatch] = useState<boolean>(false);
+  const [isUpgradePaused, setIsUpgradePaused] = useState<boolean>(false);
+  const [upgradeProgress, setUpgradeProgress] = useState<number>(0);
+  const [upgradeBatchSize, setUpgradeBatchSize] = useState<number>(20);
+  const [upgradeConsoleLogs, setUpgradeConsoleLogs] = useState<string[]>([]);
+
+  const fetchLegacyStats = async () => {
+     const res = await getLegacyArticlesCountAndList();
+     if (res.success) {
+        setLegacyCount(res.count);
+        setLegacyArticles(res.articles);
+     }
+  };
 
   // --- Persistence & Initialization ---
   const fetchStaff = async () => {
@@ -188,6 +208,7 @@ export default function MedSenseDashboard() {
     
     fetchStaff();
     fetchPublished();
+    fetchLegacyStats();
     setAuthChecked(true);
   }, []);
 
@@ -324,6 +345,76 @@ export default function MedSenseDashboard() {
 
   const [editingSourceId, setEditingSourceId] = useState<string | null>(null);
 
+  // --- Legacy Batch Upgrade Logic ---
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+  const isPausedRef = React.useRef(false);
+
+  const startBatchUpgrade = async () => {
+    if (isUpgradingBatch) return;
+    setIsUpgradingBatch(true);
+    setIsUpgradePaused(false);
+    isPausedRef.current = false;
+    setUpgradeProgress(0);
+    setUpgradeConsoleLogs(["[SYSTEM] Initiating Batch Upgrade Engine...", `[SYSTEM] Target size: ${upgradeBatchSize} articles.`]);
+
+    const articlesToUpgrade = legacyArticles.slice(0, upgradeBatchSize);
+    
+    if (articlesToUpgrade.length === 0) {
+      setUpgradeConsoleLogs(prev => [...prev, "[SYSTEM] No legacy articles left to upgrade!"]);
+      setIsUpgradingBatch(false);
+      return;
+    }
+
+    let processedCount = 0;
+
+    for (let i = 0; i < articlesToUpgrade.length; i++) {
+      if (isPausedRef.current) {
+        setUpgradeConsoleLogs(prev => [...prev, "[SYSTEM] Upgrade paused by operator."]);
+        break;
+      }
+
+      const article = articlesToUpgrade[i];
+      const timeStr = new Date().toLocaleTimeString();
+      setUpgradeConsoleLogs(prev => [...prev, `[${timeStr}] [${i + 1}/${articlesToUpgrade.length}] Upgrading: "${article.title}"...`]);
+
+      const res = await upgradeSingleLegacyArticle(article.id);
+
+      if (res.success) {
+        setUpgradeConsoleLogs(prev => [
+          ...prev, 
+          `[${new Date().toLocaleTimeString()}] ✓ Success: "${res.headline || article.title}" (Quality Score: ${res.qualityScore || 'N/A'})`
+        ]);
+        processedCount++;
+        setUpgradeProgress(processedCount);
+        
+        // Refresh local lists and counts
+        setLegacyCount(prev => Math.max(0, prev - 1));
+        setLegacyArticles(prev => prev.filter(a => a.id !== article.id));
+      } else {
+        setUpgradeConsoleLogs(prev => [
+          ...prev, 
+          `[${new Date().toLocaleTimeString()}] ✗ Failed: ${res.error || "Unknown Error"}`
+        ]);
+      }
+
+      // Respect rate limits, wait 15 seconds unless it's the last article or we are paused
+      if (i < articlesToUpgrade.length - 1 && !isPausedRef.current) {
+        setUpgradeConsoleLogs(prev => [...prev, `[SYSTEM] Sleeping 15s to clear AI rate limits...`]);
+        await sleep(15000);
+      }
+    }
+
+    setUpgradeConsoleLogs(prev => [...prev, `[SYSTEM] Batch processing run finished. Upgraded: ${processedCount}/${articlesToUpgrade.length} articles.`]);
+    setIsUpgradingBatch(false);
+    fetchLegacyStats(); // Final refresh
+  };
+
+  const pauseBatchUpgrade = () => {
+    setIsUpgradePaused(true);
+    isPausedRef.current = true;
+    setUpgradeConsoleLogs(prev => [...prev, "[SYSTEM] Pause request sent. Waiting for current article to finish..."]);
+  };
+
   const runScraper = async () => {
     if (isRunning) return;
     setIsRunning(true);
@@ -362,6 +453,11 @@ export default function MedSenseDashboard() {
 
              const res = await processArticleWithAI(item, settings.aiModel, settings.tone);
             if (res.success && res.transformed) {
+              const qs = res.transformed.quality_score || 0;
+              const artStatus: 'ready' | 'draft' = res.transformed.status === 'draft' ? 'draft' : 'ready';
+              if (artStatus === 'draft') {
+                addLog(`⚠️ Low quality (${qs}/100) — "${item.title.substring(0, 30)}" sent to review queue.`, "warning");
+              }
               const newArticle: Article = {
                 id: Math.random().toString(36).substr(2, 9),
                 title: res.transformed.title,
@@ -376,7 +472,9 @@ export default function MedSenseDashboard() {
                 originalImage: res.transformed.originalImage,
                 relevance: 95 + Math.floor(Math.random() * 5),
                 severity: "High",
-                read: false
+                read: false,
+                quality_score: qs,
+                articleStatus: artStatus
               };
               
               if (normalizedUrl) processedUrls.add(normalizedUrl);
@@ -614,6 +712,7 @@ export default function MedSenseDashboard() {
             { id: 'sources', label: 'Intelligence Sources', icon: 'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3' },
             { id: 'pipeline', label: 'Neural Pipeline', icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5' },
             { id: 'settings', label: 'System Config', icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' },
+            ...(currentUser.role === 'admin' ? [{ id: 'upgrade', label: 'Batch Upgrader', icon: 'M12 4v16m8-8H4' }] : []),
             ...(currentUser.role === 'admin' ? [{ id: 'staff', label: 'Staff Registry', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' }] : [])
           ].map(item => (
             <a 
@@ -843,6 +942,120 @@ export default function MedSenseDashboard() {
            </section>
         )}
 
+        {/* Legacy Batch Upgrader Panel */}
+        {activeNav === 'upgrade' && (
+           <section className="dashboard-panel" style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto', background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-dim)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '30px' }}>
+                 <div>
+                    <h2 style={{ fontSize: '24px', fontWeight: '800' }}>Legacy Articles Upgrader</h2>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>Batch process old news into high-value editorial content.</p>
+                 </div>
+                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ background: 'var(--bg-elevated)', padding: '8px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-primary)' }}>
+                       <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700' }}>REMAINING: </span>
+                       <span style={{ fontSize: '16px', color: 'var(--accent-primary)', fontWeight: '900' }}>{legacyCount}</span>
+                    </div>
+                    <button className="btn btn-ghost" onClick={fetchLegacyStats} style={{ padding: '10px' }} title="Refresh Stats">
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                    </button>
+                 </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+                 {/* Controls */}
+                 <div style={{ background: 'var(--bg-elevated)', padding: '24px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>UPGRADE CONTROLS</h3>
+                    
+                    <div style={{ marginBottom: '20px' }}>
+                       <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                          <span>BATCH SIZE</span>
+                          <span style={{ color: 'var(--accent-primary)' }}>{upgradeBatchSize} Articles</span>
+                       </label>
+                       <input 
+                          type="range" 
+                          min="1" 
+                          max="100" 
+                          value={upgradeBatchSize} 
+                          onChange={e => setUpgradeBatchSize(Number(e.target.value))}
+                          style={{ width: '100%', accentColor: 'var(--accent-primary)' }}
+                          disabled={isUpgradingBatch}
+                       />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                       {!isUpgradingBatch ? (
+                          <button className="btn btn-primary" onClick={startBatchUpgrade} style={{ flex: 1, padding: '12px', fontWeight: '800' }}>
+                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: '8px' }}><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                             Start Auto-Upgrade
+                          </button>
+                       ) : (
+                          <button className="btn btn-ghost" onClick={pauseBatchUpgrade} style={{ flex: 1, padding: '12px', fontWeight: '800', border: '1px solid var(--danger)', color: 'var(--danger)' }} disabled={isUpgradePaused}>
+                             {isUpgradePaused ? "Pausing..." : "Pause Upgrade"}
+                          </button>
+                       )}
+                    </div>
+                    
+                    {isUpgradingBatch && (
+                       <div style={{ marginTop: '20px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '800', marginBottom: '8px' }}>
+                             <span>PROGRESS</span>
+                             <span>{upgradeProgress} / {upgradeBatchSize}</span>
+                          </div>
+                          <div className="stage-progress-bg">
+                             <div className="stage-progress-fill" style={{ width: `${(upgradeProgress / upgradeBatchSize) * 100}%` }}></div>
+                          </div>
+                       </div>
+                    )}
+                 </div>
+
+                 {/* Next in Queue */}
+                 <div style={{ background: 'var(--bg-elevated)', padding: '24px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)', display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '16px', color: 'var(--text-primary)' }}>UP NEXT IN QUEUE</h3>
+                    <div style={{ flex: 1, overflowY: 'auto', maxHeight: '180px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                       {legacyArticles.length === 0 ? (
+                          <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontStyle: 'italic' }}>Queue is empty.</div>
+                       ) : (
+                          legacyArticles.slice(0, 10).map((art, idx) => (
+                             <div key={art.id} style={{ fontSize: '12px', display: 'flex', gap: '12px', alignItems: 'center', padding: '8px', background: 'var(--bg-surface)', borderRadius: '4px' }}>
+                                <span style={{ color: 'var(--text-muted)', fontWeight: '800' }}>#{idx + 1}</span>
+                                <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>{art.title}</span>
+                             </div>
+                          ))
+                       )}
+                    </div>
+                 </div>
+              </div>
+
+              {/* Console Output */}
+              <div style={{ background: '#0d1117', borderRadius: 'var(--radius-md)', border: '1px solid #30363d', padding: '16px', height: '300px', display: 'flex', flexDirection: 'column' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid #30363d', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                       <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff5f56' }}></div>
+                       <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ffbd2e' }}></div>
+                       <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#27c93f' }}></div>
+                    </div>
+                    <span style={{ fontSize: '12px', color: '#8b949e', fontWeight: '600', fontFamily: 'var(--font-mono)' }}>medsense-upgrader-tty1</span>
+                 </div>
+                 <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', fontFamily: 'var(--font-mono)' }}>
+                    {upgradeConsoleLogs.length === 0 ? (
+                       <div style={{ color: '#8b949e', fontSize: '12px' }}>Waiting to initiate upgrade sequence...</div>
+                    ) : (
+                       upgradeConsoleLogs.map((log, i) => (
+                          <div key={i} style={{ 
+                             fontSize: '12px', 
+                             color: log.includes('Success') ? '#3fb950' : log.includes('Failed') ? '#f85149' : '#c9d1d9',
+                             whiteSpace: 'pre-wrap',
+                             wordBreak: 'break-word'
+                          }}>
+                             {log}
+                          </div>
+                       ))
+                    )}
+                 </div>
+              </div>
+           </section>
+        )}
+
         {['dashboard', 'pipeline', 'sources'].includes(activeNav) && (
         <header className="header-row">
           <div className="page-title">
@@ -1005,6 +1218,12 @@ export default function MedSenseDashboard() {
                     <div className="intel-body">
                       <div className="intel-meta">
                         <span className={`badge ${article.category === 'Research' ? 'badge-tech' : 'badge-health'}`}>{article.category}</span>
+                        {article.articleStatus === 'draft' && (
+                          <span style={{ fontSize: '10px', fontWeight: '800', background: 'hsla(40,100%,50%,0.15)', color: '#f59e0b', padding: '2px 8px', borderRadius: '100px', border: '1px solid hsla(40,100%,50%,0.3)' }}>⚠ REVIEW</span>
+                        )}
+                        {article.quality_score !== undefined && (
+                          <span style={{ fontSize: '10px', fontWeight: '700', color: article.quality_score >= 75 ? 'var(--success)' : '#f59e0b' }}>Q:{article.quality_score}</span>
+                        )}
                         <a href={article.sourceUrl !== "#" ? article.sourceUrl : undefined} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-muted)', textDecoration: 'underline' }} onClick={e => e.stopPropagation()}>
                            {article.source}
                         </a>
@@ -1169,6 +1388,9 @@ export default function MedSenseDashboard() {
               <div className="modal-section" style={{ borderBottom: '1px solid var(--border-dim)' }}>
                  <div className="intel-meta">
                     <span className="badge badge-health">{selectedArticle.category}</span>
+                    {selectedArticle.quality_score !== undefined && (
+                      <span style={{ fontSize: '11px', fontWeight: '800', padding: '3px 10px', borderRadius: '100px', background: selectedArticle.quality_score >= 75 ? 'hsla(145,70%,40%,0.15)' : 'hsla(40,100%,50%,0.15)', color: selectedArticle.quality_score >= 75 ? 'var(--success)' : '#f59e0b', border: `1px solid ${selectedArticle.quality_score >= 75 ? 'hsla(145,70%,40%,0.3)' : 'hsla(40,100%,50%,0.3)'}` }}>Quality: {selectedArticle.quality_score}/100</span>
+                    )}
                     <span style={{ fontWeight: '700' }}>By {settings.authorName}</span>
                     <span>•</span>
                     <span>{selectedArticle.date}</span>
@@ -1182,16 +1404,33 @@ export default function MedSenseDashboard() {
                     )}
                  </div>
                  <h2 style={{ fontSize: '32px', fontWeight: '800', lineHeight: '1.2', marginTop: '16px' }}>{selectedArticle.title}</h2>
+                 {selectedArticle.articleStatus === 'draft' && (
+                   <div style={{ marginTop: '12px', padding: '10px 16px', background: 'hsla(40,100%,50%,0.1)', border: '1px solid hsla(40,100%,50%,0.3)', borderRadius: 'var(--radius-sm)', fontSize: '13px', color: '#f59e0b', fontWeight: '600' }}>
+                     ⚠ This article scored below 75/100 and is in the <strong>review queue</strong>. Approve before publishing.
+                   </div>
+                 )}
               </div>
               <div className="modal-section" style={{ fontSize: '18px', lineHeight: '1.8', color: 'var(--text-secondary)' }} dangerouslySetInnerHTML={{ __html: selectedArticle.fullText }} />
-              <div className="modal-section" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-dim)', display: 'flex', justifyContent: 'flex-end', gap: '16px' }}>
+              <div className="modal-section" style={{ background: 'var(--bg-surface)', borderTop: '1px solid var(--border-dim)', display: 'flex', justifyContent: 'flex-end', gap: '16px', flexWrap: 'wrap' }}>
                  <button className="btn btn-ghost" onClick={() => setSelectedArticle(null)}>Close</button>
-                 <button 
-                  className="btn btn-primary" 
+                 {selectedArticle.articleStatus === 'draft' && !selectedArticle.publishedToNews && (
+                   <button
+                     className="btn btn-ghost"
+                     style={{ border: '1px solid #f59e0b', color: '#f59e0b' }}
+                     onClick={() => {
+                       setArticles(prev => prev.map(a => a.id === selectedArticle.id ? { ...a, articleStatus: 'ready' } : a));
+                       setSelectedArticle(prev => prev ? { ...prev, articleStatus: 'ready' } : prev);
+                       showToast('Article approved for publishing', 'success');
+                     }}
+                   >Approve &amp; Override</button>
+                 )}
+                 <button
+                  className="btn btn-primary"
                   onClick={() => handlePublishArticle(selectedArticle)}
-                  disabled={selectedArticle.publishedToNews}
+                  disabled={selectedArticle.publishedToNews || selectedArticle.articleStatus === 'draft'}
+                  title={selectedArticle.articleStatus === 'draft' ? 'Review queue: approve first to publish' : ''}
                  >
-                  {selectedArticle.publishedToNews ? "✅ Already Live" : "🚀 Confirm & Uplink"}
+                  {selectedArticle.publishedToNews ? "✅ Already Live" : selectedArticle.articleStatus === 'draft' ? "🔒 Needs Review" : "🚀 Confirm & Uplink"}
                  </button>
               </div>
            </div>

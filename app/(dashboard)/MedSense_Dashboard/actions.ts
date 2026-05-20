@@ -13,6 +13,57 @@ const parser = new Parser({
   }
 });
 
+/**
+ * Sanitizes all types of dashes and hyphens in the text:
+ * - Em-dashes (—) and en-dashes (–) are replaced with a clean comma and space (, ).
+ * - Hyphens (-) in compound words are replaced with a space.
+ * - Lingering/standalone hyphens are replaced with space.
+ */
+function sanitizeDashesAndHyphens(text: string): string {
+  if (!text) return "";
+  let cleaned = text
+    .replace(/\s*[—–]\s*/g, ", ") // replaces "foo — bar" or "foo—bar" with "foo, bar"
+    .replace(/[—–]/g, ", ")
+    .replace(/(\w)-(\w)/g, "$1 $2") // "fact-checking" -> "fact checking"
+    .replace(/-/g, " ")
+    .replace(/\s+/g, " ") // normalize spacing
+    .trim();
+
+  // Strip UI artifacts like "remove" or "share" joined or standalone at the end of elements
+  cleaned = cleaned
+    .replace(/(\w)remove$/gi, "$1") // "Medicineremove" -> "Medicine"
+    .replace(/(\w)share$/gi, "$1")
+    .replace(/\s+remove$/gi, "")
+    .replace(/\s+share$/gi, "");
+
+  return cleaned.trim();
+}
+
+/**
+ * Recursively walks an object and sanitizes all string values.
+ */
+function sanitizeObjectStrings(obj: any): any {
+  if (typeof obj === "string") {
+    return sanitizeDashesAndHyphens(obj);
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeObjectStrings(item));
+  }
+  if (obj !== null && typeof obj === "object") {
+    const newObj: any = {};
+    for (const key of Object.keys(obj)) {
+      // Do not sanitize metadata dates or links
+      if (key === "reviewed_date" || key === "sources" || key === "sourceUrl") {
+        newObj[key] = obj[key];
+      } else {
+        newObj[key] = sanitizeObjectStrings(obj[key]);
+      }
+    }
+    return newObj;
+  }
+  return obj;
+}
+
 // --- Global Intelligence Sources (Expanded) ---
 const FEEDS = [
   "https://nigeriahealthwatch.com/feed/",
@@ -72,7 +123,7 @@ export async function scrapeFullArticleText(url: string): Promise<string> {
 
     const paragraphs = pMatches
       .map(p => {
-        let text = p.replace(/<[^>]*>/g, '').trim();
+        let text = p.replace(/<[^>]*>/g, ' ').trim();
         text = text
           .replace(/&amp;/g, '&')
           .replace(/&lt;/g, '<')
@@ -403,13 +454,16 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
               8. Preserve the core factual event/topic of the original article.
               9. Make the article useful to readers, not just informative.
               10. Avoid clickbait exaggeration.
-              11. STRICT WRITING RULE: NEVER use hyphens (-) anywhere in your output. Use commas, colons, or other punctuation instead.
+              11. STRICT WRITING RULE: NEVER use hyphens (-), en-dashes (–), or em-dashes (—) anywhere in your output. Use commas, colons, parentheses, or other punctuation instead. Any use of a hyphen or dash is a complete failure.
               12. STRICT CONTENT FILTER: If the article is primarily about sports, football, general politics, or entertainment, you must set "rejected": true.
               13. NO FABRICATED EXPERTS: NEVER invent experts, institutions, quotes, studies, statistics, or commentary that cannot be verified publicly. If no verified expert quote exists in the original source, omit the expert commentary section entirely.
-              14. REDUCE REPETITION: Avoid re-explaining the same concept multiple times or repeating phrases.
-              15. CONCISE & DENSE: Prioritize concise, information-dense journalism over excessive expansion. Keep paragraphs tighter and more natural to mimic professional newsroom writing patterns.
-              16. REAL CITATIONS: Include mentions of real journal references or reputable organizations (e.g. WHO, CDC, NIH, major universities, published peer-reviewed studies) if applicable to the topic.
-              17. BRADING & AUTHOR CREDENTIALS: Add "Medical Review: MedSense Editorial Board" at the very end of the article text.
+              14. REDUCE REPETITION: Do not restate the same idea in multiple sections or repeatedly explain concepts already introduced.
+              15. CONCISE & DENSE: Prioritize clarity over excessive expansion. Keep articles concise and information-dense. Do not artificially lengthen articles to increase word count. Keep article length proportional to the importance of the story.
+              16. AVOID AI FILLER: NEVER use repetitive transitions or generic filler (e.g. "This highlights the importance of", "Serves as a reminder", "In an era where", "Underscores the need for", "Could become a cornerstone"). Use direct journalistic writing instead.
+              17. Write with natural newsroom pacing: use tighter paragraphs, vary sentence structure, and avoid overly polished or philosophical transitions.
+              18. The tone should resemble Reuters Health, AP Health, Health Policy Watch, or WHO-style reporting.
+              19. Focus on factual reporting: what happened, why it matters, who is affected, what officials are doing, what readers should know.
+              20. GENETIC / STATISTICAL CLAIM RULE: Never include precise genetic percentages, epidemiological figures, or study-specific statistics unless they are explicitly provided from verified sources in the input article. If uncertain, generalize the claim or remove numerical specificity.
 
               OUTPUT FORMAT:
               Return ONLY valid JSON in this exact structure:
@@ -420,37 +474,37 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
                 "meta_description": "",
                 "category": "Health, Medicine, Research, Public Health, Technology, or Health Alerts",
                 "visual_keyword": "A single specific medical keyword for image searching",
-                "executive_summary": "2-4 concise paragraphs summarizing what happened and why it matters",
-                "article": "The main content using HTML <h3>, <p>, <ul>. DO NOT use markdown blocks.",
+                "opening": "2 to 4 strong journalistic lead paragraphs. NO heading or label. Write as natural prose opening. Answer: what happened, why it matters, who is affected. Tone: Reuters Health lede style.",
+                "article": "The main content using HTML <h3>, <p>, <ul>. DO NOT use markdown blocks. DO NOT repeat content from the opening field.",
                 "key_takeaways": ["point 1", "point 2"],
                 "faq": [{"question": "Q1?", "answer": "A1"}],
                 "tags": [],
-                "quality_score": 95
+                "quality_score": 95,
+                "metadata": {
+                  "reviewed_by": "MedSense Editorial Board",
+                  "reviewed_date": "",
+                  "sources": [],
+                  "fact_checked": true,
+                  "update_status": "New Article"
+                }
               }
 
               ARTICLE REQUIREMENTS:
-              1. Executive Summary
-              2. Structured Article Sections
-              3. Add Public Health Context or Clinical Significance
-              4. Add Human Value
-              5. SEO Optimization
-              6. FAQ Section
-              7. Key Takeaways
+              1. Strong Professional Headline
+              2. Natural journalistic opening (lede paragraphs — NO heading, NO label)
+              3. Structured Article Sections
+              4. Add Public Health Context or Clinical Significance
+              5. Add Human Value
+              6. SEO Optimization
+              7. FAQ Section
+              8. Key Takeaways
+              9. Quality Score
+              10. Metadata (populate reviewed_date with today's date in YYYY-MM-DD format)
 
               STRUCTURAL REQUIREMENTS:
               * For Public Health Topics (outbreaks, epidemics, disease surveillance, healthcare policy, environmental health, vaccination, food safety, or population health):
-                1. Focus on public safety and awareness.
-                2. Explain why the issue matters to communities and healthcare systems.
-                3. Include prevention guidance where medically appropriate.
-                4. Discuss affected populations or regions.
-                5. Explain transmission risks where relevant.
-                6. Include healthcare preparedness or government response when applicable.
-                7. Avoid fearmongering or panic-driven language.
-                8. Maintain calm, evidence-based reporting.
-                9. Emphasize practical health education and awareness.
-                10. Prioritize clarity and accessibility for general readers.
-                11. Style: Write like a professional global health/public health newsroom similar to Reuters Health, WHO reports, Health Policy Watch, or major medical journalism platforms.
-                12. Inside the JSON "article" field, structure the HTML content using these headers (using <h3> HTML tags):
+                1. Focus on community impact, healthcare preparedness, prevention guidance, surveillance, and practical reader awareness.
+                2. Inside the JSON "article" field, structure the HTML content using these headers (using <h3> HTML tags):
                   - <h3>What Happened</h3>
                   - <h3>Why Public Health Officials Are Concerned</h3>
                   - <h3>Symptoms or Risk Factors</h3> (if applicable)
@@ -467,15 +521,7 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
                   - <h3>Future Outlook and Medical Implications</h3>
                   - <h3>Patient or Practitioner Guidance</h3>
 
-              STYLE GUIDELINES:
-              * Professional medical journalism tone
-              * Clean formatting without markdown blocks
-              * Clear readability
-              * No sensationalism
-              * No emojis
-              
-              TARGET LENGTH: 800-1600 words. Keep it within this sweet spot for SEO and readability.
-              IMPORTANT: The final article must feel like it was written by an experienced health newsroom editor for a legitimate medical publication.` 
+              IMPORTANT: The final article must feel like it was edited by a real newsroom editor. Prefer high-value journalism over mass production.` 
             },
             { 
               role: "user", 
@@ -513,7 +559,8 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
         let rawContent = data.choices[0].message.content;
         rawContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
         
-        const result = JSON.parse(rawContent);
+        let result = JSON.parse(rawContent);
+        result = sanitizeObjectStrings(result);
         
         if (result.rejected === true) {
           throw new Error("Article rejected by AI: Content is non-medical (e.g., sports, politics, entertainment).");
@@ -522,21 +569,28 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
         let articleBody = result.article || "";
         articleBody = articleBody.replace(/```html/g, '').replace(/```/g, '').trim();
 
-        let formattedContent = `<h3>Executive Summary</h3>\n<p>${result.executive_summary}</p>\n\n${articleBody}\n\n<h3>Key Takeaways</h3>\n<ul>\n${(result.key_takeaways || []).map((t: string) => `<li>${t}</li>`).join('\n')}\n</ul>\n\n<h3>Frequently Asked Questions</h3>\n${(result.faq || []).map((f: any) => `<h4>${f.question}</h4><p>${f.answer}</p>`).join('\n')}`;
-        
+        let formattedContent = `${result.opening || ""}\n\n${articleBody}\n\n<h3>Key Takeaways</h3>\n<ul>\n${(result.key_takeaways || []).map((t: string) => `<li>${t}</li>`).join('\n')}\n</ul>\n\n<h3>Frequently Asked Questions</h3>\n${(result.faq || []).map((f: any) => `<h4>${f.question}</h4><p>${f.answer}</p>`).join('\n')}`;
+
         formattedContent += `\n\n<hr style="border: 0; border-top: 1px solid #eaeaea; margin-top: 30px;" />\n<p style="font-size: 12px; color: #888;"><em>Medical Review: MedSense Editorial Board</em></p>`;
+
+        const qualityScore = result.quality_score || 0;
+        const qualityStatus = qualityScore < 75 ? "draft" : "ready";
 
         return { 
           success: true, 
           transformed: {
             title: result.headline || result.title,
-            summary: result.meta_description || result.executive_summary || result.summary,
+            summary: result.meta_description || result.summary || "",
             content: formattedContent,
             category: result.category,
             visual_keyword: result.visual_keyword || "medical",
-            originalImage: sourceArticle.originalImage
+            originalImage: sourceArticle.originalImage,
+            quality_score: qualityScore,
+            status: qualityStatus
           },
-          msg: "Intelligence classified and report generated."
+          msg: qualityScore < 75 
+            ? `⚠️ Quality score ${qualityScore}/100 — sent to review queue (draft).` 
+            : "Intelligence classified and report generated."
         };
       } else {
         const errMsg = data?.detail || data?.message || data?.error?.message || "Invalid response from Mistral AI";
@@ -592,13 +646,14 @@ export async function saveArticleToSupabase(article: any) {
           category: article.category,
           source: article.source,
           relevance: article.relevance,
-          status: 'published',
+          status: article.status || 'published',
           created_at: new Date().toISOString()
         }
       ]);
 
     if (error) throw error;
-    return { success: true, msg: "Data committed to Supabase." };
+    const statusMsg = (article.status === 'draft') ? "Saved to review queue (quality score < 75)." : "Data committed to Supabase.";
+    return { success: true, msg: statusMsg };
   } catch (error: any) {
     console.error("Supabase Save Error:", error);
     return { success: false, error: error.message };
@@ -1008,6 +1063,231 @@ export async function saveSourcesToCloud(sources: any[]) {
       
     if (insError) throw insError;
     return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Gets count and list of legacy articles needing upgrade.
+ */
+export async function getLegacyArticlesCountAndList() {
+  try {
+    // Get total count
+    const { count, error: countError } = await supabase
+      .from('articles')
+      .select('*', { count: 'exact', head: true })
+      .not('content', 'ilike', '%Executive Summary%');
+
+    if (countError) throw countError;
+
+    // Get first 100 articles
+    const { data: articles, error: fetchError } = await supabase
+      .from('articles')
+      .select('id, title, category, created_at, content')
+      .not('content', 'ilike', '%Executive Summary%')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (fetchError) throw fetchError;
+
+    return {
+      success: true,
+      count: count || 0,
+      articles: articles || []
+    };
+  } catch (error: any) {
+    return { success: false, count: 0, articles: [], error: error.message };
+  }
+}
+
+/**
+ * Upgrades a single legacy article using Mistral API and saves it to the DB.
+ */
+export async function upgradeSingleLegacyArticle(id: string) {
+  const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY;
+  if (!MISTRAL_API_KEY) {
+    return { success: false, error: "Mistral API Key is missing." };
+  }
+
+  try {
+    // 1. Fetch the article
+    const { data: article, error: fetchError } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !article) {
+      return { success: false, error: fetchError?.message || "Article not found" };
+    }
+
+    if (article.content.includes("Executive Summary")) {
+      return { success: true, alreadyUpgraded: true, headline: article.title };
+    }
+
+    const PROMPT = `You are a senior medical journalist and public health editor writing for MedSense News, a professional global health and medical intelligence platform.
+
+Your task is to rewrite and significantly upgrade an existing medical news article into a high-value, human-quality editorial health report suitable for Google News, SEO, and AdSense approval.
+
+STRICT RULES:
+1. NEVER copy the original wording.
+2. NEVER sound robotic or AI-generated.
+3. NEVER use repetitive transitions or generic filler (e.g. "This highlights the importance of", "Serves as a reminder", "In an era where", "Underscores the need for", "Could become a cornerstone"). Use direct journalistic writing instead.
+4. NEVER fabricate medical facts, experts, quotes, institutions, statistics, studies, commentary, or government statements. Only include verifiable public information.
+5. Add source attribution naturally when available (e.g., "According to the CDC...", "Researchers writing in Science reported..."). Only link to organization/researcher platforms, not competitor news sites.
+6. Write with natural newsroom pacing: use tighter paragraphs, vary sentence structure, and avoid overly polished or philosophical transitions.
+7. REDUCE REPETITION: Do not restate the same idea in multiple sections or repeatedly explain concepts already introduced.
+8. CONCISE & DENSE: Prioritize clarity over excessive expansion. Keep articles concise and information-dense. Do not artificially lengthen articles to increase word count. Keep article length proportional to the importance of the story.
+9. Avoid fear-based, sensational language, clickbait, or exaggerated risks.
+10. The tone should resemble Reuters Health, AP Health, Health Policy Watch, or WHO-style reporting.
+11. STRICT WRITING RULE: NEVER use hyphens (-), en-dashes (–), or em-dashes (—) anywhere in your output, neither in the headline nor the body text. Use commas, colons, parentheses, or other punctuation instead. Any use of a hyphen or dash is a complete failure.
+12. Focus on factual reporting: what happened, why it matters, who is affected, what officials are doing, what readers should know.
+13. BRADING & AUTHOR CREDENTIALS: Add "Medical Review: MedSense Editorial Board" at the very end of the article text.
+14. GENETIC / STATISTICAL CLAIM RULE: Never include precise genetic percentages, epidemiological figures, or study-specific statistics unless they are explicitly provided from verified sources in the input article. If uncertain, generalize the claim or remove numerical specificity.
+
+OUTPUT FORMAT:
+Return ONLY valid JSON in this exact structure:
+{
+  "headline": "",
+  "seo_title": "",
+  "meta_description": "",
+  "category": "",
+  "opening": "",
+  "article": "",
+  "key_takeaways": [],
+  "faq": [
+    {
+      "question": "",
+      "answer": ""
+    }
+  ],
+  "tags": [],
+  "quality_score": 0,
+  "metadata": {
+    "reviewed_by": "MedSense Editorial Board",
+    "reviewed_date": "",
+    "sources": [],
+    "fact_checked": true,
+    "update_status": "Major Rewrite"
+  }
+}
+
+ARTICLE REQUIREMENTS:
+The upgraded article must include:
+1. Strong Professional Headline
+2. Natural journalistic opening (lede paragraphs formatted as HTML <p> tags — NO heading, NO label)
+3. Structured Article Sections (Use standard HTML <h3>, <p>, <ul> tags. Do NOT use markdown ## for headers, use proper <h3> HTML tags. DO NOT output \`\`\`html markdown blocks inside the JSON string. DO NOT repeat content from the opening field.)
+4. Add Public Health Context or Clinical Significance
+5. Add Human Value
+6. SEO Optimization
+7. FAQ Section
+8. Key Takeaways
+9. Quality Score
+10. Metadata (populate reviewed_date with today's date in YYYY-MM-DD format)
+
+STRUCTURAL REQUIREMENTS:
+* For Public Health Topics (outbreaks, epidemics, disease surveillance, healthcare policy, environmental health, vaccination, food safety, or population health):
+  1. Focus on community impact, healthcare preparedness, prevention guidance, surveillance, and practical reader awareness.
+  2. Inside the JSON "article" field, structure the HTML content using these headers (using <h3> HTML tags):
+    - <h3>What Happened</h3>
+    - <h3>Why Public Health Officials Are Concerned</h3>
+    - <h3>Symptoms or Risk Factors</h3> (if applicable)
+    - <h3>Who May Be Affected</h3>
+    - <h3>Government or WHO Response</h3> (if applicable)
+    - <h3>Prevention and Safety Guidance</h3>
+    - <h3>What Readers Should Know</h3>
+
+* For General Medical/Clinical Research Topics (supplement news, clinical trials, medical tech, biology research):
+  1. Style: Professional medical journalism tone.
+  2. Inside the JSON "article" field, structure the HTML content using these headers (using <h3> HTML tags):
+    - <h3>Clinical Significance</h3>
+    - <h3>Deep Dive and Research Findings</h3>
+    - <h3>Future Outlook and Medical Implications</h3>
+    - <h3>Patient or Practitioner Guidance</h3>
+
+IMPORTANT: The final article must feel like it was edited by a real newsroom editor. Prefer high-value journalism over mass production.`;
+
+    let attempts = 0;
+    const maxAttempts = 3;
+    let retryDelayMs = 20000; // 20s initial wait for free tier
+    let response: Response | null = null;
+
+    while (attempts < maxAttempts) {
+      response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "Authorization": `Bearer ${MISTRAL_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "mistral-small-latest",
+          messages: [
+            { role: "system", content: PROMPT },
+            { role: "user", content: `ORIGINAL ARTICLE:\nTitle: ${article.title}\n\nContent:\n${article.content}` }
+          ],
+          response_format: { type: "json_object" }
+        })
+      });
+
+      if (response.status === 429) {
+        attempts++;
+        if (attempts >= maxAttempts) {
+          return { success: false, error: `Rate limit exceeded after ${maxAttempts} retries. Try again in a minute.` };
+        }
+        console.warn(`[UPGRADE] 429 Rate limit hit. Retrying in ${retryDelayMs / 1000}s... (${attempts}/${maxAttempts})`);
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        retryDelayMs *= 2; // exponential backoff: 20s → 40s → 80s
+        continue;
+      }
+
+      break; // success or non-429 error
+    }
+
+    if (!response || !response.ok) {
+      return { success: false, error: `Mistral HTTP error: ${response?.status || 'unknown'}` };
+    }
+
+    const data = await response.json();
+    const rawJson = data.choices[0].message.content;
+    let result = JSON.parse(rawJson.replace(/```json/gi, '').replace(/```/g, '').trim());
+    result = sanitizeObjectStrings(result);
+
+    let articleBody = result.article || "";
+    articleBody = articleBody.replace(/```html/g, '').replace(/```/g, '').trim();
+
+    const faqHtml = (result.faq || []).map((f: { question: string, answer: string }) => `<h4>${f.question}</h4><p>${f.answer}</p>`).join('\n');
+    const takeawaysHtml = (result.key_takeaways || []).map((t: string) => `<li>${t}</li>`).join('\n');
+
+    const formattedContent = [
+      result.opening || "",
+      articleBody,
+      `<h3>Key Takeaways</h3><ul>${takeawaysHtml}</ul>`,
+      `<h3>Frequently Asked Questions</h3>`,
+      faqHtml,
+      `<hr style="border:0;border-top:1px solid #eaeaea;margin-top:30px;" />`,
+      `<p style="font-size:12px;color:#888;"><em>Medical Review: MedSense Editorial Board</em></p>`
+    ].join('\n\n');
+
+    const finalStatus = (result.quality_score && result.quality_score < 75) ? "draft" : (article.status || "published");
+
+    const { error: updateError } = await supabase
+      .from('articles')
+      .update({
+        title: result.headline,
+        content: formattedContent,
+        status: finalStatus
+      })
+      .eq('id', article.id);
+
+    if (updateError) throw updateError;
+
+    return {
+      success: true,
+      headline: result.headline,
+      qualityScore: result.quality_score
+    };
   } catch (error: any) {
     return { success: false, error: error.message };
   }

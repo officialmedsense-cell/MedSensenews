@@ -49,12 +49,13 @@ STRICT RULES:
 8. Preserve the core factual event/topic of the original article.
 9. Make the article useful to readers, not just informative.
 10. Avoid clickbait exaggeration.
-11. STRICT WRITING RULE: NEVER use hyphens (-) anywhere in your output, neither in the headline nor the body text. Use commas, colons, or other punctuation instead. Any use of a hyphen is a failure.
+11. STRICT WRITING RULE: NEVER use hyphens (-), en-dashes (–), or em-dashes (—) anywhere in your output, neither in the headline nor the body text. Use commas, colons, parentheses, or other punctuation instead. Any use of a hyphen or dash is a complete failure.
 12. NO FABRICATED EXPERTS: NEVER invent experts, institutions, quotes, studies, statistics, or commentary that cannot be verified publicly. If no verified expert quote exists in the original source, omit the expert commentary section entirely.
 13. REDUCE REPETITION: Avoid re-explaining the same concept multiple times or repeating phrases.
 14. CONCISE & DENSE: Prioritize concise, information-dense journalism over excessive expansion. Keep paragraphs tighter and more natural to mimic professional newsroom writing patterns.
 15. REAL CITATIONS: Include mentions of real journal references or reputable organizations (e.g. WHO, CDC, NIH, major universities, published peer-reviewed studies) if applicable to the topic.
 16. BRADING & AUTHOR CREDENTIALS: Add "Medical Review: MedSense Editorial Board" at the very end of the article text.
+17. GENETIC / STATISTICAL CLAIM RULE: Never include precise genetic percentages, epidemiological figures, or study-specific statistics unless they are explicitly provided from verified sources in the input article. If uncertain, generalize the claim or remove numerical specificity.
 
 OUTPUT FORMAT:
 Return ONLY valid JSON in this exact structure:
@@ -63,7 +64,7 @@ Return ONLY valid JSON in this exact structure:
   "seo_title": "",
   "meta_description": "",
   "category": "",
-  "executive_summary": "",
+  "opening": "",
   "article": "",
   "key_takeaways": [],
   "faq": [
@@ -79,7 +80,7 @@ Return ONLY valid JSON in this exact structure:
 ARTICLE REQUIREMENTS:
 The upgraded article must include:
 1. Strong Professional Headline
-2. Executive Summary
+2. Natural journalistic opening (lede paragraphs formatted as HTML <p> tags — NO heading, NO label)
 3. Structured Article Sections (Use standard HTML <h3>, <p>, <ul> tags. Do NOT use markdown ## for headers, use proper <h3> HTML tags. DO NOT output \`\`\`html markdown blocks inside the JSON string.)
 4. Add Public Health Context or Clinical Significance
 5. Add Human Value
@@ -158,32 +159,66 @@ async function upgradeBatch() {
     const article = articles[i];
     console.log(`\n[${i+1}/${articles.length}] Upgrading article: ${article.title}`);
 
-    try {
-      const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          "Authorization": `Bearer ${mistralApiKey}`
-        },
-        body: JSON.stringify({
-          model: "mistral-small-latest",
-          messages: [
-            { role: "system", content: PROMPT },
-            { role: "user", content: `ORIGINAL ARTICLE:\nTitle: ${article.title}\n\nContent:\n${article.content}` }
-          ],
-          response_format: { type: "json_object" }
-        })
-      });
+    let attempts = 0;
+    const maxAttempts = 5;
+    let retryDelayMs = 15000; // start with 15s delay
+    let success = false;
+    let data;
 
-      if (!response.ok) {
-        console.error(`Mistral API error for ${article.title}: ${response.status}`);
-        const errText = await response.text();
-        console.error(errText);
-        continue;
+    while (attempts < maxAttempts && !success) {
+      try {
+        const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "Authorization": `Bearer ${mistralApiKey}`
+          },
+          body: JSON.stringify({
+            model: "mistral-small-latest",
+            messages: [
+              { role: "system", content: PROMPT },
+              { role: "user", content: `ORIGINAL ARTICLE:\nTitle: ${article.title}\n\nContent:\n${article.content}` }
+            ],
+            response_format: { type: "json_object" }
+          })
+        });
+
+        if (response.status === 429) {
+          attempts++;
+          if (attempts >= maxAttempts) {
+            console.error(`[MISTRAL] Rate limit hit (429). Max retries reached for: ${article.title}`);
+            break;
+          }
+          console.warn(`[MISTRAL] Rate limit hit (429). Retrying in ${retryDelayMs / 1000}s... (Attempt ${attempts}/${maxAttempts})`);
+          await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+          retryDelayMs *= 2; // Exponential backoff
+          continue;
+        }
+
+        if (!response.ok) {
+          console.error(`Mistral API error for ${article.title}: ${response.status}`);
+          const errText = await response.text();
+          console.error(errText);
+          break; // break loop on non-429 errors
+        }
+
+        data = await response.json();
+        success = true;
+      } catch (err) {
+        console.error(`Fetch error during attempt for ${article.title}:`, err.message);
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+        retryDelayMs *= 2;
       }
+    }
 
-      const data = await response.json();
+    if (!success) {
+      console.log(`Skipping article due to consecutive errors: ${article.title}`);
+      continue;
+    }
+
+    try {
       const rawJson = data.choices[0].message.content;
       const result = JSON.parse(rawJson.replace(/```json/gi, '').replace(/```/g, '').trim());
 
@@ -191,19 +226,55 @@ async function upgradeBatch() {
       let articleBody = result.article || "";
       articleBody = articleBody.replace(/```html/g, '').replace(/```/g, '').trim();
 
+      // Helper functions inside script to sanitize
+      function sanitizeDashesAndHyphens(text) {
+        if (!text) return "";
+        let cleaned = text
+          .replace(/\s*[—–]\s*/g, ", ")
+          .replace(/[—–]/g, ", ")
+          .replace(/(\w)-(\w)/g, "$1 $2")
+          .replace(/-/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        cleaned = cleaned
+          .replace(/(\w)remove$/gi, "$1")
+          .replace(/(\w)share$/gi, "$1")
+          .replace(/\s+remove$/gi, "")
+          .replace(/\s+share$/gi, "");
+        return cleaned.trim();
+      }
+
+      function sanitizeObjectStrings(obj) {
+        if (typeof obj === "string") return sanitizeDashesAndHyphens(obj);
+        if (Array.isArray(obj)) return obj.map(item => sanitizeObjectStrings(item));
+        if (obj !== null && typeof obj === "object") {
+          const newObj = {};
+          for (const key of Object.keys(obj)) {
+            if (key === "reviewed_date" || key === "sources" || key === "sourceUrl") {
+              newObj[key] = obj[key];
+            } else {
+              newObj[key] = sanitizeObjectStrings(obj[key]);
+            }
+          }
+          return newObj;
+        }
+        return obj;
+      }
+
+      const cleanResult = sanitizeObjectStrings(result);
+
       // Format the result back into standard HTML for the "content" column
-      let formattedContent = `<h3>Executive Summary</h3>
-<p>${result.executive_summary}</p>
+      let formattedContent = `${cleanResult.opening || ""}
 
 ${articleBody}
 
 <h3>Key Takeaways</h3>
 <ul>
-${result.key_takeaways.map((t) => `<li>${t}</li>`).join('\n')}
+${(cleanResult.key_takeaways || []).map((t) => `<li>${t}</li>`).join('\n')}
 </ul>
 
 <h3>Frequently Asked Questions</h3>
-${result.faq.map((f) => `<h4>${f.question}</h4><p>${f.answer}</p>`).join('\n')}
+${(cleanResult.faq || []).map((f) => `<h4>${f.question}</h4><p>${f.answer}</p>`).join('\n')}
 
 <hr style="border: 0; border-top: 1px solid #eaeaea; margin-top: 30px;" />
 <p style="font-size: 12px; color: #888;"><em>Medical Review: MedSense Editorial Board</em></p>`;
