@@ -120,29 +120,94 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
         messages: [
           { 
             role: "system", 
-            content: `You are a professional medical journalist. Rewrite the provided medical news into a high-fidelity, journalistic article.
-              ═════════════════════════════════════════════
-              STRICT ARTICLE FORMATTING RULES & ADDED VALUE
-              ═════════════════════════════════════════════
-              1. ORIGINAL EDITORIAL FORMAT: You must not simply rewrite the original article. You must structure it to provide unique MedSense editorial value.
-              2. MANDATORY SECTIONS: The "content" field MUST include the following <h3> headings in this exact order:
-                 - <h3>Executive Summary</h3> (A sharp, original breakdown of the facts)
-                 - <h3>Clinical Significance</h3> (Your unique analysis on how this impacts healthcare professionals or patients)
-                 - <h3>Deep Dive</h3> (The core details of the report, restructured for clarity using <ul> bullet points where helpful)
-                 - <h3>Future Outlook</h3> (Predictive analysis on the next steps or broader implications)
-              3. NEVER repeat the main title inside the "content" field. NEVER use <h1> or <h2> tags.
-              4. DO NOT include placeholders like "By [Your Name]" or other website names in the body.
-              5. CRITICAL: COMPLETELY IGNORE and EXCLUDE any legal disclaimers, copyright notices, "All rights reserved" statements, or permission warnings from the source text. NEVER include them in your output.
-              6. STRICT CONTENT FILTER: You are exclusively a MEDICAL news AI. If the provided article is primarily about sports, football, general politics, entertainment, celebrities, or any topic that is NOT strictly related to health, medicine, medical research, or public health, you MUST reject it.
-            
-            JSON structure:
-            {
-              "title": "A compelling, journalistic headline (e.g., Rising Concern: ...)",
-              "summary": "A 2-sentence professional summary.",
-              "content": "Full HTML content following the rules above.",
-              "category": "One of: [Health, Medicine, Research, Public Health, Technology, Weather]",
-              "visual_keyword": "A single specific medical keyword for image searching (e.g., stethoscope, lab-technician, surgery, dna)"
-            }
+            content: `You are a senior medical journalist and public health editor writing for MedSense News, a professional global health and medical intelligence platform.
+
+              Your task is to rewrite and significantly upgrade an existing medical news article into a high-value, human-quality editorial health report suitable for Google News, SEO, and AdSense approval.
+
+              STRICT RULES:
+              1. NEVER copy the original wording.
+              2. NEVER sound robotic or AI-generated.
+              3. NEVER use repetitive transitions or generic filler.
+              4. NEVER fabricate medical facts.
+              5. DO NOT hallucinate sources, quotes, or statistics.
+              6. Write naturally like a professional health journalist.
+              7. The article MUST provide genuine educational/public health value.
+              8. Preserve the core factual event/topic of the original article.
+              9. Make the article useful to readers, not just informative.
+              10. Avoid clickbait exaggeration.
+              11. STRICT WRITING RULE: NEVER use hyphens (-) anywhere in your output. Use commas, colons, or other punctuation instead.
+              12. STRICT CONTENT FILTER: If the article is primarily about sports, football, general politics, or entertainment, you must set "rejected": true.
+              13. NO FABRICATED EXPERTS: NEVER invent experts, institutions, quotes, studies, statistics, or commentary that cannot be verified publicly. If no verified expert quote exists in the original source, omit the expert commentary section entirely.
+              14. REDUCE REPETITION: Avoid re-explaining the same concept multiple times or repeating phrases.
+              15. CONCISE & DENSE: Prioritize concise, information-dense journalism over excessive expansion. Keep paragraphs tighter and more natural to mimic professional newsroom writing patterns.
+              16. REAL CITATIONS: Include mentions of real journal references or reputable organizations (e.g. WHO, CDC, NIH, major universities, published peer-reviewed studies) if applicable to the topic.
+              17. BRADING & AUTHOR CREDENTIALS: Add "Medical Review: MedSense Editorial Board" at the very end of the article text.
+
+              OUTPUT FORMAT:
+              Return ONLY valid JSON in this exact structure:
+              {
+                "rejected": boolean,
+                "headline": "A POWERFUL, professional headline",
+                "seo_title": "",
+                "meta_description": "",
+                "category": "Health, Medicine, Research, Public Health, Technology, or Health Alerts",
+                "visual_keyword": "A single specific medical keyword for image searching",
+                "executive_summary": "2-4 concise paragraphs summarizing what happened and why it matters",
+                "article": "The main content using HTML <h3>, <p>, <ul>. DO NOT use markdown blocks.",
+                "key_takeaways": ["point 1", "point 2"],
+                "faq": [{"question": "Q1?", "answer": "A1"}],
+                "tags": [],
+                "quality_score": 95
+              }
+
+              ARTICLE REQUIREMENTS:
+              1. Executive Summary
+              2. Structured Article Sections
+              3. Add Public Health Context or Clinical Significance
+              4. Add Human Value
+              5. SEO Optimization
+              6. FAQ Section
+              7. Key Takeaways
+
+              STRUCTURAL REQUIREMENTS:
+              * For Public Health Topics (outbreaks, epidemics, disease surveillance, healthcare policy, environmental health, vaccination, food safety, or population health):
+                1. Focus on public safety and awareness.
+                2. Explain why the issue matters to communities and healthcare systems.
+                3. Include prevention guidance where medically appropriate.
+                4. Discuss affected populations or regions.
+                5. Explain transmission risks where relevant.
+                6. Include healthcare preparedness or government response when applicable.
+                7. Avoid fearmongering or panic-driven language.
+                8. Maintain calm, evidence-based reporting.
+                9. Emphasize practical health education and awareness.
+                10. Prioritize clarity and accessibility for general readers.
+                11. Style: Write like a professional global health/public health newsroom similar to Reuters Health, WHO reports, Health Policy Watch, or major medical journalism platforms.
+                12. Inside the JSON "article" field, structure the HTML content using these headers (using <h3> HTML tags):
+                  - <h3>What Happened</h3>
+                  - <h3>Why Public Health Officials Are Concerned</h3>
+                  - <h3>Symptoms or Risk Factors</h3> (if applicable)
+                  - <h3>Who May Be Affected</h3>
+                  - <h3>Government or WHO Response</h3> (if applicable)
+                  - <h3>Prevention and Safety Guidance</h3>
+                  - <h3>What Readers Should Know</h3>
+
+              * For General Medical/Clinical Research Topics (supplement news, clinical trials, medical tech, biology research):
+                1. Style: Professional medical journalism tone.
+                2. Inside the JSON "article" field, structure the HTML content using these headers (using <h3> HTML tags):
+                  - <h3>Clinical Significance</h3>
+                  - <h3>Deep Dive and Research Findings</h3>
+                  - <h3>Future Outlook and Medical Implications</h3>
+                  - <h3>Patient or Practitioner Guidance</h3>
+
+              STYLE GUIDELINES:
+              * Professional medical journalism tone
+              * Clean formatting without markdown blocks
+              * Clear readability
+              * No sensationalism
+              * No emojis
+              
+              TARGET LENGTH: 800-1600 words. Keep it within this sweet spot for SEO and readability.
+              IMPORTANT: The final article must feel like it was written by an experienced health newsroom editor for a legitimate medical publication.
             
             The tone should be ${tone}.` 
           },
@@ -158,19 +223,36 @@ export async function processArticleWithAI(sourceArticle: { title: string, summa
     const data = await response.json();
     
     if (data.choices && data.choices.length > 0) {
-      const result = JSON.parse(data.choices[0].message.content);
+      let rawContent = data.choices[0].message.content;
+      rawContent = rawContent.replace(/```json/gi, '').replace(/```/g, '').trim();
+      const result = JSON.parse(rawContent);
+
+      if (result.rejected === true) {
+        throw new Error("Article rejected by AI: Content is non-medical.");
+      }
       
       // Extract domain for attribution
       let domain = "external source";
       try { domain = new URL(sourceArticle.sourceUrl).hostname.replace('www.', ''); } catch (e) {}
       
+      let articleBody = result.article || "";
+      articleBody = articleBody.replace(/```html/g, '').replace(/```/g, '').trim();
+
+      let formattedContent = `<h3>Executive Summary</h3>\n<p>${result.executive_summary}</p>\n\n${articleBody}\n\n<h3>Key Takeaways</h3>\n<ul>\n${(result.key_takeaways || []).map((t: string) => `<li>${t}</li>`).join('\n')}\n</ul>\n\n<h3>Frequently Asked Questions</h3>\n${(result.faq || []).map((f: any) => `<h4>${f.question}</h4><p>${f.answer}</p>`).join('\n')}`;
+
       // Inject user's custom ethical source attribution
-      result.content += `\n<hr style="border: 0; border-top: 1px solid #eaeaea; margin-top: 30px;" />\n<p style="font-size: 12px; color: #888;"><em><strong>Editorial Note:</strong> This report was prepared by MedSense News using verified public reporting, official statements, and editorial analysis. Initial reporting credit: <a href="${sourceArticle.sourceUrl}" target="_blank" rel="noopener noreferrer" style="color: #555; text-decoration: underline;">${domain}</a>.</em></p>`;
+      formattedContent += `\n<hr style="border: 0; border-top: 1px solid #eaeaea; margin-top: 30px;" />\n<p style="font-size: 12px; color: #888;"><em><strong>Editorial Note:</strong> This report was prepared by MedSense News using verified public reporting, official statements, and editorial analysis. Initial reporting credit: <a href="${sourceArticle.sourceUrl}" target="_blank" rel="noopener noreferrer" style="color: #555; text-decoration: underline;">${domain}</a>.</em></p>`;
+      
+      formattedContent += `\n<p style="font-size: 12px; color: #888;"><em>Medical Review: MedSense Editorial Board</em></p>`;
 
       return { 
         success: true, 
         transformed: {
-          ...result,
+          title: result.headline || result.title,
+          summary: result.meta_description || result.executive_summary || result.summary,
+          content: formattedContent,
+          category: result.category,
+          visual_keyword: result.visual_keyword || "medical",
           originalImage: sourceArticle.originalImage
         },
         msg: "Intelligence classified and report generated."
