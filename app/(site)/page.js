@@ -381,6 +381,142 @@ export default async function Home() {
                 </div>
              </div>
 
+             {/* Outbreak Tracker */}
+              <div style={{ marginTop: '3rem' }}>
+                <h3 className="intelligence-section-title" style={{ borderLeftColor: 'var(--alert-red)', fontSize: '1.25rem', marginBottom: '1.5rem' }}>
+                  <span className="live-pulse-dot" style={{ marginRight: '0.5rem' }}></span> Outbreak Tracker
+                </h3>
+                
+                {(() => {
+                  const diseases = [
+                    { name: 'Mpox', icon: '🦠' },
+                    { name: 'Cholera', icon: '💧' },
+                    { name: 'Lassa fever', icon: '🦇' },
+                    { name: 'Ebola', icon: '☣️' },
+                    { name: 'Bird flu', icon: '🦅' }
+                  ];
+
+                  // Filter to only show active outbreaks matching active system articles
+                  const activeOutbreaks = diseases.map(d => {
+                    const related = articles.filter(a => {
+                      const text = `${a.title} ${a.excerpt || ''} ${a.content || ''}`.toLowerCase();
+                      const matchesDisease = text.includes(d.name.toLowerCase()) || 
+                                            (d.name === 'Bird flu' && (text.includes('avian') || text.includes('h5n1')));
+                      
+                      if (!matchesDisease) return false;
+                      
+                      // Identify active outbreak news (Health Alerts, Outbreaks, or titles signaling active crisis)
+                      const isOutbreakAlert = a.category === 'Health Alerts' || 
+                                              a.category === 'Outbreak' ||
+                                              a.title.toLowerCase().includes('outbreak') ||
+                                              a.title.toLowerCase().includes('emergency') ||
+                                              a.title.toLowerCase().includes('spread') ||
+                                              a.title.toLowerCase().includes('cases climb') ||
+                                              (a.excerpt && a.excerpt.toLowerCase().includes('outbreak'));
+                      return isOutbreakAlert;
+                    });
+
+                    return {
+                      ...d,
+                      articles: related,
+                      count: related.length,
+                      latestArticle: related[0] || null
+                    };
+                  }).filter(d => d.count > 0);
+
+                  if (activeOutbreaks.length === 0) {
+                    return (
+                      <div style={{ 
+                        padding: '1.25rem', 
+                        textAlign: 'center', 
+                        background: 'var(--bg-secondary)', 
+                        borderRadius: '12px', 
+                        border: '1px solid var(--border)' 
+                      }}>
+                        <span style={{ color: 'var(--fact-green)', fontSize: '0.85rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                          <i className="fas fa-check-circle"></i> Pathogens Stable
+                        </span>
+                        <p style={{ fontSize: '0.75rem', opacity: 0.7, margin: '0.4rem 0 0 0', lineHeight: 1.4 }}>
+                          No active emergency outbreaks reported in the system.
+                        </p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {activeOutbreaks.map(o => {
+                        // Click navigation logic: direct article link if 1 report, else search result
+                        const linkHref = o.count === 1 
+                          ? `/article/${o.latestArticle.slug || o.latestArticle.id}`
+                          : `/search?q=${encodeURIComponent(o.name)}`;
+
+                        return (
+                          <Link key={o.name} href={linkHref} style={{ textDecoration: 'none', color: 'var(--text)' }}>
+                            <div 
+                              className="hover-bg" 
+                              style={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                padding: '0.75rem 1rem', 
+                                background: 'var(--bg-card)', 
+                                border: '1px solid var(--border)', 
+                                borderRadius: '12px', 
+                                transition: 'all 0.2s',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.01)'
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <span style={{ fontSize: '1.2rem' }}>{o.icon}</span>
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{o.name}</span>
+                                  <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>
+                                    {o.count === 1 ? '1 active report' : `${o.count} active reports`}
+                                  </span>
+                                </div>
+                              </div>
+                              <span style={{ 
+                                background: 'rgba(239, 68, 68, 0.1)', 
+                                color: 'var(--alert-red)', 
+                                fontSize: '0.65rem', 
+                                fontWeight: 900, 
+                                padding: '4px 8px', 
+                                borderRadius: '6px', 
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.35rem'
+                              }}>
+                                <span className="live-pulse-dot" style={{ background: 'var(--alert-red)' }}></span> Active Outbreak
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                      
+                      {/* Interactive Outbreak Maps Future-proof Indicator */}
+                      <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        padding: '0.6rem', 
+                        borderRadius: '8px', 
+                        border: '1px dashed var(--border)',
+                        fontSize: '0.75rem',
+                        opacity: 0.8,
+                        color: 'var(--text-light)',
+                        textAlign: 'center'
+                      }}>
+                        <i className="fas fa-map-marked-alt" style={{ marginRight: '0.5rem', color: 'var(--intel-blue)' }}></i> 
+                        Interactive Outbreak Maps (Beta)
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
              {/* Health Days Awareness (Conditional) */}
              {activeHealthDay && healthDayArticles.length > 0 && (
                <div style={{ marginTop: '3rem' }}>
