@@ -284,12 +284,47 @@ export default async function Home() {
              <h3 className="intelligence-section-title" style={{ marginBottom: '1.25rem', fontSize: '1.5rem' }}>
               <i className="fas fa-clock" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Latest Insights
             </h3>
-            <div className="latest-insights-desktop" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {latestArticles.slice(0, 12).map((article) => (
-                <BbcCard key={article.id} article={article} isList={true} />
-              ))}
+            {/* Desktop: Cyclic Card Grid (3, 4, 3, 4) */}
+            <div className="latest-insights-desktop">
+              {(() => {
+                const chunkedLatestRows = [];
+                let currentIndex = 0;
+                let rowCount = 0;
+                const desktopArticles = latestArticles.slice(0, 21); // Supports up to 21 articles (3 + 4 + 3 + 4 + 3 + 4)
+                
+                while (currentIndex < desktopArticles.length) {
+                  const cardsInRow = rowCount % 2 === 0 ? 3 : 4;
+                  const rowSlice = desktopArticles.slice(currentIndex, currentIndex + cardsInRow);
+                  if (rowSlice.length > 0) {
+                    chunkedLatestRows.push({
+                      cols: cardsInRow,
+                      articles: rowSlice
+                    });
+                  }
+                  currentIndex += cardsInRow;
+                  rowCount++;
+                }
+
+                return chunkedLatestRows.map((row, rowIdx) => (
+                  <div 
+                    key={rowIdx} 
+                    style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: `repeat(${row.cols}, 1fr)`, 
+                      gap: row.cols === 3 ? '1.5rem' : '1rem', 
+                      marginBottom: '2rem' 
+                    }}
+                  >
+                    {row.articles.map((article) => (
+                      <BbcCard key={article.id} article={article} isSmall={true} />
+                    ))}
+                  </div>
+                ));
+              })()}
             </div>
-            <div className="latest-insights-mobile section-grid-mobile" style={{ display: 'none' }}>
+
+            {/* Mobile: Standard small card list */}
+            <div className="latest-insights-mobile">
               {latestArticles.slice(0, 12).map((article) => (
                 <BbcCard key={article.id} article={article} isSmall={true} />
               ))}

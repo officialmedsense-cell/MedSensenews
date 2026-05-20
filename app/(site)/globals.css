@@ -5428,3 +5428,26 @@ img {
   max-width: 480px;
 }
 
+/* Responsive visibility for Latest Insights */
+@media (min-width: 1025px) {
+  .latest-insights-desktop {
+    display: flex !important;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .latest-insights-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .latest-insights-desktop {
+    display: none !important;
+  }
+  .latest-insights-mobile {
+    display: flex !important;
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
