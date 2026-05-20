@@ -389,11 +389,12 @@ export default async function Home() {
                 
                 {(() => {
                   const diseases = [
-                    { name: 'Mpox', icon: '🦠' },
-                    { name: 'Cholera', icon: '💧' },
-                    { name: 'Lassa fever', icon: '🦇' },
-                    { name: 'Ebola', icon: '☣️' },
-                    { name: 'Bird flu', icon: '🦅' }
+                    { name: 'Ebola', icon: '☣️', keywords: ['ebola'] },
+                    { name: 'Cholera', icon: '💧', keywords: ['cholera'] },
+                    { name: 'Mpox', icon: '🦠', keywords: ['mpox'] },
+                    { name: 'Lassa fever', icon: '🦇', keywords: ['lassa'] },
+                    { name: 'Bird flu', icon: '🦅', keywords: ['bird flu', 'avian', 'h5n1'] },
+                    { name: 'Hantavirus', icon: '🐀', keywords: ['hantavirus', 'hanta'] }
                   ];
 
                   // Filter to only show active outbreaks matching active system articles
@@ -402,8 +403,7 @@ export default async function Home() {
                       const titleLower = a.title.toLowerCase();
                       const excerptLower = (a.excerpt || '').toLowerCase();
                       const text = `${titleLower} ${excerptLower}`;
-                      const matchesDisease = text.includes(d.name.toLowerCase()) || 
-                                            (d.name === 'Bird flu' && (text.includes('avian') || text.includes('h5n1')));
+                      const matchesDisease = d.keywords.some(k => text.includes(k));
                       
                       if (!matchesDisease) return false;
                       
