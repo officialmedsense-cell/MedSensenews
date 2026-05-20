@@ -906,7 +906,8 @@ export async function publishToNewsSite(payload: {
   originalImage?: string | null,
   sourceUrl?: string,
   targetUrl?: string,
-  token?: string
+  token?: string,
+  status?: string
 }) {
   if (!pubClient) {
     return { success: false, error: "Publication Target not configured." };
@@ -994,7 +995,7 @@ export async function publishToNewsSite(payload: {
         excerpt: payload.summary,
         content: payload.fullReport,
         image: heroImage,
-        status: 'published',
+        status: payload.status || 'published',
         date: exactPublishTime,
         source_url: payload.sourceUrl ? normalizeUrl(payload.sourceUrl) : null,
         views: 0,

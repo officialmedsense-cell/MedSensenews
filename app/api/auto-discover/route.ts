@@ -62,6 +62,7 @@ export async function GET(request: Request) {
           visualKeyword: aiResult.transformed.visual_keyword,
           originalImage: aiResult.transformed.originalImage,
           sourceUrl: article.sourceUrl,
+          status: aiResult.transformed.status === 'ready' ? 'published' : 'draft',
         });
 
         if (pubResult.success) {
