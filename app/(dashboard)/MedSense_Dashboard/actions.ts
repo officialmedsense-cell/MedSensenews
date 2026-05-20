@@ -1074,11 +1074,20 @@ export async function saveSourcesToCloud(sources: any[]) {
  */
 export async function getLegacyArticlesCountAndList() {
   try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 3); // Protect recent news by not upgrading articles created in the last 3 days
+    const cutoffIso = cutoffDate.toISOString();
+
     // Get total count
     const { count, error: countError } = await supabase
       .from('articles')
       .select('*', { count: 'exact', head: true })
-      .not('content', 'ilike', '%Executive Summary%');
+      .not('content', 'ilike', '%Executive Summary%')
+      .not('content', 'ilike', '%Medical Review: MedSense%')
+      .not('content', 'ilike', '%Key Takeaways%')
+      .not('content', 'ilike', '%Frequently Asked Questions%')
+      .neq('title', 'SYSTEM_HUBS_CONFIG')
+      .lt('created_at', cutoffIso);
 
     if (countError) throw countError;
 
@@ -1087,7 +1096,12 @@ export async function getLegacyArticlesCountAndList() {
       .from('articles')
       .select('id, title, category, created_at, content')
       .not('content', 'ilike', '%Executive Summary%')
-      .order('created_at', { ascending: false })
+      .not('content', 'ilike', '%Medical Review: MedSense%')
+      .not('content', 'ilike', '%Key Takeaways%')
+      .not('content', 'ilike', '%Frequently Asked Questions%')
+      .neq('title', 'SYSTEM_HUBS_CONFIG')
+      .lt('created_at', cutoffIso)
+      .order('created_at', { ascending: true }) // Start from the oldest articles first
       .limit(100);
 
     if (fetchError) throw fetchError;

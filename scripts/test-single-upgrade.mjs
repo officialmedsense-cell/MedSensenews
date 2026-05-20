@@ -63,11 +63,19 @@ Return ONLY valid JSON in this exact structure:
 TARGET LENGTH: 800-1600 words.`;
 
 async function testSingleUpgrade() {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 3); // Protect recent news by not upgrading articles created in the last 3 days
+
   const { data: articles } = await supabase
     .from('articles')
     .select('*')
     .not('content', 'ilike', '%Executive Summary%')
-    .order('created_at', { ascending: false })
+    .not('content', 'ilike', '%Medical Review: MedSense%')
+    .not('content', 'ilike', '%Key Takeaways%')
+    .not('content', 'ilike', '%Frequently Asked Questions%')
+    .neq('title', 'SYSTEM_HUBS_CONFIG')
+    .lt('created_at', cutoffDate.toISOString())
+    .order('created_at', { ascending: true }) // Start from the oldest articles first
     .limit(1);
 
   if (!articles || articles.length === 0) {
