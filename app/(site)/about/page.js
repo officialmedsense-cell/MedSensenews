@@ -118,7 +118,7 @@ export default function AboutPage() {
                 As part of the broader MedSense vision, we are committed to advancing healthcare communication, education, research, and digital innovation for a healthier and more informed society.
               </p>
               <div className="exist-quote" style={{ margin: '3rem auto 0' }}>
-                "Informed societies make healthier decisions."
+                "BEHIND EVERY HEADLINE IS A LIFE"
               </div>
             </div>
           </div>
