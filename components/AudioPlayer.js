@@ -148,22 +148,23 @@ export default function AudioPlayer({ title, author, content, excerpt }) {
     <div className="audio-article-player" style={{
       display: 'flex',
       alignItems: 'center',
-      gap: '1rem',
-      padding: '0.8rem 1.2rem',
+      gap: '0.6rem',
+      padding: '0.4rem 0.8rem',
       background: 'var(--bg-secondary)',
       border: '1px solid var(--border)',
-      borderRadius: '30px',
-      margin: '1.5rem auto 2rem auto',
-      maxWidth: '420px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+      borderRadius: '20px',
+      margin: '1rem auto 1.5rem auto',
+      width: '100%',
+      maxWidth: '280px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
       justifyContent: 'space-between',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <button 
           onClick={handlePlayPause}
           style={{
-            width: '42px',
-            height: '42px',
+            width: '28px',
+            height: '28px',
             borderRadius: '50%',
             background: 'var(--intel-blue)',
             color: '#fff',
@@ -172,31 +173,32 @@ export default function AudioPlayer({ title, author, content, excerpt }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '1rem',
+            fontSize: '0.75rem',
             transition: 'all 0.2s',
+            flexShrink: 0,
           }}
           aria-label={isPlaying && !isPaused ? "Pause Article" : "Listen to Article"}
         >
           {isPlaying && !isPaused ? (
             <i className="fas fa-pause"></i>
           ) : (
-            <i className="fas fa-play" style={{ marginLeft: isPlaying ? '0' : '3px' }}></i>
+            <i className="fas fa-play" style={{ marginLeft: isPlaying ? '0' : '2px' }}></i>
           )}
         </button>
         
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>
-            {isPlaying ? (isPaused ? "Audio Paused" : "Listening to Article") : "Listen to Article"}
+        <div style={{ display: 'flex', flexDirection: 'column', minWidth: '85px' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+            {isPlaying ? (isPaused ? "Paused" : "Listening...") : "Listen to Article"}
           </span>
-          <span style={{ fontSize: '0.75rem', opacity: 0.6 }}>
-            {isPlaying 
-              ? `Reading sentence ${currentSentenceIndex + 1} of ${sentencesRef.current.length}` 
-              : "Narrated by MedSense Voice Engine"}
-          </span>
+          {isPlaying && (
+            <span style={{ fontSize: '0.6rem', opacity: 0.6, whiteSpace: 'nowrap' }}>
+              {`${currentSentenceIndex + 1}/${sentencesRef.current.length}`}
+            </span>
+          )}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', borderLeft: '1px solid var(--border)', paddingLeft: '0.4rem' }}>
         {isPlaying && (
           <button 
             onClick={handleStop}
@@ -205,9 +207,12 @@ export default function AudioPlayer({ title, author, content, excerpt }) {
               border: 'none',
               cursor: 'pointer',
               color: 'var(--text)',
-              fontSize: '0.9rem',
-              padding: '6px 10px',
+              fontSize: '0.75rem',
+              padding: '2px 4px',
               opacity: 0.7,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             title="Stop Audio"
           >
@@ -220,12 +225,16 @@ export default function AudioPlayer({ title, author, content, excerpt }) {
           style={{
             background: 'var(--bg)',
             border: '1px solid var(--border)',
-            borderRadius: '15px',
-            padding: '4px 10px',
-            fontSize: '0.75rem',
+            borderRadius: '10px',
+            padding: '2px 6px',
+            fontSize: '0.65rem',
             fontWeight: 800,
             cursor: 'pointer',
             color: 'var(--text)',
+            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
           title="Change Reading Speed"
         >
