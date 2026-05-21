@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+﻿import { supabase } from '@/lib/supabase';
 import BbcCard from '@/components/BbcCard';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -40,11 +40,12 @@ export default async function Home() {
   const leftArticles = articles.slice(1, 3); // #2 and #3 on the left
   const rightArticles = articles.slice(3, 5); // #4 and #5 on the right
   const trendingArticles = articles.slice(5, 15);
+  const premiumTrendingArticles = trendingArticles.slice(0, 8);
   
   // Editorial Categories
   const medicalArticles = articles.filter(a => a.category === 'Medicine').slice(0, 6);
-  const researchArticles = articles.filter(a => a.category === 'Research').slice(0, 5);
-  const techArticles = articles.filter(a => a.category === 'Technology' || a.title.toLowerCase().includes('tech') || a.title.toLowerCase().includes('ai ')).slice(0, 5);
+  const researchArticles = articles.filter(a => a.category === 'Research').slice(0, 8);
+  const techArticles = articles.filter(a => a.category === 'Technology' || a.title.toLowerCase().includes('tech') || a.title.toLowerCase().includes('ai ')).slice(0, 8);
   const alertArticles = articles.filter(a => 
     a.category === 'Health Alerts' || 
     a.category === 'Outbreak' ||
@@ -277,7 +278,7 @@ export default async function Home() {
 
   // Determine split for Additional Coverage desktop layout
   // Balance so both columns end at same visual height:
-  // 1 row of 3 main cards ≈ 4 sidebar list items in height
+  // 1 row of 3 main cards â‰ˆ 4 sidebar list items in height
   let mainRemaining = remainingArticles;
   let sidebarRemaining = [];
   if (remainingArticles.length >= 5) {
@@ -318,30 +319,25 @@ export default async function Home() {
       {/* 2. TRENDING NOW */}
       <section className="bbc-homepage-wrapper" style={{ marginTop: '2rem', marginBottom: '0' }}>
         <h3 className="intelligence-section-title" style={{ fontSize: '1rem', margin: '0 0 1.25rem 0', borderLeftColor: 'var(--intel-blue)' }}>
-          <i className="fas fa-bolt" style={{ color: '#eab308', marginRight: '0.5rem' }}></i> Trending Now
+          <i className="fas fa-bolt" style={{ color: 'var(--primary)', marginRight: '0.5rem' }}></i> Trending Now
         </h3>
-        <div className="mobile-scroll-track" style={{ padding: '0 0 1rem 0', margin: '0' }}>
-          {trendingArticles.map((article, idx) => (
-            <Link key={article.id} href={`/article/${article.slug || article.id}`} className="mobile-trending-item" style={{ 
-              textDecoration: 'none',
-              flex: '0 0 320px', // Slightly wider to accommodate image
-              background: 'linear-gradient(135deg, var(--intel-blue) 0%, var(--intel-navy) 100%)',
-              margin: '0 1.25rem 0 0',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              padding: '0.75rem'
-            }}>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <div style={{ width: '70px', height: '70px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                  <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="70px" style={{ objectFit: 'cover', opacity: 0.9 }} />
-                </div>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '1.2rem', fontWeight: 900, color: 'rgba(255,255,255,0.3)', lineHeight: 1 }}>{idx + 1}</span>
-                  <div>
-                    <h4 style={{ margin: 0, fontSize: '0.85rem', lineHeight: 1.3, color: 'white', fontWeight: 700, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{article.title}</h4>
-                    <span style={{ fontSize: '0.7rem', color: '#60a5fa', fontWeight: 800, textTransform: 'uppercase', marginTop: '0.25rem', display: 'block' }}>{article.category}</span>
-                  </div>
-                </div>
+        <div className="trending-news-list">
+          {premiumTrendingArticles.map((article, idx) => (
+            <Link key={article.id} href={`/article/${article.slug || article.id}`} className="trending-news-item">
+              <span className="trending-news-index">{String(idx + 1).padStart(2, '0')}</span>
+              <div className="trending-news-image">
+                <Image
+                  src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"}
+                  alt=""
+                  fill
+                  sizes="(max-width: 768px) 88px, 112px"
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
+              <div className="trending-news-content">
+                <span className="trending-news-meta">{article.category}</span>
+                <h4>{article.title}</h4>
+                <span className="trending-news-time">{formatDate(article.created_at || article.date)}</span>
               </div>
             </Link>
           ))}
@@ -360,7 +356,7 @@ export default async function Home() {
             <h3 className="intelligence-section-title" style={{ borderLeftColor: 'var(--intel-accent)', marginBottom: '1.25rem' }}>
               <i className="fas fa-microscope"></i> Medical Research
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="medical-tech-list-view" style={{ display: 'flex', flexDirection: 'column' }}>
               {researchArticles.map(article => (
                 <BbcCard key={article.id} article={article} isList={true} />
               ))}
@@ -372,7 +368,7 @@ export default async function Home() {
             <h3 className="intelligence-section-title" style={{ borderLeftColor: 'var(--brand-accent)', marginBottom: '1.25rem' }}>
               <i className="fas fa-microchip"></i> Health Technology
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="medical-tech-list-view" style={{ display: 'flex', flexDirection: 'column' }}>
               {techArticles.length > 0 ? techArticles.map(article => (
                 <BbcCard key={article.id} article={article} isList={true} />
               )) : (
@@ -391,49 +387,15 @@ export default async function Home() {
              <h3 className="intelligence-section-title" style={{ marginBottom: '1.25rem', fontSize: '1.5rem' }}>
               <i className="fas fa-clock" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Latest Insights
             </h3>
-            {/* Desktop: Cyclic Card Grid (3, 4, 3, 4) */}
-            <div className="latest-insights-desktop">
-              {(() => {
-                const chunkedLatestRows = [];
-                let currentIndex = 0;
-                let rowCount = 0;
-                const desktopArticles = latestArticles.slice(0, 21); // Supports up to 21 articles (3 + 4 + 3 + 4 + 3 + 4)
-                
-                while (currentIndex < desktopArticles.length) {
-                  const cardsInRow = rowCount % 2 === 0 ? 3 : 4;
-                  const rowSlice = desktopArticles.slice(currentIndex, currentIndex + cardsInRow);
-                  if (rowSlice.length > 0) {
-                    chunkedLatestRows.push({
-                      cols: cardsInRow,
-                      articles: rowSlice
-                    });
-                  }
-                  currentIndex += cardsInRow;
-                  rowCount++;
-                }
-
-                return chunkedLatestRows.map((row, rowIdx) => (
-                  <div 
-                    key={rowIdx} 
-                    style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: `repeat(${row.cols}, 1fr)`, 
-                      gap: row.cols === 3 ? '1.5rem' : '1rem', 
-                      marginBottom: '2rem' 
-                    }}
-                  >
-                    {row.articles.map((article) => (
-                      <BbcCard key={article.id} article={article} isSmall={true} />
-                    ))}
-                  </div>
-                ));
-              })()}
+            <div className="latest-insights-desktop latest-insights-list">
+              {latestArticles.slice(0, 10).map((article) => (
+                <BbcCard key={article.id} article={article} isList={true} />
+              ))}
             </div>
 
-            {/* Mobile: Standard small card list */}
-            <div className="latest-insights-mobile">
-              {latestArticles.slice(0, 12).map((article) => (
-                <BbcCard key={article.id} article={article} isSmall={true} />
+            <div className="latest-insights-mobile latest-insights-list">
+              {latestArticles.slice(0, 8).map((article) => (
+                <BbcCard key={article.id} article={article} isList={true} />
               ))}
             </div>
           </div>
@@ -445,21 +407,9 @@ export default async function Home() {
                 <h3 className="intelligence-section-title" style={{ borderLeftColor: 'var(--alert-red)', fontSize: '1.25rem', marginBottom: '1.5rem' }}>
                   <i className="fas fa-exclamation-circle" style={{ color: 'var(--alert-red)' }}></i> Health Alerts
                 </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div className="latest-insights-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {alertArticles.map(article => (
-                    <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
-                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} className="hover-bg">
-                        <div style={{ width: '80px', height: '60px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                          <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="80px" style={{ objectFit: 'cover' }} />
-                        </div>
-                        <div>
-                          <span style={{ color: 'var(--alert-red)', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
-                            {article.category === 'Outbreak' || article.title.toLowerCase().includes('outbreak') ? 'Outbreak Alert' : 'Emergency Update'}
-                          </span>
-                          <h4 style={{ fontSize: '0.9rem', margin: 0, lineHeight: 1.3, fontWeight: 700 }}>{article.title}</h4>
-                        </div>
-                      </div>
-                    </Link>
+                    <BbcCard key={article.id} article={article} isList={true} />
                   ))}
                 </div>
              </div>
@@ -469,162 +419,12 @@ export default async function Home() {
                 <h3 className="intelligence-section-title" style={{ borderLeftColor: 'var(--primary)', fontSize: '1.25rem', marginBottom: '1.5rem' }}>
                   <i className="fas fa-bookmark" style={{ color: 'var(--primary)' }}></i> Must Read
                 </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                <div className="latest-insights-list" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {mustReadArticles.map(article => (
-                    <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
-                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', padding: '0.5rem', borderRadius: '8px', transition: 'background 0.2s' }} className="hover-bg">
-                        <div style={{ width: '80px', height: '60px', borderRadius: '6px', overflow: 'hidden', flexShrink: 0, position: 'relative' }}>
-                          <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="80px" style={{ objectFit: 'cover' }} />
-                        </div>
-                        <div>
-                          <span style={{ color: 'var(--primary)', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', display: 'block', marginBottom: '0.25rem' }}>
-                            Policy & Crisis
-                          </span>
-                          <h4 style={{ fontSize: '0.9rem', margin: 0, lineHeight: 1.3, fontWeight: 700 }}>{article.title}</h4>
-                        </div>
-                      </div>
-                    </Link>
+                    <BbcCard key={article.id} article={article} isList={true} />
                   ))}
                 </div>
              </div>
-
-             {/* Outbreak Tracker */}
-              <div style={{ marginTop: '3rem' }}>
-                <h3 className="intelligence-section-title" style={{ borderLeftColor: 'var(--alert-red)', fontSize: '1.25rem', marginBottom: '1.5rem' }}>
-                  <span className="live-pulse-dot" style={{ marginRight: '0.5rem' }}></span> Outbreak Tracker
-                </h3>
-                
-                {(() => {
-                  const diseases = [
-                    { name: 'Ebola', icon: '☣️', keywords: ['ebola'] },
-                    { name: 'Cholera', icon: '💧', keywords: ['cholera'] },
-                    { name: 'Mpox', icon: '🦠', keywords: ['mpox'] },
-                    { name: 'Lassa fever', icon: '🦇', keywords: ['lassa'] },
-                    { name: 'Bird flu', icon: '🦅', keywords: ['bird flu', 'avian', 'h5n1'] },
-                    { name: 'Hantavirus', icon: '🐀', keywords: ['hantavirus', 'hanta'] }
-                  ];
-
-                  // Filter to only show active outbreaks matching active system articles
-                  const activeOutbreaks = diseases.map(d => {
-                    const related = articles.filter(a => {
-                      const titleLower = a.title.toLowerCase();
-                      const excerptLower = (a.excerpt || '').toLowerCase();
-                      const text = `${titleLower} ${excerptLower}`;
-                      const matchesDisease = d.keywords.some(k => text.includes(k));
-                      
-                      if (!matchesDisease) return false;
-                      
-                      // Identify active outbreak news (Health Alerts, Outbreaks, or titles signaling active crisis)
-                      const isOutbreakAlert = a.category === 'Health Alerts' || 
-                                              a.category === 'Outbreak' ||
-                                              titleLower.includes('outbreak') ||
-                                              titleLower.includes('emergency') ||
-                                              titleLower.includes('spread') ||
-                                              titleLower.includes('cases climb') ||
-                                              excerptLower.includes('outbreak');
-                      return isOutbreakAlert;
-                    });
-
-                    return {
-                      ...d,
-                      articles: related,
-                      count: related.length,
-                      latestArticle: related[0] || null
-                    };
-                  }).filter(d => d.count > 0);
-
-                  if (activeOutbreaks.length === 0) {
-                    return (
-                      <div style={{ 
-                        padding: '1.25rem', 
-                        textAlign: 'center', 
-                        background: 'var(--bg-secondary)', 
-                        borderRadius: '12px', 
-                        border: '1px solid var(--border)' 
-                      }}>
-                        <span style={{ color: 'var(--fact-green)', fontSize: '0.85rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                          <i className="fas fa-check-circle"></i> Pathogens Stable
-                        </span>
-                        <p style={{ fontSize: '0.75rem', opacity: 0.7, margin: '0.4rem 0 0 0', lineHeight: 1.4 }}>
-                          No active emergency outbreaks reported in the system.
-                        </p>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      {activeOutbreaks.map(o => {
-                        // Click navigation logic: direct article link if 1 report, else search result
-                        const linkHref = o.count === 1 
-                          ? `/article/${o.latestArticle.slug || o.latestArticle.id}`
-                          : `/search?q=${encodeURIComponent(o.name)}`;
-
-                        return (
-                          <Link key={o.name} href={linkHref} style={{ textDecoration: 'none', color: 'var(--text)' }}>
-                            <div 
-                              className="hover-bg" 
-                              style={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between', 
-                                alignItems: 'center', 
-                                padding: '0.75rem 1rem', 
-                                background: 'var(--bg-card)', 
-                                border: '1px solid var(--border)', 
-                                borderRadius: '12px', 
-                                transition: 'all 0.2s',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.01)'
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <span style={{ fontSize: '1.2rem' }}>{o.icon}</span>
-                                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                  <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>{o.name}</span>
-                                  <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>
-                                    {o.count === 1 ? '1 active report' : `${o.count} active reports`}
-                                  </span>
-                                </div>
-                              </div>
-                              <span style={{ 
-                                background: 'rgba(239, 68, 68, 0.1)', 
-                                color: 'var(--alert-red)', 
-                                fontSize: '0.65rem', 
-                                fontWeight: 900, 
-                                padding: '4px 8px', 
-                                borderRadius: '6px', 
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.35rem'
-                              }}>
-                                <span className="live-pulse-dot" style={{ background: 'var(--alert-red)' }}></span> Active Outbreak
-                              </span>
-                            </div>
-                          </Link>
-                        );
-                      })}
-                      
-                      {/* Interactive Outbreak Maps Future-proof Indicator */}
-                      <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        padding: '0.6rem', 
-                        borderRadius: '8px', 
-                        border: '1px dashed var(--border)',
-                        fontSize: '0.75rem',
-                        opacity: 0.8,
-                        color: 'var(--text-light)',
-                        textAlign: 'center'
-                      }}>
-                        <i className="fas fa-map-marked-alt" style={{ marginRight: '0.5rem', color: 'var(--intel-blue)' }}></i> 
-                        Interactive Outbreak Maps (Beta)
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
 
              {/* Health Days Awareness (Conditional) */}
              {activeHealthDay && healthDayArticles.length > 0 && (
@@ -771,8 +571,8 @@ export default async function Home() {
 
       {/* 7. WEATHER & ENVIRONMENT */}
       <section className="bbc-homepage-wrapper" style={{ marginBottom: '1.25rem' }}>
-        <h3 className="intelligence-section-title section-title-desktop-stack" style={{ borderLeftColor: '#0ea5e9', marginBottom: '1.25rem', fontSize: '1.5rem' }}>
-          <i className="fas fa-cloud-sun-rain" style={{ fontSize: '1.2rem', opacity: 0.8, color: '#0ea5e9' }}></i> Weather & Climate Health
+        <h3 className="intelligence-section-title section-title-desktop-stack" style={{ borderLeftColor: 'var(--primary)', marginBottom: '1.25rem', fontSize: '1.5rem' }}>
+          <i className="fas fa-cloud-sun-rain" style={{ fontSize: '1.2rem', opacity: 0.8, color: 'var(--primary)' }}></i> Weather & Climate Health
         </h3>
         {/* Live Weather Widget */}
         <WeatherWidget />
@@ -924,84 +724,16 @@ export default async function Home() {
         @media (max-width: 1023px) {
           .additional-coverage-grid {
             display: grid !important;
-            grid-template-columns: repeat(6, 1fr) !important;
-            gap: 1rem !important;
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
           }
 
-          /* Force default span to 6 (full width) first, then adjust using cycle */
+          /* Single-column mobile layout */
           .additional-coverage-grid > * {
-            grid-column: span 6 !important;
+            grid-column: span 1 !important;
             width: 100% !important;
             max-width: none !important;
             margin: 0 !important;
-          }
-
-          /* 1. First 2 cards together (span 3 each) */
-          .additional-coverage-grid > :nth-child(9n+1),
-          .additional-coverage-grid > :nth-child(9n+2) {
-            grid-column: span 3 !important;
-          }
-
-          /* 2. Next 4 list items (span 6 each, strip styling, hide images) */
-          .additional-coverage-grid > :nth-child(9n+3),
-          .additional-coverage-grid > :nth-child(9n+4),
-          .additional-coverage-grid > :nth-child(9n+5),
-          .additional-coverage-grid > :nth-child(9n+6) {
-            grid-column: span 6 !important;
-            padding: 0 !important;
-            background: transparent !important;
-            border: none !important;
-          }
-
-          .additional-coverage-grid > :nth-child(9n+3) .bbc-article-card,
-          .additional-coverage-grid > :nth-child(9n+4) .bbc-article-card,
-          .additional-coverage-grid > :nth-child(9n+5) .bbc-article-card,
-          .additional-coverage-grid > :nth-child(9n+6) .bbc-article-card {
-            background: transparent !important;
-            border: none !important;
-            padding: 0.35rem 0 !important;
-            box-shadow: none !important;
-          }
-
-          .additional-coverage-grid > :nth-child(9n+3) .bbc-card-image,
-          .additional-coverage-grid > :nth-child(9n+4) .bbc-card-image,
-          .additional-coverage-grid > :nth-child(9n+5) .bbc-card-image,
-          .additional-coverage-grid > :nth-child(9n+6) .bbc-card-image {
-            display: none !important;
-          }
-
-          .additional-coverage-grid > :nth-child(9n+3) .bbc-card-content,
-          .additional-coverage-grid > :nth-child(9n+4) .bbc-card-content,
-          .additional-coverage-grid > :nth-child(9n+5) .bbc-card-content,
-          .additional-coverage-grid > :nth-child(9n+6) .bbc-card-content {
-            padding: 0 !important;
-          }
-
-          /* 3. Next 3 cards together (span 2 each) */
-          .additional-coverage-grid > :nth-child(9n+7),
-          .additional-coverage-grid > :nth-child(9n+8),
-          .additional-coverage-grid > :nth-child(9n+9) {
-            grid-column: span 2 !important;
-          }
-
-          /* Micro-UX adjustments for 3-card rows in Additional Coverage on mobile */
-          .additional-coverage-grid > :nth-child(9n+7) .bbc-card-title,
-          .additional-coverage-grid > :nth-child(9n+8) .bbc-card-title,
-          .additional-coverage-grid > :nth-child(9n+9) .bbc-card-title {
-            font-size: 0.8rem !important;
-            line-height: 1.25 !important;
-          }
-
-          .additional-coverage-grid > :nth-child(9n+7) .bbc-card-excerpt,
-          .additional-coverage-grid > :nth-child(9n+8) .bbc-card-excerpt,
-          .additional-coverage-grid > :nth-child(9n+9) .bbc-card-excerpt {
-            display: none !important;
-          }
-
-          .additional-coverage-grid > :nth-child(9n+7) .bbc-card-image,
-          .additional-coverage-grid > :nth-child(9n+8) .bbc-card-image,
-          .additional-coverage-grid > :nth-child(9n+9) .bbc-card-image {
-            max-height: 90px !important;
           }
         }
 
@@ -1125,8 +857,8 @@ export default async function Home() {
             position: static !important;
           }
 
-          .container { padding: 0 0.75rem !important; }
-          .bbc-homepage-wrapper { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+          .container { padding: 0 !important; }
+          .bbc-homepage-wrapper { padding-left: 0 !important; padding-right: 0 !important; }
           
           .main-editorial-grid { 
             grid-template-columns: 1fr !important; 
@@ -1137,74 +869,82 @@ export default async function Home() {
           
           .latest-insights-desktop { display: none !important; }
           
-          .latest-insights-mobile,
-          .section-grid-mobile {
-            display: grid !important;
-            grid-template-columns: repeat(6, 1fr) !important;
+          .latest-insights-mobile {
+            display: flex !important;
+            flex-direction: column !important;
             gap: 1rem !important;
             width: 100% !important;
           }
-          
-          /* Force default span to 6 (full width) first, then adjust using cycle */
+
           .latest-insights-mobile > *,
           .section-grid-mobile > * {
-            grid-column: span 6 !important;
             width: 100% !important;
             max-width: none !important;
             margin: 0 !important;
           }
-          
-          /* 1. First 2 cards together (span 3 each) */
-          .latest-insights-mobile > :nth-child(6n+1),
-          .latest-insights-mobile > :nth-child(6n+2),
-          .section-grid-mobile > :nth-child(6n+1),
-          .section-grid-mobile > :nth-child(6n+2) {
-            grid-column: span 3 !important;
-          }
-          
-          /* 2. Next 1 card full width (span 6) */
-          .latest-insights-mobile > :nth-child(6n+3),
-          .section-grid-mobile > :nth-child(6n+3) {
-            grid-column: span 6 !important;
-          }
-          
-          /* 3. Next 3 cards together (span 2 each) */
-          .latest-insights-mobile > :nth-child(6n+4),
-          .latest-insights-mobile > :nth-child(6n+5),
-          .latest-insights-mobile > :nth-child(6n+6),
-          .section-grid-mobile > :nth-child(6n+4),
-          .section-grid-mobile > :nth-child(6n+5),
-          .section-grid-mobile > :nth-child(6n+6) {
-            grid-column: span 2 !important;
+
+          .latest-insights-list .bbc-list-card {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            padding: 0.75rem 0 !important;
+            border-bottom: 1px solid var(--border) !important;
           }
 
-          /* Micro-UX font size and layout adjustments for 3-card rows on mobile */
-          .latest-insights-mobile > :nth-child(6n+4) .bbc-card-title,
-          .latest-insights-mobile > :nth-child(6n+5) .bbc-card-title,
-          .latest-insights-mobile > :nth-child(6n+6) .bbc-card-title,
-          .section-grid-mobile > :nth-child(6n+4) .bbc-card-title,
-          .section-grid-mobile > :nth-child(6n+5) .bbc-card-title,
-          .section-grid-mobile > :nth-child(6n+6) .bbc-card-title {
-            font-size: 0.8rem !important;
+          .latest-insights-list .bbc-list-card .bbc-card-image {
+            width: 96px !important;
+            height: 68px !important;
+            flex: 0 0 96px !important;
+            border-radius: 0 !important;
+          }
+
+          .latest-insights-list .bbc-list-card .bbc-card-content {
+            padding: 0 !important;
+          }
+
+          .latest-insights-list .bbc-list-card .bbc-card-title {
+            font-size: 0.85rem !important;
             line-height: 1.25 !important;
           }
 
-          .latest-insights-mobile > :nth-child(6n+4) .bbc-card-excerpt,
-          .latest-insights-mobile > :nth-child(6n+5) .bbc-card-excerpt,
-          .latest-insights-mobile > :nth-child(6n+6) .bbc-card-excerpt,
-          .section-grid-mobile > :nth-child(6n+4) .bbc-card-excerpt,
-          .section-grid-mobile > :nth-child(6n+5) .bbc-card-excerpt,
-          .section-grid-mobile > :nth-child(6n+6) .bbc-card-excerpt {
+          .latest-insights-list .bbc-list-card .bbc-card-meta {
+            font-size: 0.65rem !important;
+          }
+
+          .latest-insights-list .bbc-list-card .bbc-card-excerpt {
             display: none !important;
           }
 
-          .latest-insights-mobile > :nth-child(6n+4) .bbc-card-image,
-          .latest-insights-mobile > :nth-child(6n+5) .bbc-card-image,
-          .latest-insights-mobile > :nth-child(6n+6) .bbc-card-image,
-          .section-grid-mobile > :nth-child(6n+4) .bbc-card-image,
-          .section-grid-mobile > :nth-child(6n+5) .bbc-card-image,
-          .section-grid-mobile > :nth-child(6n+6) .bbc-card-image {
-            max-height: 90px !important;
+          .medical-tech-list-view .bbc-list-card {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            padding: 0.75rem 0 !important;
+            border-bottom: 1px solid var(--border) !important;
+          }
+
+          .medical-tech-list-view .bbc-list-card .bbc-card-image {
+            width: 96px !important;
+            height: 68px !important;
+            flex: 0 0 96px !important;
+            border-radius: 0 !important;
+          }
+
+          .medical-tech-list-view .bbc-list-card .bbc-card-content {
+            padding: 0 !important;
+          }
+
+          .medical-tech-list-view .bbc-list-card .bbc-card-title {
+            font-size: 0.85rem !important;
+            line-height: 1.25 !important;
+          }
+
+          .medical-tech-list-view .bbc-list-card .bbc-card-meta {
+            font-size: 0.65rem !important;
+          }
+
+          .medical-tech-list-view .bbc-list-card .bbc-card-excerpt {
+            display: none !important;
           }
         }
       `}} />

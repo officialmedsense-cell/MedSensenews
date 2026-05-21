@@ -31,16 +31,44 @@ async function getArticle(identifier) {
 
 async function getOtherArticles(currentId, category) {
   try {
-    const { data } = await supabase
+    const sameCategoryQuery = category
+      ? supabase
+          .from('articles')
+          .select('*')
+          .eq('status', 'published')
+          .eq('category', category)
+          .neq('id', currentId)
+          .order('created_at', { ascending: false })
+          .order('date', { ascending: false })
+          .limit(12)
+      : Promise.resolve({ data: [] });
+
+    const fallbackQuery = supabase
       .from('articles')
       .select('*')
       .eq('status', 'published')
-      .eq('category', category)
       .neq('id', currentId)
+      .order('created_at', { ascending: false })
       .order('date', { ascending: false })
       .limit(20);
 
-    return data || [];
+    const [sameCategoryResult, fallbackResult] = await Promise.all([
+      sameCategoryQuery,
+      fallbackQuery
+    ]);
+
+    const merged = [];
+    const seen = new Set([String(currentId)]);
+
+    [...(sameCategoryResult.data || []), ...(fallbackResult.data || [])].forEach((item) => {
+      const key = String(item.id);
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(item);
+      }
+    });
+
+    return merged.slice(0, 12);
   } catch (err) {
     console.error('Error fetching other articles:', err);
     return [];
@@ -208,7 +236,7 @@ export default async function ArticlePage({ params }) {
         content={article.content}
       />
 
-      <div className="image-branding-wrapper article-main-image-container" style={{ position: 'relative', width: '100%', borderRadius: '12px', overflow: 'hidden', marginBottom: '3rem' }}>
+      <div className="image-branding-wrapper article-main-image-container" style={{ position: 'relative', width: '100%', borderRadius: '0', overflow: 'hidden', marginBottom: '3rem' }}>
         <Image 
           src={article.image} 
           alt={article.title} 

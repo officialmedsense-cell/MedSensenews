@@ -72,13 +72,13 @@ function EditorialCycle({ articles, cycleIndex }) {
       {/* MOBILE EXCLUSIVE VIEW (Full-Screen + 2-Column Grid) */}
       <div className="mobile-cycle-layout">
         <div className="m-grid-1">{articles.slice(0, 1).map(a => <BbcCard key={a.id} article={a} isFeatured={cycleIndex === 0} />)}</div>
-        <div className="m-grid-2">{articles.slice(1, 5).map(a => <BbcCard key={a.id} article={a} />)}</div>
-        {articles.slice(5, 13).length > 0 && (
+        {articles.slice(1, 9).length > 0 && (
           <div className="list-section">
-             <div className="list-grid">{articles.slice(5, 13).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
+            <h3 className="list-header">Inside the Story</h3>
+            <div className="list-grid">{articles.slice(1, 9).map(a => <BbcCard key={a.id} article={a} isList={true} />)}</div>
           </div>
         )}
-        <div className="m-grid-2">{articles.slice(13, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
+        <div className="m-stack">{articles.slice(9, 25).map(a => <BbcCard key={a.id} article={a} />)}</div>
       </div>
     </div>
   );
@@ -128,6 +128,7 @@ export default async function CategoryPage({ params }) {
         .list-section { background: var(--bg-secondary); padding: 3rem; border-radius: 12px; }
         .list-header { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; font-weight: 800; margin-bottom: 2.5rem; color: var(--intel-blue); text-align: center; }
         .list-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2.5rem; }
+        .m-stack { display: grid; grid-template-columns: 1fr; gap: 1rem; }
  
         @media (max-width: 1023px) {
           /* Make container fill more screen */
@@ -136,19 +137,47 @@ export default async function CategoryPage({ params }) {
           .desktop-cycle-layout { display: none; }
           .mobile-cycle-layout { display: flex; flex-direction: column; gap: 1rem; }
           
-          .m-grid-1, .m-grid-2 { display: grid; gap: 0.75rem; }
+          .m-grid-1, .m-stack { display: grid; gap: 1rem; }
           .m-grid-1 { grid-template-columns: 1fr; }
-          .m-grid-2 { grid-template-columns: repeat(2, 1fr); }
-          @media (max-width: 639px) {
-            .m-grid-2 { grid-template-columns: 1fr; }
-          }
  
-          .mobile-cycle-layout .list-section { padding: 1.25rem 0.5rem; border-radius: 8px; margin: 0 -0.25rem; }
-          .mobile-cycle-layout .list-grid { grid-template-columns: 1fr; gap: 1rem; }
+          .mobile-cycle-layout .list-section { padding: 0.75rem 0; border-radius: 0; margin: 0; background: transparent; }
+          .mobile-cycle-layout .list-header { margin-bottom: 0.75rem; text-align: left; }
+          .mobile-cycle-layout .list-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+
+          .mobile-cycle-layout .list-grid .bbc-list-card {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            padding: 0.75rem 0 !important;
+            border-bottom: 1px solid var(--border) !important;
+          }
+
+          .mobile-cycle-layout .list-grid .bbc-list-card .bbc-card-image {
+            width: 96px !important;
+            height: 68px !important;
+            flex: 0 0 96px !important;
+          }
+
+          .mobile-cycle-layout .list-grid .bbc-list-card .bbc-card-content {
+            padding: 0 !important;
+          }
+
+          .mobile-cycle-layout .list-grid .bbc-list-card .bbc-card-title {
+            font-size: 0.85rem !important;
+            line-height: 1.25 !important;
+          }
+
+          .mobile-cycle-layout .list-grid .bbc-list-card .bbc-card-meta {
+            font-size: 0.65rem !important;
+          }
+
+          .mobile-cycle-layout .list-grid .bbc-list-card .bbc-card-excerpt {
+            display: none !important;
+          }
           
-          /* Forced 2-column density for consistency */
-          .m-grid-2 h3 { font-size: 0.85rem !important; line-height: 1.25 !important; }
-          .m-grid-2 p { display: none !important; }
+          .mobile-cycle-layout .m-stack .bbc-card-image {
+            max-height: none !important;
+          }
         }
       `}} />
     </div>

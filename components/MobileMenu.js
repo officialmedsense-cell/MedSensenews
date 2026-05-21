@@ -5,7 +5,19 @@ import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-const CATEGORIES = ['Research', 'Global Health', 'Public Health', 'Technology', 'Weather', 'Health Alerts', 'Nigeria/Africa Health'];
+const SECTION_LINKS = [
+  { label: 'Home', href: '/' },
+  { label: 'Trending', href: '/trending', accent: true },
+  { label: 'Health', href: '/category/Health' },
+  { label: 'Medicine', href: '/category/Medicine' },
+  { label: 'Research', href: '/category/Research' },
+  { label: 'Global Health', href: '/category/Global%20Health' },
+  { label: 'Public Health', href: '/category/Public%20Health' },
+  { label: 'Technology', href: '/category/Technology' },
+  { label: 'Weather', href: '/category/Weather' },
+  { label: 'Health Alerts', href: '/category/Health%20Alerts' },
+  { label: 'Nigeria & Africa Health', href: '/category/Nigeria%2FAfrica%20Health' },
+];
 
 export default function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
@@ -54,7 +66,7 @@ export default function MobileMenu() {
           width: 100%;
           height: 100%;
           background-color: rgba(0,0,0,0.5);
-          backdrop-filter: blur(4px);
+          backdrop-filter: none;
           z-index: 10000;
           opacity: 0;
           visibility: hidden;
@@ -67,23 +79,60 @@ export default function MobileMenu() {
         .mobile-drawer {
           position: fixed;
           top: 0;
-          left: -300px;
-          width: 300px;
+          left: -100%;
+          width: min(100vw, 360px);
           height: 100%;
-          background-color: #ffffff;
+          background-color: var(--bg);
           z-index: 10001;
           transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          padding: 2rem;
+          padding: 1.25rem 1rem 1.5rem;
           display: flex;
           flex-direction: column;
-          box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+          box-shadow: none;
+          border-right: 1px solid var(--border);
         }
         [data-theme="dark"] .mobile-drawer {
-          background-color: #000000;
-          border-right: 1px solid #333;
+          background-color: var(--bg);
+          border-right: 1px solid var(--border);
         }
         .mobile-drawer.active {
           left: 0;
+        }
+        .mobile-menu-links {
+          display: flex;
+          flex-direction: column;
+        }
+        .mobile-menu-links a {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.9rem 0;
+          border-bottom: 1px solid var(--border);
+          text-decoration: none;
+          color: var(--text);
+          font-size: 0.92rem;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+        }
+        .mobile-menu-links a:hover {
+          color: var(--primary);
+        }
+        .mobile-menu-links a.active {
+          color: var(--primary);
+        }
+        .mobile-menu-links a .menu-arrow {
+          color: var(--primary);
+          font-size: 0.75rem;
+        }
+        .mobile-menu-footer {
+          margin-top: auto;
+          padding-top: 1.25rem;
+          border-top: 1px solid var(--border);
+        }
+        .mobile-menu-footer .social-links {
+          justify-content: flex-start;
+          gap: 0.75rem;
         }
       `}} />
 
@@ -92,9 +141,8 @@ export default function MobileMenu() {
 
       {/* Slide-out Drawer */}
       <div className={`mobile-drawer ${isOpen ? 'active' : ''}`}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-            <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--primary)' }}>MEDSENSE</span>
             <button 
               onClick={toggleTheme} 
               style={{ 
@@ -105,7 +153,8 @@ export default function MobileMenu() {
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                opacity: 0.8
+                opacity: 0.8,
+                padding: 0
               }}
               aria-label="Toggle theme"
             >
@@ -148,21 +197,23 @@ export default function MobileMenu() {
           ></i>
         </div>
 
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
-          <Link href="/trending" onClick={toggle} style={{ textDecoration: 'none', color: '#ef4444', fontWeight: 800, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <i className="fas fa-fire"></i> Trending
-          </Link>
-          <Link href="/" onClick={toggle} style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Home</Link>
-          <Link href="/category/Health" onClick={toggle} style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Health</Link>
-          <Link href="/category/Medicine" onClick={toggle} style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>Medicine</Link>
-          {CATEGORIES.map(cat => (
-            <Link key={cat} href={`/category/${encodeURIComponent(cat)}`} onClick={toggle} style={{ textDecoration: 'none', color: 'inherit', fontWeight: 600, fontSize: '1.1rem' }}>
-              {cat === 'Nigeria/Africa Health' ? 'Nigeria & Africa Health' : cat}
-            </Link>
-          ))}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <div className="mobile-menu-links">
+            {SECTION_LINKS.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={toggle}
+                className={item.accent ? 'active' : ''}
+              >
+                <span>{item.label}</span>
+                <i className="fas fa-chevron-right menu-arrow"></i>
+              </Link>
+            ))}
+          </div>
         </nav>
 
-        <div style={{ marginTop: 'auto', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+        <div className="mobile-menu-footer">
           <div style={{ display: 'flex', gap: '1.5rem', fontSize: '1.3rem' }}>
             <a href="https://web.facebook.com/people/MedSense-News/61579693413492" target="_blank" rel="noopener" style={{ color: 'inherit' }}><i className="fab fa-facebook"></i></a>
             <a href="https://x.com/MedsenseN" target="_blank" rel="noopener" style={{ color: 'inherit' }}><i className="fab fa-twitter"></i></a>

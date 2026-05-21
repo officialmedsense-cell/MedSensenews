@@ -1,5 +1,5 @@
 import './globals.css';
-import { Inter, Playfair_Display } from 'next/font/google';
+import { Source_Sans_3, Merriweather } from 'next/font/google';
 import Link from 'next/link';
 import NavbarActions from '@/components/NavbarActions';
 import MobileMenu from '@/components/MobileMenu';
@@ -14,8 +14,8 @@ import NewsletterForm from '@/components/NewsletterForm';
 import { supabase } from '@/lib/supabase';
 import ConditionalShell from '@/components/ConditionalShell';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
+const sourceSans = Source_Sans_3({ subsets: ['latin'], variable: '--font-sans' });
+const merriweather = Merriweather({ subsets: ['latin'], variable: '--font-serif', weight: ['400', '700', '900'] });
 
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://med-sens-news.vercel.app'),
@@ -126,8 +126,8 @@ export default async function SiteLayout({ children }) {
               }}>
                 <li>
                   <Link href="/trending" style={{ 
-                    textDecoration: 'none', 
-                    color: '#ef4444', 
+                    textDecoration: 'none',
+                    color: 'var(--primary)',
                     fontWeight: 900, 
                     fontSize: '0.9rem',
                     textTransform: 'uppercase',
@@ -236,7 +236,7 @@ export default async function SiteLayout({ children }) {
   );
 
   return (
-    <div className={`${inter.variable} ${playfair.variable} ${inter.className}`}>
+    <div className={`${sourceSans.variable} ${merriweather.variable}`}>
       <Suspense fallback={null}>
         <PageLoader />
       </Suspense>
