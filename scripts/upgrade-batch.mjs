@@ -137,15 +137,12 @@ async function upgradeBatch() {
   
   // Find articles that don't have the new format
   const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - 3); // Protect recent news by not upgrading articles created in the last 3 days
+  cutoffDate.setDate(cutoffDate.getDate() - 0); // Disable safety window to upgrade recent news too
 
   const { data: articles, error } = await supabase
     .from('articles')
     .select('*')
-    .not('content', 'ilike', '%Executive Summary%')
     .not('content', 'ilike', '%Medical Review: MedSense%')
-    .not('content', 'ilike', '%Key Takeaways%')
-    .not('content', 'ilike', '%Frequently Asked Questions%')
     .neq('title', 'SYSTEM_HUBS_CONFIG')
     .lt('created_at', cutoffDate.toISOString())
     .order('created_at', { ascending: true }) // Start from the oldest articles first

@@ -13,7 +13,6 @@ import SubscribeModal from '@/components/SubscribeModal';
 import NewsletterForm from '@/components/NewsletterForm';
 import { supabase } from '@/lib/supabase';
 import ConditionalShell from '@/components/ConditionalShell';
-import Head from 'next/head';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
@@ -238,10 +237,6 @@ export default async function SiteLayout({ children }) {
 
   return (
     <div className={`${inter.variable} ${playfair.variable} ${inter.className}`}>
-      <Head>
-        <meta name="google-adsense-account" content="ca-pub-6268594865479039" />
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-      </Head>
       <Suspense fallback={null}>
         <PageLoader />
       </Suspense>
