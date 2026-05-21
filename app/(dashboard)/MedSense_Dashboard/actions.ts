@@ -853,16 +853,67 @@ export async function processAICommand(prompt: string, context: { articles: any[
 }
 
 // --- Category Image Assets ---
+// All images are from Unsplash with explicit format, crop, quality, and width params
+// to guarantee sharp, professional, high-resolution clinical images.
 const CATEGORY_IMAGES: Record<string, string> = {
-  'Health': "https://images.unsplash.com/photo-1505751172107-167425f38e0a?auto=format&fit=crop&q=80&w=1200",
-  'Medicine': "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200",
-  'Research': "https://images.unsplash.com/photo-1579154273821-396417646a7d?auto=format&fit=crop&q=80&w=1200",
-  'Vaccine': "https://images.unsplash.com/photo-1618961734760-466979ce35b0?auto=format&fit=crop&q=80&w=1200",
-  'AI / Robotics': "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=1200",
-  'Public Health': "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=1200",
-  'Technology': "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=80&w=1200",
-  'Breaking': "https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&q=80&w=1200"
+  'Health':         "https://images.unsplash.com/photo-1505751172107-167425f38e0a?auto=format&fit=crop&q=85&w=1200",
+  'Medicine':       "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=85&w=1200",
+  'Research':       "https://images.unsplash.com/photo-1579154273821-396417646a7d?auto=format&fit=crop&q=85&w=1200",
+  'Vaccine':        "https://images.unsplash.com/photo-1618961734760-466979ce35b0?auto=format&fit=crop&q=85&w=1200",
+  'AI / Robotics':  "https://images.unsplash.com/photo-1518152006812-edab29b069ac?auto=format&fit=crop&q=85&w=1200",
+  'Public Health':  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=85&w=1200",
+  'Technology':     "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=85&w=1200",
+  'Breaking':       "https://images.unsplash.com/photo-1583947215259-38e31be8751f?auto=format&fit=crop&q=85&w=1200",
+  'Health Alerts':  "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=85&w=1200",
+  'Mental Health':  "https://images.unsplash.com/photo-1620147461831-a97b99ade1d3?auto=format&fit=crop&q=85&w=1200",
+  'Nutrition':      "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=85&w=1200",
+  'Fitness':        "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&q=85&w=1200",
+  'Cancer':         "https://images.unsplash.com/photo-1576671081837-49000212a370?auto=format&fit=crop&q=85&w=1200",
+  'Cardiology':     "https://images.unsplash.com/photo-1628348068343-c6a848d2b6dd?auto=format&fit=crop&q=85&w=1200",
+  'Infectious Disease': "https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?auto=format&fit=crop&q=85&w=1200",
+  'Global Health':  "https://images.unsplash.com/photo-1599059813005-11265ba4b4ce?auto=format&fit=crop&q=85&w=1200",
 };
+
+// Keyword-to-Unsplash photo ID map for clean, relevant fallback images.
+// These are hand-picked high-quality clinical/medical photos.
+const KEYWORD_FALLBACK_IMAGES: Record<string, string> = {
+  'hospital':    'photo-1519494026892-80bbd2d6fd0d',
+  'surgery':     'photo-1579684385127-1ef15d508118',
+  'laboratory':  'photo-1582719508461-905c673771fd',
+  'doctor':      'photo-1612349317150-e413f6a5b16d',
+  'nurse':       'photo-1543269865-cbf427effbad',
+  'brain':       'photo-1559757175-5700dde675bc',
+  'heart':       'photo-1628348068343-c6a848d2b6dd',
+  'virus':       'photo-1584036561566-baf8f5f1b144',
+  'vaccine':     'photo-1618961734760-466979ce35b0',
+  'pharmacy':    'photo-1584308666744-24d5c474f2ae',
+  'genetics':    'photo-1530026405186-ed1f139313f',
+  'cancer':      'photo-1576671081837-49000212a370',
+  'diabetes':    'photo-1631815589968-fdb09a223b1e',
+  'mental':      'photo-1620147461831-a97b99ade1d3',
+  'nutrition':   'photo-1490645935967-10de6ba17061',
+  'exercise':    'photo-1517836357463-d25dfeac3438',
+  'epidemic':    'photo-1599059813005-11265ba4b4ce',
+  'clinical':    'photo-1579154273821-396417646a7d',
+  'medical':     'photo-1505751172107-167425f38e0a',
+};
+
+/**
+ * Returns a clean, sharp Unsplash image URL for a given medical keyword.
+ * Searches the keyword fallback map first, then defaults to a clean medical image.
+ */
+function getCleanFallbackImage(visualKeyword?: string): string {
+  if (visualKeyword) {
+    const lowerKw = visualKeyword.toLowerCase();
+    for (const [key, photoId] of Object.entries(KEYWORD_FALLBACK_IMAGES)) {
+      if (lowerKw.includes(key)) {
+        return `https://images.unsplash.com/${photoId}?auto=format&fit=crop&q=85&w=1200`;
+      }
+    }
+  }
+  // Ultimate safe fallback: a sharp, general medical/clinical Unsplash image
+  return "https://images.unsplash.com/photo-1505751172107-167425f38e0a?auto=format&fit=crop&q=85&w=1200";
+}
 
 /**
  * Duplicate Check Helper
@@ -951,8 +1002,11 @@ export async function publishToNewsSite(payload: {
     const exactPublishTime = new Date().toISOString();
     
     // 2. IMAGE SELECTION PRIORITY:
-    // Try to use the original photo from the news site first.
-    // If it doesn't exist OR looks like a generic logo/placeholder, fallback to AI search.
+    // Priority 1: Original photo from the RSS feed/news site (if clean & valid).
+    // Priority 2: Curated Unsplash image matched to the article category.
+    // Priority 3: Keyword-matched Unsplash image from the visual_keyword field.
+    // Priority 4: Safe generic medical Unsplash image.
+    // NOTE: loremflickr.com was removed — it served blurry, low-quality random images.
     let heroImage = payload.originalImage;
     
     const isGenericImage = heroImage && (
@@ -960,19 +1014,17 @@ export async function publishToNewsSite(payload: {
       heroImage.toLowerCase().includes('placeholder') || 
       heroImage.toLowerCase().includes('default') ||
       heroImage.toLowerCase().includes('favicon') ||
-      heroImage.toLowerCase().includes('avatar')
+      heroImage.toLowerCase().includes('avatar') ||
+      heroImage.toLowerCase().includes('icon')
     );
 
-    if (!heroImage || isGenericImage || heroImage.length < 10) {
-      // Use curated internal category image first
+    if (!heroImage || isGenericImage || heroImage.length < 15) {
+      // Priority 2: Use curated category image
       heroImage = CATEGORY_IMAGES[payload.category || 'Medicine'];
       
       if (!heroImage) {
-        const searchTerms = payload.visualKeyword || payload.category || 'medical research';
-        // Search for high-quality, clinical images
-        const randomSeed = Math.floor(Math.random() * 1000000);
-        // Use Source Unsplash or LoremFlickr with high-quality clinical keywords
-        heroImage = `https://loremflickr.com/1200/800/${encodeURIComponent(searchTerms)},clinical,professional/all?lock=${randomSeed}`;
+        // Priority 3 & 4: Keyword-matched or generic safe Unsplash fallback
+        heroImage = getCleanFallbackImage(payload.visualKeyword || payload.category);
       }
     }
 
