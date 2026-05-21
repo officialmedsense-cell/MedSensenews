@@ -127,9 +127,81 @@ export default async function Home() {
     return false;
   };
 
-  const nigeriaArticles = articles.filter(isAfricanNews).slice(0, 20);
-  const globalArticles = articles.filter(isGlobalNews).slice(0, 20);
-  
+  const isGovOrgInstituteNews = (a) => {
+    const title = (a.title || '').toLowerCase();
+    const excerpt = (a.excerpt || '').toLowerCase();
+    const category = (a.category || '').toLowerCase();
+
+    return (
+      category.includes('public health') ||
+      category.includes('policy') ||
+      category.includes('government') ||
+      title.includes('who ') || title.includes('who:') || title.includes('world health organization') ||
+      title.includes('cdc') || title.includes('ncdc') || title.includes('nafdac') ||
+      title.includes('government') || title.includes('govt') || title.includes('ministry') ||
+      title.includes('fda') || title.includes('nih') || title.includes('un ') ||
+      title.includes('united nations') || title.includes('unicef') || title.includes('organization') ||
+      title.includes('institute') || title.includes('policy') || title.includes('health authority') ||
+      excerpt.includes('who ') || excerpt.includes('world health organization') ||
+      excerpt.includes('cdc') || excerpt.includes('ncdc') || excerpt.includes('nafdac') ||
+      excerpt.includes('government') || excerpt.includes('govt') || excerpt.includes('ministry') ||
+      excerpt.includes('fda') || excerpt.includes('un ') || excerpt.includes('united nations') ||
+      excerpt.includes('organization') || excerpt.includes('institute') || excerpt.includes('policy')
+    );
+  };
+
+  const govArticlesAll = articles.filter(isGovOrgInstituteNews);
+
+  // Africa / Nigeria specific gov articles
+  let nigeriaGovArticles = govArticlesAll.filter(isAfricanNews);
+  if (nigeriaGovArticles.length < 3) {
+    nigeriaGovArticles = govArticlesAll.filter(a => isAfricanNews(a) || a.category === 'Public Health');
+  }
+  nigeriaGovArticles = nigeriaGovArticles.slice(0, 5);
+
+  // Global specific gov articles
+  let globalGovArticles = govArticlesAll.filter(isGlobalNews);
+  if (globalGovArticles.length < 3) {
+    globalGovArticles = govArticlesAll.filter(a => 
+      !nigeriaGovArticles.find(n => n.id === a.id) &&
+      (isGlobalNews(a) || a.category === 'Public Health' || a.category === 'Medicine')
+    );
+  }
+  globalGovArticles = globalGovArticles.slice(0, 5);
+
+  const nigeriaArticlesFiltered = articles
+    .filter(isAfricanNews)
+    .filter(a => !nigeriaGovArticles.find(g => g.id === a.id))
+    .slice(0, 6);
+
+  const globalArticlesFiltered = articles
+    .filter(isGlobalNews)
+    .filter(a => !globalGovArticles.find(g => g.id === a.id))
+    .slice(0, 6);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    if (dateString.length === 10 && dateString.includes('-')) {
+      const [y, m, d] = dateString.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Africa/Lagos'
+      });
+    }
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Africa/Lagos'
+    });
+  };
+
   const weatherArticles = articles.filter(a => 
     a.category === 'Weather' || 
     a.category === 'Environment' ||
@@ -155,13 +227,16 @@ export default async function Home() {
     );
   }).slice(0, 5);
 
-  const latestArticles = articles.slice(15).filter(a => 
+  // Latest articles for display (capped at 21 for the rotating grid)
+  const latestArticlesFull = articles.slice(15).filter(a => 
     a.category !== 'Research' && 
     a.category !== 'Technology' &&
     a.category !== 'Weather' &&
     a.category !== 'Environment' &&
     !mustReadArticles.find(m => m.id === a.id)
   );
+  // Only mark what is actually displayed as used, so the rest flows to Additional Coverage
+  const latestArticles = latestArticlesFull.slice(0, 21);
 
   // Health Awareness Days Logic
   const today = new Date();
@@ -176,6 +251,38 @@ export default async function Home() {
         activeHealthDay.keywords.some(kw => text.includes(kw.toLowerCase()))
       );
     }).slice(0, 4);
+  }
+
+  // Deduplicate articles shown in previous sections to gather the remaining coverage
+  const usedArticleIds = new Set([
+    featuredArticle?.id,
+    ...leftArticles.map(a => a.id),
+    ...rightArticles.map(a => a.id),
+    ...trendingArticles.map(a => a.id),
+    ...researchArticles.map(a => a.id),
+    ...techArticles.map(a => a.id),
+    ...alertArticles.map(a => a.id),
+    ...mustReadArticles.map(a => a.id),
+    ...latestArticles.map(a => a.id),
+    ...nigeriaGovArticles.map(a => a.id),
+    ...globalGovArticles.map(a => a.id),
+    ...nigeriaArticlesFiltered.map(a => a.id),
+    ...globalArticlesFiltered.map(a => a.id),
+    ...weatherArticles.map(a => a.id),
+    ...healthDayArticles.map(a => a.id)
+  ].filter(Boolean));
+
+  const remainingArticlesAll = articles.filter(a => !usedArticleIds.has(a.id));
+  const remainingArticles = remainingArticlesAll.slice(0, 14); // limit to 6 main + 8 sidebar items
+
+  // Determine split for Additional Coverage desktop layout
+  // Balance so both columns end at same visual height:
+  // 1 row of 3 main cards ≈ 4 sidebar list items in height
+  let mainRemaining = remainingArticles;
+  let sidebarRemaining = [];
+  if (remainingArticles.length >= 5) {
+    mainRemaining = remainingArticles.slice(0, 6);
+    sidebarRemaining = remainingArticles.slice(6, 10); // exactly 4 sidebar items
   }
 
   return (
@@ -242,7 +349,7 @@ export default async function Home() {
       </section>
 
       <div className="bbc-homepage-wrapper">
-        <div style={{ height: '1px', background: 'var(--border)', opacity: 0.4, margin: '0.5rem 0 2rem' }}></div>
+        <div className="mobile-divider"></div>
       </div>
 
       {/* 3. MEDICAL RESEARCH & TECHNOLOGY SECTION */}
@@ -551,58 +658,114 @@ export default async function Home() {
 
 
       {/* 5. NIGERIA & AFRICA HEALTH */}
-      <section className="bbc-homepage-wrapper" style={{ marginBottom: '1.25rem' }}>
-        <h3 className="intelligence-section-title section-title-desktop-stack" style={{ borderLeftColor: 'var(--intel-blue)', marginBottom: '1.25rem', fontSize: '1.5rem' }}>
-          <i className="fas fa-globe-africa" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Nigeria & Africa Health
-        </h3>
-        <div className="section-grid-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
-          {nigeriaArticles.map((article, i) => {
-            let flexBasis = 'calc(50% - 0.75rem)'; // 2 across for top row
-            let isSmall = false;
-            if (i >= 2) {
-              flexBasis = 'calc(25% - 1.125rem)'; // 4 across for the rest
-              isSmall = true;
-            }
-            
-            return (
-              <div key={article.id} className={i === 0 ? "mobile-featured-row" : ""} style={{ 
-                flex: i === 0 ? '0 0 100%' : `0 0 ${flexBasis}`, 
-                maxWidth: i === 0 ? '700px' : 'none',
-                margin: i === 0 ? '0 auto 2.5rem' : '0',
-                minWidth: i >= 2 ? '140px' : '250px'
-              }}>
-                <BbcCard article={article} isSmall={isSmall} />
+      <section className="bbc-homepage-wrapper" style={{ marginBottom: '2.5rem' }}>
+        <div className="editorial-split-layout">
+          {/* Main Column */}
+          <div className="split-main-column">
+            <h3 className="intelligence-section-title section-title-desktop-stack" style={{ borderLeftColor: 'var(--intel-blue)', marginBottom: '1.25rem', fontSize: '1.5rem' }}>
+              <i className="fas fa-globe-africa" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Nigeria & Africa Health
+            </h3>
+            <div className="section-grid-mobile">
+              {nigeriaArticlesFiltered.map((article, i) => {
+                let isSmall = i >= 2;
+                
+                return (
+                  <div key={article.id} className={`editorial-card-col ${i === 0 ? "mobile-featured-row" : ""}`}>
+                    <BbcCard article={article} isSmall={isSmall} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sidebar Column */}
+          <div className="split-sidebar-column">
+            <div className="gov-news-sidebar">
+              <h4 className="gov-sidebar-header">
+                <i className="fas fa-landmark" style={{ marginRight: '0.5rem', fontSize: '0.9rem' }}></i> Official & Agency Updates
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {nigeriaGovArticles.length > 0 ? nigeriaGovArticles.map(article => (
+                  <Link key={article.id} href={`/article/${article.slug || article.id}`} className="gov-sidebar-item-link">
+                    <div className="gov-sidebar-item">
+                      <div className="gov-sidebar-img-wrapper">
+                        <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="90px" style={{ objectFit: 'cover' }} />
+                      </div>
+                      <div className="gov-sidebar-meta-content">
+                        <span className="gov-sidebar-tag">
+                          {article.category || 'Official News'}
+                        </span>
+                        <h5 className="gov-sidebar-title">
+                          {article.title}
+                        </h5>
+                        <span className="gov-sidebar-date">
+                          {formatDate(article.created_at || article.date)}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                )) : (
+                  <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>No recent public health briefings available.</p>
+                )}
               </div>
-            );
-          })}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* 6. GLOBAL HEALTH INSIGHTS */}
-      <section className="bbc-homepage-wrapper" style={{ marginBottom: '1.25rem' }}>
-        <h3 className="intelligence-section-title section-title-desktop-stack" style={{ borderLeftColor: 'var(--accent)', marginBottom: '1.25rem', fontSize: '1.5rem' }}>
-          <i className="fas fa-globe" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Global Health Insights
-        </h3>
-        <div className="section-grid-mobile" style={{ display: 'flex', flexWrap: 'wrap', gap: '1.5rem', justifyContent: 'center' }}>
-          {globalArticles.map((article, i) => {
-            let flexBasis = 'calc(50% - 0.75rem)'; // 2 across for top row
-            let isSmall = false;
-            if (i >= 2) {
-              flexBasis = 'calc(25% - 1.125rem)'; // 4 across for the rest
-              isSmall = true;
-            }
+      <section className="bbc-homepage-wrapper" style={{ marginBottom: '2.5rem' }}>
+        <div className="editorial-split-layout">
+          {/* Main Column */}
+          <div className="split-main-column">
+            <h3 className="intelligence-section-title section-title-desktop-stack" style={{ borderLeftColor: 'var(--accent)', marginBottom: '1.25rem', fontSize: '1.5rem' }}>
+              <i className="fas fa-globe" style={{ fontSize: '1.2rem', opacity: 0.8 }}></i> Global Health Insights
+            </h3>
+            <div className="section-grid-mobile">
+              {globalArticlesFiltered.map((article, i) => {
+                let isSmall = i >= 2;
 
-            return (
-              <div key={article.id} className={i === 0 ? "mobile-featured-row" : ""} style={{ 
-                flex: i === 0 ? '0 0 100%' : `0 0 ${flexBasis}`, 
-                maxWidth: i === 0 ? '700px' : 'none',
-                margin: i === 0 ? '0 auto 2.5rem' : '0',
-                minWidth: i >= 2 ? '140px' : '250px'
-              }}>
-                <BbcCard article={article} isSmall={isSmall} />
+                return (
+                  <div key={article.id} className={`editorial-card-col ${i === 0 ? "mobile-featured-row" : ""}`}>
+                    <BbcCard article={article} isSmall={isSmall} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Sidebar Column */}
+          <div className="split-sidebar-column">
+            <div className="gov-news-sidebar">
+              <h4 className="gov-sidebar-header">
+                <i className="fas fa-globe-americas" style={{ marginRight: '0.5rem', fontSize: '0.9rem' }}></i> Institutional Briefings
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {globalGovArticles.length > 0 ? globalGovArticles.map(article => (
+                  <Link key={article.id} href={`/article/${article.slug || article.id}`} className="gov-sidebar-item-link">
+                    <div className="gov-sidebar-item">
+                      <div className="gov-sidebar-img-wrapper">
+                        <Image src={article.image || "https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&q=80&w=1200"} alt="" fill sizes="90px" style={{ objectFit: 'cover' }} />
+                      </div>
+                      <div className="gov-sidebar-meta-content">
+                        <span className="gov-sidebar-tag">
+                          {article.category || 'Global Report'}
+                        </span>
+                        <h5 className="gov-sidebar-title">
+                          {article.title}
+                        </h5>
+                        <span className="gov-sidebar-date">
+                          {formatDate(article.created_at || article.date)}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                )) : (
+                  <p style={{ fontSize: '0.8rem', opacity: 0.6 }}>No recent institutional briefings available.</p>
+                )}
               </div>
-            );
-          })}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -624,9 +787,344 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* 8. ADDITIONAL COVERAGE */}
+      {remainingArticles.length > 0 && (
+        <section className="bbc-homepage-wrapper" style={{ marginBottom: '3rem', marginTop: '3rem' }}>
+          <h3 className="intelligence-section-title" style={{ borderLeftColor: '#6b7280', marginBottom: '1.5rem', fontSize: '1.5rem' }}>
+            <i className="fas fa-newspaper" style={{ fontSize: '1.2rem', opacity: 0.8, color: '#6b7280', marginRight: '0.5rem' }}></i> Additional Coverage
+          </h3>
+
+          {/* Desktop split layout */}
+          {sidebarRemaining.length > 0 ? (
+            <div className="editorial-split-layout additional-coverage-split mobile-hide">
+              {/* Main Column */}
+              <div className="split-main-column">
+                <div className="additional-coverage-desktop-main-grid">
+                  {mainRemaining.map((article) => (
+                    <div key={article.id} className="additional-coverage-item">
+                      <BbcCard article={article} isSmall={true} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sidebar Column */}
+              <div>
+                <div className="gov-news-sidebar" style={{ borderLeft: '1px solid var(--border)', paddingLeft: '1.5rem', height: '100%' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    {sidebarRemaining.map((article) => (
+                      <Link key={article.id} href={`/article/${article.slug || article.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }} className="gov-sidebar-item-link">
+                        <div className="additional-coverage-desktop-list-item">
+                          <span className="gov-sidebar-tag">
+                            {article.category || 'More News'}
+                          </span>
+                          <h5 className="additional-coverage-desktop-list-title">
+                            {article.title}
+                          </h5>
+                          <span className="gov-sidebar-date">
+                            {formatDate(article.created_at || article.date)}
+                          </span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Desktop fallback grid when not enough articles to split */
+            <div className="additional-coverage-grid mobile-hide">
+              {remainingArticles.map((article) => (
+                <div key={article.id} className="additional-coverage-item">
+                  <BbcCard article={article} isSmall={true} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Mobile-only rotating grid layout */}
+          <div className="additional-coverage-grid desktop-hide">
+            {remainingArticles.map((article) => (
+              <div key={article.id} className="additional-coverage-item">
+                <BbcCard article={article} isSmall={true} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
 
       <style dangerouslySetInnerHTML={{ __html: `
+        .additional-coverage-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 1.5rem;
+          width: 100%;
+        }
+
+        .additional-coverage-desktop-main-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1.5rem;
+          width: 100%;
+          align-content: start;
+        }
+
+        .additional-coverage-desktop-list-item {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid var(--border);
+          transition: opacity 0.15s ease-in-out;
+        }
+
+        .additional-coverage-desktop-list-item:hover {
+          opacity: 0.85;
+        }
+
+        .additional-coverage-desktop-list-title {
+          font-size: 0.85rem;
+          margin: 0;
+          font-weight: 700;
+          line-height: 1.35;
+          font-family: var(--font-news);
+          color: var(--primary-dark);
+        }
+
+        .additional-coverage-desktop-list-item:hover .additional-coverage-desktop-list-title {
+          text-decoration: underline !important;
+        }
+
+        .additional-coverage-item {
+          width: 100%;
+        }
+
+        .additional-coverage-split {
+          align-items: start !important;
+        }
+
+        .additional-coverage-split .gov-news-sidebar {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .additional-coverage-split .gov-news-sidebar > div {
+          flex: 1;
+          justify-content: space-between;
+        }
+
+        @media (min-width: 1024px) {
+          .desktop-hide {
+            display: none !important;
+          }
+        }
+
         @media (max-width: 1023px) {
+          .additional-coverage-grid {
+            display: grid !important;
+            grid-template-columns: repeat(6, 1fr) !important;
+            gap: 1rem !important;
+          }
+
+          /* Force default span to 6 (full width) first, then adjust using cycle */
+          .additional-coverage-grid > * {
+            grid-column: span 6 !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+          }
+
+          /* 1. First 2 cards together (span 3 each) */
+          .additional-coverage-grid > :nth-child(9n+1),
+          .additional-coverage-grid > :nth-child(9n+2) {
+            grid-column: span 3 !important;
+          }
+
+          /* 2. Next 4 list items (span 6 each, strip styling, hide images) */
+          .additional-coverage-grid > :nth-child(9n+3),
+          .additional-coverage-grid > :nth-child(9n+4),
+          .additional-coverage-grid > :nth-child(9n+5),
+          .additional-coverage-grid > :nth-child(9n+6) {
+            grid-column: span 6 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: none !important;
+          }
+
+          .additional-coverage-grid > :nth-child(9n+3) .bbc-article-card,
+          .additional-coverage-grid > :nth-child(9n+4) .bbc-article-card,
+          .additional-coverage-grid > :nth-child(9n+5) .bbc-article-card,
+          .additional-coverage-grid > :nth-child(9n+6) .bbc-article-card {
+            background: transparent !important;
+            border: none !important;
+            padding: 0.35rem 0 !important;
+            box-shadow: none !important;
+          }
+
+          .additional-coverage-grid > :nth-child(9n+3) .bbc-card-image,
+          .additional-coverage-grid > :nth-child(9n+4) .bbc-card-image,
+          .additional-coverage-grid > :nth-child(9n+5) .bbc-card-image,
+          .additional-coverage-grid > :nth-child(9n+6) .bbc-card-image {
+            display: none !important;
+          }
+
+          .additional-coverage-grid > :nth-child(9n+3) .bbc-card-content,
+          .additional-coverage-grid > :nth-child(9n+4) .bbc-card-content,
+          .additional-coverage-grid > :nth-child(9n+5) .bbc-card-content,
+          .additional-coverage-grid > :nth-child(9n+6) .bbc-card-content {
+            padding: 0 !important;
+          }
+
+          /* 3. Next 3 cards together (span 2 each) */
+          .additional-coverage-grid > :nth-child(9n+7),
+          .additional-coverage-grid > :nth-child(9n+8),
+          .additional-coverage-grid > :nth-child(9n+9) {
+            grid-column: span 2 !important;
+          }
+
+          /* Micro-UX adjustments for 3-card rows in Additional Coverage on mobile */
+          .additional-coverage-grid > :nth-child(9n+7) .bbc-card-title,
+          .additional-coverage-grid > :nth-child(9n+8) .bbc-card-title,
+          .additional-coverage-grid > :nth-child(9n+9) .bbc-card-title {
+            font-size: 0.8rem !important;
+            line-height: 1.25 !important;
+          }
+
+          .additional-coverage-grid > :nth-child(9n+7) .bbc-card-excerpt,
+          .additional-coverage-grid > :nth-child(9n+8) .bbc-card-excerpt,
+          .additional-coverage-grid > :nth-child(9n+9) .bbc-card-excerpt {
+            display: none !important;
+          }
+
+          .additional-coverage-grid > :nth-child(9n+7) .bbc-card-image,
+          .additional-coverage-grid > :nth-child(9n+8) .bbc-card-image,
+          .additional-coverage-grid > :nth-child(9n+9) .bbc-card-image {
+            max-height: 90px !important;
+          }
+        }
+
+        /* Desktop split layout styling for regional grids and government sidebars */
+        .editorial-split-layout {
+          display: grid;
+          grid-template-columns: 2.8fr 1.2fr;
+          gap: 2.5rem;
+          align-items: start;
+        }
+
+        .section-grid-mobile {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1.5rem;
+          width: 100%;
+        }
+
+        .editorial-card-col {
+          width: 100%;
+        }
+
+        .split-sidebar-column {
+          position: sticky;
+          top: 100px;
+        }
+
+        .gov-news-sidebar {
+          border-left: 1px solid var(--border);
+          padding-left: 1.5rem;
+        }
+
+        .gov-sidebar-header {
+          font-size: 0.9rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--primary);
+          border-bottom: 2px solid var(--primary);
+          padding-bottom: 0.6rem;
+          margin-bottom: 1.25rem;
+          font-family: var(--font-main);
+        }
+
+        .gov-sidebar-item-link {
+          text-decoration: none;
+          color: var(--text);
+          display: block;
+        }
+
+        .gov-sidebar-item {
+          display: flex;
+          gap: 1rem;
+          align-items: flex-start;
+          padding-bottom: 1rem;
+          border-bottom: 1px solid var(--border);
+          transition: opacity 0.15s ease-in-out;
+        }
+
+        .gov-sidebar-item:hover {
+          opacity: 0.85;
+        }
+
+        .gov-sidebar-item:hover .gov-sidebar-title {
+          text-decoration: underline !important;
+        }
+
+        .gov-sidebar-img-wrapper {
+          width: 90px;
+          height: 65px;
+          position: relative;
+          overflow: hidden;
+          flex-shrink: 0;
+          border: 1px solid var(--border);
+          border-radius: 0px !important;
+        }
+
+        .gov-sidebar-meta-content {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .gov-sidebar-tag {
+          font-size: 0.65rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          color: var(--primary-light);
+          letter-spacing: 0.04em;
+        }
+
+        .gov-sidebar-title {
+          font-size: 0.85rem;
+          margin: 0;
+          font-weight: 700;
+          line-height: 1.3;
+          font-family: var(--font-news);
+          color: var(--primary-dark);
+        }
+
+        .gov-sidebar-date {
+          font-size: 0.65rem;
+          color: var(--text-light);
+        }
+
+        @media (max-width: 1023px) {
+          .editorial-split-layout {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+          }
+          
+          .gov-news-sidebar {
+            border-left: none !important;
+            border-top: 1px solid var(--border) !important;
+            padding-left: 0 !important;
+            padding-top: 1.5rem !important;
+            margin-top: 1rem !important;
+          }
+          
+          .split-sidebar-column {
+            position: static !important;
+          }
+
           .container { padding: 0 0.75rem !important; }
           .bbc-homepage-wrapper { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
           
@@ -638,24 +1136,76 @@ export default async function Home() {
           .mobile-hide { display: none !important; }
           
           .latest-insights-desktop { display: none !important; }
-          .latest-insights-mobile { display: grid !important; }
           
-          /* Regional sections 2-column grid */
+          .latest-insights-mobile,
           .section-grid-mobile {
             display: grid !important;
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 0.75rem !important;
+            grid-template-columns: repeat(6, 1fr) !important;
+            gap: 1rem !important;
             width: 100% !important;
           }
           
-          .mobile-featured-row {
-            grid-column: span 2 !important;
+          /* Force default span to 6 (full width) first, then adjust using cycle */
+          .latest-insights-mobile > *,
+          .section-grid-mobile > * {
+            grid-column: span 6 !important;
             width: 100% !important;
             max-width: none !important;
-            margin: 0 0 1rem 0 !important;
+            margin: 0 !important;
           }
           
-          .section-grid-mobile h3 { font-size: 0.85rem !important; line-height: 1.25 !important; }
+          /* 1. First 2 cards together (span 3 each) */
+          .latest-insights-mobile > :nth-child(6n+1),
+          .latest-insights-mobile > :nth-child(6n+2),
+          .section-grid-mobile > :nth-child(6n+1),
+          .section-grid-mobile > :nth-child(6n+2) {
+            grid-column: span 3 !important;
+          }
+          
+          /* 2. Next 1 card full width (span 6) */
+          .latest-insights-mobile > :nth-child(6n+3),
+          .section-grid-mobile > :nth-child(6n+3) {
+            grid-column: span 6 !important;
+          }
+          
+          /* 3. Next 3 cards together (span 2 each) */
+          .latest-insights-mobile > :nth-child(6n+4),
+          .latest-insights-mobile > :nth-child(6n+5),
+          .latest-insights-mobile > :nth-child(6n+6),
+          .section-grid-mobile > :nth-child(6n+4),
+          .section-grid-mobile > :nth-child(6n+5),
+          .section-grid-mobile > :nth-child(6n+6) {
+            grid-column: span 2 !important;
+          }
+
+          /* Micro-UX font size and layout adjustments for 3-card rows on mobile */
+          .latest-insights-mobile > :nth-child(6n+4) .bbc-card-title,
+          .latest-insights-mobile > :nth-child(6n+5) .bbc-card-title,
+          .latest-insights-mobile > :nth-child(6n+6) .bbc-card-title,
+          .section-grid-mobile > :nth-child(6n+4) .bbc-card-title,
+          .section-grid-mobile > :nth-child(6n+5) .bbc-card-title,
+          .section-grid-mobile > :nth-child(6n+6) .bbc-card-title {
+            font-size: 0.8rem !important;
+            line-height: 1.25 !important;
+          }
+
+          .latest-insights-mobile > :nth-child(6n+4) .bbc-card-excerpt,
+          .latest-insights-mobile > :nth-child(6n+5) .bbc-card-excerpt,
+          .latest-insights-mobile > :nth-child(6n+6) .bbc-card-excerpt,
+          .section-grid-mobile > :nth-child(6n+4) .bbc-card-excerpt,
+          .section-grid-mobile > :nth-child(6n+5) .bbc-card-excerpt,
+          .section-grid-mobile > :nth-child(6n+6) .bbc-card-excerpt {
+            display: none !important;
+          }
+
+          .latest-insights-mobile > :nth-child(6n+4) .bbc-card-image,
+          .latest-insights-mobile > :nth-child(6n+5) .bbc-card-image,
+          .latest-insights-mobile > :nth-child(6n+6) .bbc-card-image,
+          .section-grid-mobile > :nth-child(6n+4) .bbc-card-image,
+          .section-grid-mobile > :nth-child(6n+5) .bbc-card-image,
+          .section-grid-mobile > :nth-child(6n+6) .bbc-card-image {
+            max-height: 90px !important;
+          }
         }
       `}} />
     </div>

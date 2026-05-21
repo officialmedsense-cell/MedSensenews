@@ -139,6 +139,9 @@ export default async function CategoryPage({ params }) {
           .m-grid-1, .m-grid-2 { display: grid; gap: 0.75rem; }
           .m-grid-1 { grid-template-columns: 1fr; }
           .m-grid-2 { grid-template-columns: repeat(2, 1fr); }
+          @media (max-width: 639px) {
+            .m-grid-2 { grid-template-columns: 1fr; }
+          }
  
           .mobile-cycle-layout .list-section { padding: 1.25rem 0.5rem; border-radius: 8px; margin: 0 -0.25rem; }
           .mobile-cycle-layout .list-grid { grid-template-columns: 1fr; gap: 1rem; }

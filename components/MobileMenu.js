@@ -133,7 +133,7 @@ export default function MobileMenu() {
               width: '100%', 
               padding: '0.6rem 1rem', 
               paddingRight: '2.5rem',
-              borderRadius: '20px', 
+              borderRadius: '0px', 
               border: '1px solid var(--border)',
               backgroundColor: 'var(--bg-secondary)',
               color: 'inherit',

@@ -73,7 +73,7 @@ export default function SubscribeModal({ iconOnly = false }) {
           aria-label="Subscribe to newsletter"
           id="subscribe-trigger-mobile"
           style={{
-            background: 'var(--primary)',
+            background: 'var(--subscribe-bg, var(--primary))',
             color: 'white',
             border: 'none',
             width: '38px',
@@ -84,7 +84,7 @@ export default function SubscribeModal({ iconOnly = false }) {
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: '1rem',
-            boxShadow: '0 4px 10px rgba(30, 58, 138, 0.25)',
+            boxShadow: '0 4px 10px var(--subscribe-shadow, rgba(30, 58, 138, 0.25))',
           }}
         >
           <i className="fas fa-bell"></i>

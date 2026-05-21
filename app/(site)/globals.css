@@ -225,29 +225,31 @@
     --font-main: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     --font-news: "Playfair Display", Georgia, "Times New Roman", serif;
     --primary: #1e3a8a;
-    --primary-dark: #172554;
-    --primary-light: #3b82f6;
-    --accent: #0ea5e9;
+    --primary-dark: #102a43;
+    --primary-light: #486581;
+    --accent: #334e68;
     --text: #1f2937;
     --text-light: #6b7280;
-    --bg: #ffffff;
+    --bg: #ffffff; /* Pristine pure white editorial background */
 
-    --bg-secondary: #f8fafc;
+    --bg-secondary: #f4f4f4;
     --bg-card: #ffffff;
-    --border: #e2e8f0;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --border: #e2e2e2; /* Soft editorial divider borders */
+    --shadow: none;
+    --shadow-lg: none;
+    --transition: all 0.15s ease-in-out;
 
-    /* Editorial UI Tokens */
-    --intel-navy: #0f172a;
-    --intel-blue: #1e40af;
-    --intel-accent: #38bdf8;
-    --alert-red: #dc2626;
-    --fact-green: #059669;
-    --brand-accent: #7c3aed;
+    /* Traditional Editorial UI Tokens */
+    --intel-navy: #102a43;
+    --intel-blue: #1e3a8a;
+    --intel-accent: #627d98;
+    --alert-red: #991b1b;
+    --fact-green: #065f46;
+    --brand-accent: #722f37;
     --glass-bg: rgba(255, 255, 255, 0.7);
     --glass-border: rgba(255, 255, 255, 0.2);
+    --subscribe-bg: var(--primary);
+    --subscribe-shadow: rgba(30, 58, 138, 0.25);
 }
 
 html {
@@ -257,22 +259,33 @@ html {
 /* Dark Theme */
 [data-theme="dark"] {
     color-scheme: dark;
-    --primary: #3b82f6;
-    --primary-dark: #1d4ed8;
-    --primary-light: #60a5fa;
-    --accent: #38bdf8;
-    --text: #e2e8f0;
+    --primary: #8da2bb;
+    --primary-dark: #475569;
+    --primary-light: #cbd5e1;
+    --accent: #94a3b8;
+    --text: #f1f5f9;
     --text-light: #94a3b8;
     --bg: #000000;
-    --bg-secondary: #050505;
-    --bg-card: #0b0b0b;
-    --border: #1a1a1a;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.45);
-    --shadow-lg: 0 16px 24px -8px rgba(0, 0, 0, 0.7);
+    --bg-secondary: #0c0c0c;
+    --bg-card: #050505;
+    --border: #262626;
+    --shadow: none;
+    --shadow-lg: none;
     background-color: #000000;
 
     --glass-bg: rgba(0, 0, 0, 0.7);
     --glass-border: rgba(255, 255, 255, 0.1);
+
+    --subscribe-bg: #1e3a8a; /* aligns with logo's deep brand blue */
+    --subscribe-shadow: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .subscribe-btn {
+    background: #1e3a8a !important;
+}
+
+[data-theme="dark"] .subscribe-btn:hover {
+    background: #102a43 !important;
 }
 
 /* Reset & Base */
@@ -289,7 +302,7 @@ body {
     color: var(--text);
     line-height: 1.6;
     transition: var(--transition);
-    overflow-x: hidden;
+    overflow-x: clip;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -323,8 +336,7 @@ img {
    ============================================ */
 
 .navbar {
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 1000;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
@@ -3483,6 +3495,31 @@ img {
     border: none;
 }
 
+/* Remove any border/outline from the first five article cards on desktop */
+@media (min-width: 1025px) {
+  .bbc-article-card:nth-child(-n+5) {
+    border: none !important;
+    box-shadow: none !important;
+    background: var(--bg-card) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+
+[data-theme="dark"].mobile-divider {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .mobile-divider {
+    display: block;
+    height: 1px;
+    background: var(--border);
+    opacity: 0.4;
+    margin: 0.5rem 0 2rem;
+  }
+}
+
 [data-theme="dark"] .bbc-article-card:hover {
     background: rgba(255, 255, 255, 0.03);
 }
@@ -4448,20 +4485,20 @@ img {
     will-change: transform;
 }
 
-@media (max-width: 768px) {
-    .main-header.header-hidden .navbar-top {
-        max-height: 0;
-        padding-top: 0;
-        padding-bottom: 0;
-        opacity: 0;
-        overflow: hidden;
-    }
-    
-    .navbar-top {
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        max-height: 60px;
-        overflow: hidden;
-    }
+.main-header.is-scrolled .navbar-top {
+    max-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    opacity: 0 !important;
+    overflow: hidden !important;
+}
+
+.navbar-top {
+    transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                padding 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 0.4s ease;
+    max-height: 60px;
+    overflow: hidden;
 }
 
 .is-scrolled .sticky-logo-container {
@@ -5476,3 +5513,457 @@ img {
   }
 }
 
+/* ==========================================================================
+   TRADITIONAL EDITORIAL STYLE OVERRIDES (BBC, CNN, Reuters, Punch Style)
+   ========================================================================== */
+
+/* 1. Reset Border Radius (Sharp Square Corners) */
+.featured-main,
+.featured-card,
+.news-card,
+.bbc-article-card,
+.bbc-card-image,
+.bbc-card-image img,
+.trending-thumb,
+.nl-modal,
+.newsletter-field input,
+.newsletter-submit-btn,
+.subscribe-modal-container,
+.subscribe-input-group input,
+.subscribe-submit-btn,
+.comment-item,
+.comment-form input,
+.comment-form textarea,
+.btn,
+.subscribe-btn,
+.toast,
+.mobile-search-panel,
+.mobile-search-box input,
+.mobile-search-submit,
+.search-container,
+.article-main-image-container,
+.legal-section,
+.weather-widget-container,
+.weather-info-card,
+.trending-card,
+.trending-card-image,
+.related-card,
+.related-card-image,
+.hover-bg,
+.hover-bg div,
+.hover-bg img,
+.hover-bg span,
+.mobile-trending-item,
+.mobile-trending-item div,
+.mobile-trending-item img,
+.mobile-trending-item span,
+.outbreak-card,
+.outbreak-item,
+.other-news-item,
+.alerts-sidebar-column div,
+.admin-sidebar,
+.admin-content,
+.stat-card,
+.action-btn {
+    border-radius: 0px !important;
+}
+
+/* 2. Flat Layout - Remove Drop Shadows & Apply Crisp Solid Dividers */
+.featured-main,
+.featured-card,
+.news-card,
+.bbc-article-card,
+.trending-card,
+.related-card,
+.comment-item,
+.subscribe-modal-container,
+.nl-modal,
+.weather-info-card,
+.mobile-trending-item,
+.admin-sidebar,
+.admin-content,
+.stat-card {
+    box-shadow: none !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* 3. Disable Float & Zoom Animations on Hover */
+.featured-main:hover,
+.featured-card:hover,
+.news-card:hover,
+.bbc-article-card:hover,
+.trending-item:hover,
+.related-card:hover,
+.btn:hover,
+.subscribe-btn:hover,
+.social-links a:hover,
+.comment-item:hover,
+.mobile-trending-item:hover,
+.weather-info-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.featured-main:hover img,
+.featured-card:hover img,
+.news-card:hover .news-card-image img,
+.bbc-article-card:hover .bbc-card-image img,
+.related-card:hover .related-card-image img,
+.trending-card:hover .trending-card-image img {
+    transform: none !important;
+}
+
+/* 4. Editorial Link Underline & Colors on Hover */
+.bbc-article-card:hover .bbc-card-title,
+.news-card:hover .news-card-title,
+.trending-item:hover h4,
+.related-card:hover .related-card-title,
+.mobile-trending-item:hover h4,
+.alerts-sidebar-column a:hover h4,
+.latest-insights-column a:hover h4,
+.other-news-item:hover h4 {
+    text-decoration: underline !important;
+}
+
+/* 5. Flat Weather Widget Styling (BBC/Reuters Editorial Style) */
+.weather-info-card {
+    background: var(--bg-secondary) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+}
+.weather-info-card * {
+    color: var(--text) !important;
+}
+.weather-info-card i.fa-heartbeat {
+    color: var(--alert-red) !important;
+}
+
+/* 6. Flat & Structured Mobile Grid/Scroll Track */
+.mobile-trending-item {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+}
+.mobile-trending-item h4,
+.mobile-trending-item span,
+.mobile-trending-item div {
+    color: var(--text) !important;
+}
+[data-theme="dark"] .mobile-trending-item {
+    background: var(--bg-card) !important;
+}
+
+/* ==========================================================================
+   BBC STRUCTURAL DESIGN SYSTEM
+   Navigation, Typography, Section Headers, Buttons, Footer
+   ========================================================================== */
+
+/* 7. BBC-Style Navigation Bar — Light paper horizontal bar with dark links */
+.navbar-nav-row {
+    background: var(--bg) !important;
+    border-top: 1px solid var(--border) !important;
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: none !important;
+}
+
+.navbar-nav-inner {
+    background: var(--bg) !important;
+}
+
+.navbar-nav-inner a,
+.navbar-nav-inner ul li a,
+.desktop-nav-links ul li a,
+.nav-links a {
+    color: var(--text) !important;
+    font-size: 0.825rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.02em !important;
+    padding: 0.6rem 0.25rem !important;
+    position: relative;
+    transition: var(--transition);
+}
+
+.navbar-nav-inner a:hover,
+.navbar-nav-inner ul li a:hover,
+.desktop-nav-links ul li a:hover,
+.nav-links a:hover {
+    color: var(--primary) !important;
+    text-decoration: none !important;
+    opacity: 0.85;
+}
+
+/* Active / current page indicator */
+.navbar-nav-inner a.active,
+.desktop-nav-links ul li a.active,
+.nav-links a.active {
+    border-bottom: 3px solid var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+[data-theme="dark"] .navbar-nav-row {
+    background: var(--bg) !important;
+    border-top: 1px solid var(--border) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+
+[data-theme="dark"] .navbar-nav-inner {
+    background: var(--bg) !important;
+}
+
+/* 8. BBC-Style Section Titles — Bottom border accent, no left border */
+.intelligence-section-title {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-family: var(--font-news) !important;
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    color: var(--text) !important;
+    margin-bottom: 1rem !important;
+    border-left: none !important;
+    border-bottom: 3px solid var(--primary) !important;
+    padding-left: 0 !important;
+    padding-bottom: 0.5rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+[data-theme="dark"] .intelligence-section-title {
+    color: var(--text) !important;
+    border-bottom-color: var(--primary) !important;
+}
+
+/* 9. Subscribe / CTA Button — Flat BBC-style, no gradient */
+.subscribe-btn {
+    background: var(--primary) !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    text-transform: uppercase !important;
+    font-size: 0.75rem !important;
+    padding: 0.55rem 1.2rem !important;
+    transition: background 0.15s ease !important;
+}
+
+.subscribe-btn:hover {
+    background: var(--primary-dark) !important;
+    transform: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+}
+
+/* 10. Card Category Labels — Plain, no pill background */
+.bbc-card-category {
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+    font-size: 0.7rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+}
+
+/* 11. Ticker label — flat, no border-radius */
+.ticker-label {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-size: 0.7rem !important;
+    font-weight: 700 !important;
+    padding: 0.2rem 0.5rem !important;
+}
+
+/* 12. BBC-Style Logo Row — white background, centered logo, generous padding */
+.navbar-logo-row.desktop-logo-row {
+    border-bottom: 1px solid var(--border) !important;
+    background: var(--bg) !important;
+    padding: 0.6rem 2rem !important;
+}
+
+/* 13. Social link icons — flat, no circle background, primary-themed contrast */
+.social-links a {
+    border-radius: 0 !important;
+    background: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.85rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: var(--transition) !important;
+}
+
+.social-links a:hover {
+    background: #ffffff !important;
+    transform: none !important;
+    border-color: #ffffff !important;
+    color: var(--primary) !important;
+}
+
+/* 14. Footer — flatter, structured, brand-matching primary background */
+.footer {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    margin-top: 2rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.footer p {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.footer-links h4 {
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.1em !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
+    padding-bottom: 0.6rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.footer-links a {
+    font-size: 0.85rem !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.footer-links a:hover {
+    padding-left: 0 !important;
+    text-decoration: underline !important;
+    color: #ffffff !important;
+}
+
+.footer-bottom {
+    background: var(--primary-dark) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 1rem 0 !important;
+    font-size: 0.8rem !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* 15. BBC-style icon buttons — flat square style */
+.icon-btn {
+    border-radius: 0 !important;
+    border: 1px solid var(--border) !important;
+}
+
+.icon-btn:hover {
+    transform: none !important;
+}
+
+/* 16. Search input — flat BBC style */
+.search-box input {
+    border-radius: 0 !important;
+}
+
+/* 17. Body font — clean and direct */
+body {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+}
+
+/* 18. Solid Card Contrast & Paper Background Overrides */
+html, body {
+    background-color: var(--bg) !important;
+}
+
+/* Ensure all news and article cards align perfectly with the paper-gray background color to stand out as flat editorial columns */
+.bbc-article-card:not(.bbc-list-card),
+.news-card,
+.trending-card,
+.related-card,
+.outbreak-card,
+.mv-card,
+.comment-item {
+    background-color: var(--bg) !important;
+    padding: 0.85rem !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* Maintain flat transparent style for horizontal row list cards */
+.bbc-article-card.bbc-list-card {
+    background-color: transparent !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* Outbreak list hover-bg custom padding and contrast */
+.hover-bg {
+    background-color: var(--bg) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 0px !important;
+}
+
+.hover-bg:hover {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* 19. Ultimate Mobile-Friendliness & Responsiveness Overrides */
+html, body {
+    overflow-x: clip !important;
+    width: 100% !important;
+    position: relative !important;
+}
+
+/* Ensure mobile trending cards have square corners to match the editorial theme */
+.mobile-trending-item {
+    border-radius: 0px !important;
+}
+
+@media (max-width: 600px) {
+    /* Stack grid-based article collections in a clean single column on phone viewports */
+    .other-news-grid,
+    .bbc-trending-grid-wrapper .other-news-grid,
+    .other-news-section .other-news-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+        padding: 0 1rem !important;
+    }
+}
+
+/* 20. Dark Mode Ticker and Footer Color Overrides */
+[data-theme="dark"] .navbar-top {
+    background: #1e3a8a !important; /* deep blue */
+}
+
+[data-theme="dark"] .breaking-ticker::after {
+    background: linear-gradient(to right, transparent, #1e3a8a) !important;
+}
+
+[data-theme="dark"] .footer {
+    background: #1e3a8a !important; /* deep blue */
+}
+
+[data-theme="dark"] .footer-bottom {
+    background: #102a43 !important; /* deep navy blue */
+}
+
+
+
+/* Remove border for first five article cards on desktop */
+@media (min-width: 1025px) {
+  .bbc-article-card:nth-child(-n+5) {
+    border: none !important;
+    background: var(--bg);
+    box-shadow: none !important;
+  }
+}
+
+/* Remove border for first five article cards on mobile */
+@media (max-width: 768px) {
+  .bbc-article-card:nth-child(-n+5) {
+    border: none !important;
+    background: var(--bg);
+    box-shadow: none !important;
+  }
+}

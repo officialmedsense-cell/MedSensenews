@@ -11,16 +11,22 @@ export default function SmartHeader({ children, isOuterHeader = false }) {
   useEffect(() => {
     const handleScroll = () => {
       const now = Date.now();
-      
-      // Track if we are scrolled away from top
       const currentScrollY = window.scrollY;
-      setIsScrolled(currentScrollY > 150);
+      
+      // Hysteresis threshold to prevent scroll shaking (jitter)
+      setIsScrolled(prev => {
+        if (prev) {
+          return currentScrollY > 80;
+        } else {
+          return currentScrollY > 180;
+        }
+      });
 
       // If we are in the lockout period, ignore visibility toggle
       if (now < lockUntil.current) return;
       
-      // Always show at the very top
-      if (currentScrollY < 150) {
+      // Always show at the very top (aligned with hysteresis bottom threshold)
+      if (currentScrollY < 100) {
         if (!isVisible) setIsVisible(true);
         lastScrollY.current = currentScrollY;
         return;

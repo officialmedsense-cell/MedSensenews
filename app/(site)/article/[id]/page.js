@@ -267,7 +267,7 @@ export default async function ArticlePage({ params }) {
     </article>
 
     {otherArticles.length > 0 && (
-      <section className="bbc-trending-grid-wrapper other-news-section" style={{ background: 'var(--bg-secondary)', padding: '3rem 0', borderTop: '1px solid var(--border)', marginTop: '4rem' }}>
+      <section className="bbc-trending-grid-wrapper other-news-section" style={{ background: 'var(--bg)', padding: '3rem 0', borderTop: '1px solid var(--border)', marginTop: '4rem' }}>
         <div className="bbc-homepage-wrapper" style={{ minHeight: 'auto', paddingTop: 0 }}>
           <div className="other-news-header">
             <h3 className="other-news-title">More News For You</h3>
