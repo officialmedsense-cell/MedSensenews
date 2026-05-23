@@ -804,6 +804,12 @@ export default function MedSenseDashboard() {
                  <input type="text" value={settings.publishUrl} onChange={e => setSettings({...settings, publishUrl: e.target.value})} placeholder="https://..." style={{ width: '100%', background: 'var(--bg-surface)', border: '1px solid var(--border-dim)', borderRadius: 'var(--radius-md)', padding: '12px', color: 'var(--text-primary)' }} />
               </div>
            </div>
+           <div style={{ marginTop: '20px', padding: '18px', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-dim)', display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+             <div>
+              <div style={{ fontSize: '13px', fontWeight: '800', marginBottom: '4px' }}>Auto Publish Scheduler</div>
+               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>The scheduler lives on its own page at `/automation`.</div>
+             </div>
+           </div>
          </section>
          )}
          

@@ -2,6 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import Parser from "rss-parser";
+import { DEFAULT_AUTO_PUBLISH_CONFIG, type AutoPublishConfig } from "./automation-config";
 
 const parser = new Parser({
   headers: {
@@ -83,6 +84,55 @@ const FEEDS = [
 const pubUrl = process.env.PUBLICATION_SUPABASE_URL || "";
 const pubKey = process.env.PUBLICATION_SUPABASE_KEY || "";
 const pubClient = (pubUrl && pubKey) ? createClient(pubUrl, pubKey) : null;
+
+async function readCloudConfig<T>(title: string, fallback: T): Promise<{ success: true; config: T } | { success: false; error: string }> {
+  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  try {
+    const { data, error } = await supabase
+      .from("articles")
+      .select("content")
+      .eq("title", title)
+      .maybeSingle();
+
+    if (error && error.code !== "PGRST116") throw error;
+    if (data && data.content) {
+      return { success: true, config: JSON.parse(data.content) as T };
+    }
+    return { success: true, config: fallback };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+async function writeCloudConfig(title: string, content: any, excerpt: string) {
+  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
+  try {
+    await supabase
+      .from("articles")
+      .delete()
+      .eq("title", title);
+
+    const { error: insError } = await supabase
+      .from("articles")
+      .insert([{
+        title,
+        content: JSON.stringify(content),
+        category: "SYSTEM",
+        status: "draft",
+        slug: title.toLowerCase().replace(/_/g, "-").toLowerCase(),
+        author: "system",
+        date: new Date().toISOString(),
+        excerpt,
+        views: 0,
+        trending: false
+      }]);
+
+    if (insError) throw insError;
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
 
 /**
  * Scrapes the clean text content from the original HTML page of a news article.
@@ -1070,55 +1120,28 @@ export async function publishToNewsSite(payload: {
  * Cloud Sync for Intelligence Hubs
  * Stores sources configuration in the articles table to persist across devices.
  */
-export async function getSourcesFromCloud() {
-  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
-  try {
-    const { data, error } = await supabase
-      .from("articles")
-      .select("content")
-      .eq("title", "SYSTEM_HUBS_CONFIG")
-      .maybeSingle();
-
-    if (error && error.code !== "PGRST116") throw error; // ignore no rows found
-    if (data && data.content) {
-       return { success: true, sources: JSON.parse(data.content) };
-    }
-    return { success: true, sources: [] };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+export async function getSourcesFromCloud(): Promise<{ success: true; sources: any[] } | { success: false; error: string }> {
+  const result = await readCloudConfig<any[]>("SYSTEM_HUBS_CONFIG", []);
+  if (!result.success) return { success: false, error: (result as { success: false; error: string }).error };
+  return { success: true, sources: (result as { success: true; config: any[] }).config };
 }
 
 export async function saveSourcesToCloud(sources: any[]) {
-  if (!supabaseUrl) return { success: false, error: "Supabase not configured." };
-  try {
-    // Delete existing
-    await supabase
-      .from("articles")
-      .delete()
-      .eq("title", "SYSTEM_HUBS_CONFIG");
-      
-    // Insert new config
-    const { error: insError } = await supabase
-      .from("articles")
-      .insert([{
-         title: "SYSTEM_HUBS_CONFIG",
-         content: JSON.stringify(sources),
-         category: "SYSTEM",
-         status: "draft",
-         slug: "system-hubs-config",
-         author: "system",
-         date: new Date().toISOString(),
-         excerpt: "System configuration for Intelligence Hubs",
-         views: 0,
-         trending: false
-      }]);
-      
-    if (insError) throw insError;
-    return { success: true };
-  } catch (error: any) {
-    return { success: false, error: error.message };
-  }
+  return writeCloudConfig("SYSTEM_HUBS_CONFIG", sources, "System configuration for Intelligence Hubs");
+}
+
+export async function getAutoPublishConfigFromCloud(): Promise<{ success: true; config: AutoPublishConfig } | { success: false; error: string }> {
+  const result = await readCloudConfig<AutoPublishConfig>("SYSTEM_AUTOPUBLISH_CONFIG", DEFAULT_AUTO_PUBLISH_CONFIG);
+  if (!result.success) return { success: false, error: (result as { success: false; error: string }).error };
+  return { success: true, config: { ...DEFAULT_AUTO_PUBLISH_CONFIG, ...(result as { success: true; config: AutoPublishConfig }).config } };
+}
+
+export async function saveAutoPublishConfigToCloud(config: AutoPublishConfig) {
+  return writeCloudConfig(
+    "SYSTEM_AUTOPUBLISH_CONFIG",
+    { ...DEFAULT_AUTO_PUBLISH_CONFIG, ...config, updatedAt: new Date().toISOString() },
+    "System configuration for Auto Publish Scheduler"
+  );
 }
 
 /**
