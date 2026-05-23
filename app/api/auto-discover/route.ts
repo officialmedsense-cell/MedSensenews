@@ -79,7 +79,13 @@ export async function GET(request: Request) {
     const now = new Date();
     const zoned = getZonedClockParts(now, config.timezone || DEFAULT_AUTO_PUBLISH_CONFIG.timezone);
 
-    if (zoned.timeKey !== config.scheduledTime) {
+    // Hobby plan compatibility check:
+    // Since Vercel Hobby accounts only allow daily cron jobs (e.g., "0 0 * * *"),
+    // the cron is only executed once per day. To ensure the scheduler runs successfully
+    // in this environment, we bypass the strict minute alignment and run once per calendar day.
+    const isDailyCron = true; 
+
+    if (!isDailyCron && zoned.timeKey !== config.scheduledTime) {
       return NextResponse.json({
         ...results,
         skipped: true,
@@ -94,11 +100,17 @@ export async function GET(request: Request) {
       });
     }
 
-    if (config.lastRunDate === zoned.dateKey && config.lastRunTime === config.scheduledTime) {
+    const alreadyRanToday = isDailyCron 
+      ? config.lastRunDate === zoned.dateKey 
+      : (config.lastRunDate === zoned.dateKey && config.lastRunTime === config.scheduledTime);
+
+    if (alreadyRanToday) {
       return NextResponse.json({
         ...results,
         skipped: true,
-        reason: 'Auto publish already ran for this scheduled slot today.',
+        reason: isDailyCron 
+          ? 'Auto publish already ran today.' 
+          : 'Auto publish already ran for this scheduled slot today.',
         schedule: {
           enabled: config.enabled,
           scheduledTime: config.scheduledTime,
