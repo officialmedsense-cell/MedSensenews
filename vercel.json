@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/auto-discover",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
